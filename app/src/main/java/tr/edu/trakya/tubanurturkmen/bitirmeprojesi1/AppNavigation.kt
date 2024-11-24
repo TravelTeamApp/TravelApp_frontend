@@ -7,6 +7,8 @@ import androidx.navigation.compose.rememberNavController
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.LoginScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.RegisterScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HomeScreen
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ForgotPasswordScreen
+
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -19,5 +21,8 @@ fun AppNavigation() {
             RegisterScreen(navController)
         }
         composable("home") { HomeScreen(navController) } // Home ekranını ekledik
+        composable("forgotPassword") {
+            ForgotPasswordScreen(navController) // Add this route for ForgotPasswordScreen
+        }
     }
 }

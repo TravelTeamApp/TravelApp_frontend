@@ -31,20 +31,28 @@ import android.util.Log
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(navController: NavController) {
-    // Durumlar
     val context = LocalContext.current
     val userName = remember { mutableStateOf("") }
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
+    val tckimlik = remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)), RoundedCornerShape(16.dp))
+            .background(
+                MaterialTheme.colorScheme.surface,
+                RoundedCornerShape(16.dp)
+            )
+            .border(
+                BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
+                RoundedCornerShape(16.dp)
+            )
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -55,9 +63,10 @@ fun RegisterScreen(navController: NavController) {
         ) {
             Text(
                 text = "Kayıt Ol",
-                style = androidx.compose.material3.MaterialTheme.typography.headlineLarge.copy(color = MaterialTheme.colorScheme.primary)
+                style = MaterialTheme.typography.headlineLarge.copy(color = MaterialTheme.colorScheme.primary)
             )
 
+            // Kullanıcı Adı
             TextField(
                 value = userName.value,
                 onValueChange = { userName.value = it },
@@ -70,10 +79,15 @@ fun RegisterScreen(navController: NavController) {
                 )
             )
 
+            // Email
             TextField(
                 value = email.value,
-                onValueChange = { email.value = it },
+                onValueChange = {
+                    email.value = it
+                    emailError = validateEmail(it) // E-posta doğrulama
+                },
                 label = { Text("Email") },
+                isError = emailError.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -81,11 +95,37 @@ fun RegisterScreen(navController: NavController) {
                     imeAction = ImeAction.Next
                 )
             )
+            if (emailError.isNotEmpty()) {
+                Text(
+                    text = emailError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
+            // T.C. Kimlik No
+            TextField(
+                value = tckimlik.value,
+                onValueChange = { tckimlik.value = it },
+                label = { Text("T.C. Kimlik No") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                maxLines = 1
+            )
+
+            // Şifre
             TextField(
                 value = password.value,
-                onValueChange = { password.value = it },
+                onValueChange = {
+                    password.value = it
+                    passwordError = validatePassword(it) // Şifre doğrulama
+                },
                 label = { Text("Şifre") },
+                isError = passwordError.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -101,21 +141,39 @@ fun RegisterScreen(navController: NavController) {
                             ImageVector.vectorResource(id = R.drawable.baseline_visibility_off_24)
                         },
                         contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
-                        modifier = Modifier
-                            .clickable { isPasswordVisible = !isPasswordVisible }
+                        modifier = Modifier.clickable { isPasswordVisible = !isPasswordVisible }
                     )
                 }
             )
+            if (passwordError.isNotEmpty()) {
+                Text(
+                    text = passwordError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
+            // Şifremi unuttum linki
+            Text(
+                text = "Şifrenizi mi unuttunuz?",
+                style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .clickable {
+                        navController.navigate("forgotPassword") // Şifremi unuttum ekranına yönlendirme
+                    }
+            )
+
+            // Kayıt Ol Butonu
             Button(
                 onClick = {
-                    if (email.value.isNotEmpty() && password.value.isNotEmpty() && userName.value.isNotEmpty()) {
+                    if (email.value.isNotEmpty() && password.value.isNotEmpty() && userName.value.isNotEmpty() && tckimlik.value.length == 11 && emailError.isEmpty() && passwordError.isEmpty()) {
                         isLoading = true
 
                         val registerRequest = RegisterRequest(
                             userName = userName.value,
                             email = email.value,
-                            password = password.value
+                            password = password.value,
+                            tckimlik = tckimlik.value
                         )
 
                         RetrofitClient.apiService.register(registerRequest).enqueue(object : Callback<RegisterResponse> {
@@ -123,9 +181,10 @@ fun RegisterScreen(navController: NavController) {
                                 isLoading = false
                                 Log.e("RegisterError", "Bağlantı Hatası: ${t.message}")
                                 Toast.makeText(context, "Bağlantı Hatası: ${t.message}", Toast.LENGTH_SHORT).show()
-                        }
+                            }
 
                             override fun onResponse(call: Call<RegisterResponse>, response: Response<RegisterResponse>) {
+                                isLoading = false
                                 if (!response.isSuccessful) {
                                     val rawError = response.errorBody()?.string()
                                     Log.e("RegisterError", "Sunucudan Gelen Yanıt: $rawError")
@@ -133,14 +192,12 @@ fun RegisterScreen(navController: NavController) {
 
                                 } else {
                                     Log.d("RegisterSuccess", "Kayıt başarılı: ${response.body()}")
-                                    navController.navigate("home") // Home ekranına yönlendirme
-
+                                    navController.navigate("login")
                                 }
                             }
-
                         })
                     } else {
-                        Toast.makeText(context, "Lütfen tüm alanları doldurun", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Lütfen tüm alanları doğru şekilde doldurun.", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -153,5 +210,19 @@ fun RegisterScreen(navController: NavController) {
                 }
             }
         }
+    }
+}
+fun validatePassword(password: String): String {
+    if (password.length < 6) return "Şifre en az 6 karakter olmalıdır."
+    if (!password.any { it.isUpperCase() }) return "Şifre en az bir büyük harf içermelidir."
+    if (!password.any { it.isLowerCase() }) return "Şifre en az bir küçük harf içermelidir."
+    if (!password.any { "!@#$%^&*()_+[]{}|;:,.<>?/".contains(it) }) return "Şifre en az bir özel karakter içermelidir."
+    return ""
+}
+fun validateEmail(email: String): String {
+    return if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        ""
+    } else {
+        "Geçerli bir email adresi girin."
     }
 }

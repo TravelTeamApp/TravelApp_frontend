@@ -169,6 +169,16 @@ fun LoginScreen(navController: NavController) {
                             navController.navigate("register")
                         }
                 )
+                // Şifremi Unuttum linki
+                Text(
+                    text = "Şifremi Unuttum?",
+                    style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.primary),
+                    modifier = Modifier
+                        .clickable {
+                            // Şifremi Unuttum ekranına yönlendir
+                            navController.navigate("forgotPassword")
+                        }
+                )
             }
         }
     }

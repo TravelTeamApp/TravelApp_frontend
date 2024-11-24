@@ -13,4 +13,8 @@ interface AuthService {
 
     @POST("register")  // Yine BASE_URL'in sonuna eklenir, yani: http://localhost:5000/api/User/register
     fun register(@Body registerRequest: RegisterRequest): Call<RegisterResponse>
+    @POST("forgot-password")
+    fun forgotPassword(@Body request: ForgotPasswordRequest): Call<ForgotPasswordResponse>
+
+
 }
