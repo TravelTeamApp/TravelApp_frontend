@@ -27,6 +27,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,38 +43,44 @@ fun RegisterScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
+    val backgroundImage: Painter = painterResource(id = R.drawable.register)
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .background(
-                MaterialTheme.colorScheme.surface,
-                RoundedCornerShape(16.dp)
-            )
-            .border(
-                BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
-                RoundedCornerShape(16.dp)
-            )
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+            .fillMaxSize(),
+
+                contentAlignment = Alignment.Center// Box tam ekran olacak şekilde ayarlandı
     ) {
+        // Arka plan resmi
+        Image(
+            painter = backgroundImage,
+            contentDescription = "Background Image",
+            modifier = Modifier.fillMaxSize() // Arka plan resmini ekranın tamamına yay
+        )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+            .padding(16.dp),
+
         ) {
             Text(
                 text = "Kayıt Ol",
-                style = MaterialTheme.typography.headlineLarge.copy(color = MaterialTheme.colorScheme.primary)
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = Color.White
+                )
             )
+
 
             // Kullanıcı Adı
             TextField(
                 value = userName.value,
                 onValueChange = { userName.value = it },
                 label = { Text("Kullanıcı Adı") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Text,
@@ -88,7 +97,8 @@ fun RegisterScreen(navController: NavController) {
                 },
                 label = { Text("Email") },
                 isError = emailError.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                .background(Color.White, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Email,
@@ -108,7 +118,8 @@ fun RegisterScreen(navController: NavController) {
                 value = tckimlik.value,
                 onValueChange = { tckimlik.value = it },
                 label = { Text("T.C. Kimlik No") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Number,
@@ -126,7 +137,8 @@ fun RegisterScreen(navController: NavController) {
                 },
                 label = { Text("Şifre") },
                 isError = passwordError.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Password,
@@ -153,15 +165,16 @@ fun RegisterScreen(navController: NavController) {
                 )
             }
 
-            // Şifremi unuttum linki
-            Text(
-                text = "Şifrenizi mi unuttunuz?",
-                style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.primary),
-                modifier = Modifier
-                    .clickable {
-                        navController.navigate("forgotPassword") // Şifremi unuttum ekranına yönlendirme
-                    }
-            )
+            // Şifremi unuttum
+            Button(
+                onClick = {
+                    navController.navigate("forgotPassword") // Şifremi unuttum ekranına yönlendirme
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+            ) {
+                Text(text = "Şifrenizi mi unuttunuz?")
+            }
 
             // Kayıt Ol Butonu
             Button(

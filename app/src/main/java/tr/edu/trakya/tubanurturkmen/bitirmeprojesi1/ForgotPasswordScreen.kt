@@ -37,6 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ui.theme.BitirmeProjesi1Theme
 import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+
 @OptIn(ExperimentalMaterial3Api::class)
 data class ForgotPasswordRequest(val email: String)
 
@@ -45,26 +49,37 @@ data class ForgotPasswordRequest(val email: String)
 fun ForgotPasswordScreen(navController: NavController) {
     val email = remember { mutableStateOf("") }
     val context = LocalContext.current
-    var isLoading by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false)
+    }
+    val backgroundImage: Painter = painterResource(id = R.drawable.password)
+
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)), RoundedCornerShape(16.dp))
-            .padding(16.dp),
+            .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        Image(
+            painter = backgroundImage,
+            contentDescription = "Background Image",
+            modifier = Modifier.fillMaxSize() // Arka plan resmini ekranın tamamına yay
+        )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(30.dp),
+            
         ) {
             Text(
                 text = "Şifremi Sıfırla",
-                style = MaterialTheme.typography.headlineLarge.copy(color = MaterialTheme.colorScheme.primary)
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = Color.White
+                )
             )
+
 
             // E-posta adresi alanı
             TextField(

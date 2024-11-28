@@ -107,9 +107,10 @@ fun LoginScreen(navController: NavController) {
             ) {
                 Text(
                     text = "Hoşgeldiniz",
-                    style = androidx.compose.material3.MaterialTheme.typography.headlineLarge.copy(
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    ),
+                    color = Color.White
                 )
 
                 // Email alanı
