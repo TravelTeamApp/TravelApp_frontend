@@ -205,7 +205,7 @@ fun RegisterScreen(navController: NavController) {
 
                                 } else {
                                     Log.d("RegisterSuccess", "Kayıt başarılı: ${response.body()}")
-                                    navController.navigate("login")
+                                    navController.navigate("hobies")
                                 }
                             }
                         })
