@@ -9,6 +9,7 @@ import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.RegisterScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HomeScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ForgotPasswordScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.Hobies
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ProfileScreen
 
 @Composable
 fun AppNavigation() {
@@ -27,6 +28,9 @@ fun AppNavigation() {
         composable("home") { HomeScreen(navController) } // Home ekranını ekledik
         composable("forgotPassword") {
             ForgotPasswordScreen(navController) // Add this route for ForgotPasswordScreen
+        }
+        composable("profile") {
+            ProfileScreen(navController) // Add this route for ForgotPasswordScreen
         }
     }
 }

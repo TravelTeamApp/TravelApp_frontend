@@ -41,10 +41,6 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-
-
-
-
 @Composable
 fun HomeScreen(navController: NavController) {
     // Geri tuşuna basıldığında login ekranına yönlendirme
