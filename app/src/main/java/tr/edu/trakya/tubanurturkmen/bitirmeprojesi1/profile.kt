@@ -101,7 +101,6 @@ fun MainActivityUI(userProfile: UserProfileResponse) {
     ) {
         // Dinamik isimle TopSection
         TopSection(userName = userProfile.userName)
-
         Divider(color = Color.Black, thickness = 0.5.dp)
 
         FavoritesSection()
@@ -162,7 +161,7 @@ fun TopSection(userName: String) {
                 color = Color.Black
             )
             Text(
-                text = "15 Badges",
+                text = "badges!",
                 fontSize = 20.sp,
                 color = Color.Black
             )
