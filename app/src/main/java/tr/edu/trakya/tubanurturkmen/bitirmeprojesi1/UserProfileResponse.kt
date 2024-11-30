@@ -4,7 +4,7 @@ data class UserProfileResponse(
     val id: Int,
     val email: String,
     val userName: String,
-    val Badges: String
+    val score: Int
 ) {
 
 }
