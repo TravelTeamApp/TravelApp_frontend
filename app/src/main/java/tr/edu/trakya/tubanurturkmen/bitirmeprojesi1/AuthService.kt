@@ -3,8 +3,8 @@ package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.POST
-
-
+import retrofit2.http.GET
+import retrofit2.http.Header
 
 
 interface AuthService {
@@ -16,5 +16,8 @@ interface AuthService {
     @POST("forgot-password")
     fun forgotPassword(@Body request: ForgotPasswordRequest): Call<ForgotPasswordResponse>
 
+    // Kullanıcı profil bilgilerini almak için
+    @GET("profile")
+    fun getUserProfile(): Call<UserProfileResponse>
 
 }
