@@ -100,7 +100,7 @@ fun MainActivityUI(userProfile: UserProfileResponse) {
             .background(Color(0xFFE3F2FD))
     ) {
         // Dinamik isimle TopSection
-        TopSection(userName = userProfile.userName)
+        TopSection(userName = userProfile.userName, score = userProfile.score)
         Divider(color = Color.Black, thickness = 0.5.dp)
 
         FavoritesSection()
@@ -110,7 +110,7 @@ fun MainActivityUI(userProfile: UserProfileResponse) {
 }
 
 @Composable
-fun TopSection(userName: String) {
+fun TopSection(userName: String , score:Int) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -156,12 +156,12 @@ fun TopSection(userName: String) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "220 Score",
+                text = "Badges!",
                 fontSize = 20.sp,
                 color = Color.Black
             )
             Text(
-                text = "badges!",
+                text = "Score$score",
                 fontSize = 20.sp,
                 color = Color.Black
             )
