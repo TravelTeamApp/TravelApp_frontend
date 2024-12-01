@@ -52,7 +52,7 @@ import androidx.navigation.NavController
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HobiesScreen(navController: NavController) {
+fun HobiesScreen(navController: NavController,sharedViewModel: SharedViewModel) {
     val interests = listOf(
         "Popüler Yerler",
         "Tarihi Mekanlar ve Anıtlar",
@@ -116,8 +116,7 @@ fun HobiesScreen(navController: NavController) {
                         onClick = {
                             if (isSelected) {
                                 selectedInterests.remove(interest)
-                            }
-                            else {
+                            } else {
                                 selectedInterests.add(interest)
                             }
 
@@ -135,20 +134,19 @@ fun HobiesScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                    Log.d("SelectedInterests", selectedInterests.joinToString(", "))
+                    val selectedInterestsString = selectedInterests.joinToString(",")
+                    sharedViewModel.updateSelectedInterests(selectedInterests)
+                    navController.navigate("profile")
                 },
                 colors = ButtonDefaults.buttonColors(
                     Color.White, Color.Black
                 ),
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
                     .padding(top = 16.dp)
                     .clickable {
-                        navController.navigate("profile")
-                    }
+                navController.navigate("profile")
+            }
             ) {
                 Text(text = "Hadi Başlayalım!")
             }
-        }
-    }
-}
+        }}}

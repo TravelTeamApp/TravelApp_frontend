@@ -9,8 +9,9 @@ import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.RegisterScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HomeScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ForgotPasswordScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HobiesScreen
-import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HobiesScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ProfileScreen
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.SharedViewModel
+
 
 @Composable
 fun AppNavigation() {
@@ -21,7 +22,7 @@ fun AppNavigation() {
             LoginScreen(navController)
         }
         composable("hobies") {
-            HobiesScreen(navController)
+            HobiesScreen(navController, sharedViewModel = SharedViewModel())
         }
         composable("register") {
             RegisterScreen(navController)
@@ -31,7 +32,8 @@ fun AppNavigation() {
             ForgotPasswordScreen(navController) // Add this route for ForgotPasswordScreen
         }
         composable("profile") {
-            ProfileScreen(navController) // Add this route for ForgotPasswordScreen
+            ProfileScreen(navController, sharedViewModel = SharedViewModel())
+             // Add this route for ForgotPasswordScreen
         }
     }
 }

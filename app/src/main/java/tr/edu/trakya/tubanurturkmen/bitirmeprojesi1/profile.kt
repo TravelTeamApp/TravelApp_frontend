@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -28,9 +29,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(navController: NavController,sharedViewModel: SharedViewModel) {
+    val selectedInterests by sharedViewModel.selectedInterests.collectAsState()
     BackHandler {
         navController.navigate("login") {
             popUpTo("home") { inclusive = true }
@@ -79,7 +80,7 @@ fun ProfileScreen(navController: NavController) {
         }
 
         if (userProfile.value != null) {
-            MainActivityUI(userProfile.value!!)
+            ProfileScreenContent(userProfile.value!!)
         } else {
             Text(
                 text = "Kullanıcı bilgileri yükleniyor...",
@@ -91,8 +92,14 @@ fun ProfileScreen(navController: NavController) {
 }
 
 @Composable
-fun MainActivityUI(userProfile: UserProfileResponse) {
-    val reviewList = listOf("Review 1 text", "Review 2 text", "Review 3 text") // Sabit liste
+fun ProfileScreenContent(userProfile: UserProfileResponse) {
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf(
+        TabItem("Yorumlar", Icons.Default.Comment),
+        TabItem("Rozetler", Icons.Default.Star),
+        TabItem("Favoriler", Icons.Default.Favorite),
+        TabItem("Gidilenler", Icons.Default.Place)
+    )
 
     Column(
         modifier = Modifier
@@ -103,15 +110,47 @@ fun MainActivityUI(userProfile: UserProfileResponse) {
         TopSection(userName = userProfile.userName, score = userProfile.score)
         Divider(color = Color.Black, thickness = 0.5.dp)
 
-        FavoritesSection()
+        // TabRow
+        TabRow(
+            selectedTabIndex = selectedTabIndex,
+            modifier = Modifier.background(Color.White),
+            contentColor = MaterialTheme.colorScheme.primary
+        ) {
+            tabs.forEachIndexed { index, tab ->
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { selectedTabIndex = index },
+                    icon = {
+                        Icon(
+                            imageVector = tab.icon,
+                            contentDescription = tab.title
+                        )
+                    },
+                    text = {
+                        Text(text = tab.title)
+                    }
+                )
+            }
+        }
 
-        ReviewsSection(reviewList)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Tab içerikleri
+        when (selectedTabIndex) {
+            0 -> ReviewsSection(reviews = listOf("Review 1 text", "Review 2 text", "Review 3 text"))
+            1 -> BadgesSection()
+            2 -> FavoritesSection()
+            3 -> VisitedSection()
+        }
     }
 }
 
+data class TabItem(val title: String, val icon: ImageVector)
+
 @Composable
-fun TopSection(userName: String , score:Int) {
-    Box(
+fun TopSection(userName: String, score: Int) {
+    val firstLetter = userName?.firstOrNull()?.toUpperCase() ?: ""
+       Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(280.dp)
@@ -125,18 +164,22 @@ fun TopSection(userName: String , score:Int) {
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Image(
-                painter = painterResource(tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.R.drawable.pull),
-                contentDescription = "Profile Image",
+        ) { Box(
                 modifier = Modifier
                     .size(110.dp)
                     .clip(CircleShape)
                     .background(Color.White)
+                ) {
+            Text(
+                firstLetter.toString(),
+                fontSize = 48.sp, // Harfin büyüklüğü
+                color = Color(0xFF1E88E5), // Harf rengi
+                modifier = Modifier.align(Alignment.Center)
             )
+        }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text =  "$userName",
+                text = "$userName",
                 fontSize = 22.sp,
                 fontFamily = FontFamily.SansSerif,
                 color = Color.Black
@@ -156,12 +199,12 @@ fun TopSection(userName: String , score:Int) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Badges!",
+                text = "Badges",
                 fontSize = 20.sp,
                 color = Color.Black
             )
             Text(
-                text = "Score$score",
+                text = "Score $score",
                 fontSize = 20.sp,
                 color = Color.Black
             )
@@ -170,27 +213,9 @@ fun TopSection(userName: String , score:Int) {
 }
 
 @Composable
-fun FavoritesSection() {
-    Text(
-        text = "Favorites",
-        fontSize = 20.sp,
-        color = Color.Black,
-        modifier = Modifier
-            .padding(start = 14.dp, top = 13.dp)
-    )
-    Spacer(modifier = Modifier.height(10.dp))
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .background(Color.LightGray) // Placeholder for favorites carousel
-    )
-}
-
-@Composable
 fun ReviewsSection(reviews: List<String>) {
     Text(
-        text = "Reviews",
+        text = "Yorumlar",
         fontSize = 20.sp,
         color = Color.Black,
         modifier = Modifier
@@ -220,7 +245,7 @@ fun ReviewCard(reviewText: String) {
             modifier = Modifier.padding(16.dp)
         ) {
             Image(
-                painter = painterResource(tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.R.drawable.pull),
+                painter = painterResource(R.drawable.pull),
                 contentDescription = null,
                 modifier = Modifier
                     .size(80.dp)
@@ -234,4 +259,46 @@ fun ReviewCard(reviewText: String) {
             )
         }
     }
+}
+
+@Composable
+fun BadgesSection() {
+    Text(
+        text = "Rozetleriniz",
+        fontSize = 20.sp,
+        color = Color.Black,
+        modifier = Modifier
+            .padding(start = 14.dp, top = 13.dp)
+    )
+    // Rozetlerinizi gösterecek bir alan
+}
+
+@Composable
+fun FavoritesSection() {
+    Text(
+        text = "Favoriler",
+        fontSize = 20.sp,
+        color = Color.Black,
+        modifier = Modifier
+            .padding(start = 14.dp, top = 13.dp)
+    )
+    Spacer(modifier = Modifier.height(10.dp))
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .background(Color.LightGray) // Placeholder for favorites carousel
+    )
+}
+
+@Composable
+fun VisitedSection() {
+    Text(
+        text = "Gidilen Yerler",
+        fontSize = 20.sp,
+        color = Color.Black,
+        modifier = Modifier
+            .padding(start = 14.dp, top = 13.dp)
+    )
+    // Gidilen yerlerin listeleneceği bir alan
 }
