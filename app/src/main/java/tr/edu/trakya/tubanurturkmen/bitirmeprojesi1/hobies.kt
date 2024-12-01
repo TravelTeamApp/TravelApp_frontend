@@ -116,7 +116,8 @@ fun HobiesScreen(navController: NavController) {
                         onClick = {
                             if (isSelected) {
                                 selectedInterests.remove(interest)
-                            } else {
+                            }
+                            else {
                                 selectedInterests.add(interest)
                             }
 
