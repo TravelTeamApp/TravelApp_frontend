@@ -143,6 +143,9 @@ fun HobiesScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp)
+                    .clickable {
+                        navController.navigate("profile")
+                    }
             ) {
                 Text(text = "Hadi Başlayalım!")
             }
