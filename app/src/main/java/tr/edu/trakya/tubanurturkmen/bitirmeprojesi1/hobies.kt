@@ -48,11 +48,13 @@ import androidx.media3.ui.PlayerView
 
 // Navigation
 import androidx.navigation.NavController
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HobiesScreen(navController: NavController,sharedViewModel: SharedViewModel) {
+fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel) {
     val interests = listOf(
         "Popüler Yerler",
         "Tarihi Mekanlar ve Anıtlar",
@@ -71,42 +73,47 @@ fun HobiesScreen(navController: NavController,sharedViewModel: SharedViewModel) 
     val selectedInterests = remember { mutableStateListOf<String>() }
     val backgroundImage: Painter = painterResource(id = R.drawable.hobies)
 
+    var isHovered by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        // Arka plan resmi
         Image(
             painter = backgroundImage,
             contentDescription = "Background Image",
-            modifier = Modifier.fillMaxSize() // Arka plan resmini ekranın tamamına yay
+            modifier = Modifier.fillMaxSize(), // Arka plan resmi ekranın tamamını kaplar
+            contentScale = ContentScale.Crop // Görüntü, ekranı tamamen dolduracak şekilde ölçeklenir
         )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Gezmeye doyamadığınız yerleri bizimle paylaşın!",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), // Yazıyı kalın yapma
-                color = Color.White,
-                modifier = Modifier
-                    .padding(top = 32.dp) // Yazıyı biraz daha aşağıya indirme
-                    .padding(bottom = 8.dp)
-            )
+            Column {
+                Text(
+                    text = "Gezmeye doyamadığınız yerleri bizimle paylaşın!",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White,
+                    modifier = Modifier
+                        .padding(top = 32.dp)
+                        .padding(bottom = 8.dp)
+                )
 
-            Text(
-                text = "İlgi alanlarınızı seçin (Birden fazla olabilir).",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+                Text(
+                    text = "İlgi alanlarınızı seçin (Birden fazla olabilir).",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxHeight(0.8f),
+                modifier = Modifier.fillMaxHeight(0.7f), // Grid biraz daha yukarı kaydırıldı
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -119,11 +126,10 @@ fun HobiesScreen(navController: NavController,sharedViewModel: SharedViewModel) 
                             } else {
                                 selectedInterests.add(interest)
                             }
-
                         },
                         colors = ButtonDefaults.buttonColors(
-                            if (isSelected) Color.LightGray else Color.White,
-                            if (isSelected) Color.White else Color.Black
+                            containerColor = if (isSelected) Color.LightGray else Color.White,
+                            contentColor = if (isSelected) Color.White else Color.Black
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -138,15 +144,26 @@ fun HobiesScreen(navController: NavController,sharedViewModel: SharedViewModel) 
                     sharedViewModel.updateSelectedInterests(selectedInterests)
                     navController.navigate("profile")
                 },
+                shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    Color.White, Color.Black
+                    containerColor = if (isHovered) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                    contentColor = Color.White
                 ),
-                modifier = Modifier.fillMaxWidth()
-                    .padding(top = 16.dp)
-                    .clickable {
-                navController.navigate("profile")
-            }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .height(48.dp)
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                isHovered = event.changes.any { it.pressed }
+                            }
+                        }
+                    }
             ) {
-                Text(text = "Hadi Başlayalım!")
+                Text(text = "Haydi Başlayalım!")
             }
-        }}}
+        }
+    }
+}

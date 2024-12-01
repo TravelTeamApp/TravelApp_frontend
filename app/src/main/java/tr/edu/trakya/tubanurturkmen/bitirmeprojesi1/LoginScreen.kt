@@ -1,24 +1,36 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
-
-// Compose ve UI bileşenleri
-import androidx.compose.foundation.*
+import androidx.compose.ui.res.painterResource
+import com.google.gson.stream.JsonReader
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.input.pointer.pointerInput
+
+
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.input.*
-import androidx.compose.ui.unit.dp
+
 import androidx.compose.ui.viewinterop.AndroidView
 
 // Android SDK ve sistem bileşenleri
@@ -50,40 +62,39 @@ fun LoginScreen(navController: NavController) {
     val password = remember { mutableStateOf("") }
     val context = LocalContext.current
     var isPasswordVisible by remember { mutableStateOf(false) }
-
-    // Giriş işlemi sırasında yükleniyor durumu
     var isLoading by remember { mutableStateOf(false) }
+    var isHovered by remember { mutableStateOf(false) }
 
-    // ExoPlayer'ı başlat ve video dosyasını ayarla
+    // ExoPlayer oluşturuluyor
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             val videoUri =
-                Uri.parse("android.resource://${context.packageName}/raw/manzara") // Video dosyanızın yolu
+                Uri.parse("android.resource://${context.packageName}/raw/manzara")
             val mediaItem = MediaItem.fromUri(videoUri)
             setMediaItem(mediaItem)
             prepare()
             playWhenReady = true
-            volume = 0f // Arka planda sessiz oynatmak için
+            volume = 0f
 
-            // Sonsuz döngü için Listener ekle
             addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_ENDED) {
-                        seekTo(0) // Videonun başına git
-                        playWhenReady = true // Oynatmayı tekrar başlat
+                        seekTo(0)
+                        playWhenReady = true
                     }
                 }
             })
         }
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Arka plan video oynatıcı
         AndroidView(
             factory = {
                 PlayerView(it).apply {
                     player = exoPlayer
-                    useController = false // Kontrolleri gizle
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM // Ekranı tam olarak kapla
+                    useController = false
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                     layoutParams = android.view.ViewGroup.LayoutParams(
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -92,7 +103,6 @@ fun LoginScreen(navController: NavController) {
             },
             modifier = Modifier.fillMaxSize()
         )
-
 
         Box(
             modifier = Modifier
@@ -108,9 +118,11 @@ fun LoginScreen(navController: NavController) {
                 Text(
                     text = "Hoşgeldiniz",
                     style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                    ),
-                    color = Color.White
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 36.sp,
+                        letterSpacing = 1.5.sp,
+                        color = Color.White
+                    )
                 )
 
                 // Email alanı
@@ -140,16 +152,20 @@ fun LoginScreen(navController: NavController) {
                     visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         Icon(
-                            imageVector = if (isPasswordVisible) {
-                                ImageVector.vectorResource(id = R.drawable.baseline_visibility_24)
-                            } else {
-                                ImageVector.vectorResource(id = R.drawable.baseline_visibility_off_24)
-                            },
-                            contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
-                            modifier = Modifier
-                                .clickable { isPasswordVisible = !isPasswordVisible }
+                            imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (isPasswordVisible) "Şifreyi gizle" else "Şifreyi göster",
+                            modifier = Modifier.clickable { isPasswordVisible = !isPasswordVisible }
                         )
                     }
+                )
+
+                Text(
+                    text = "Şifremi Unuttum",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 15.sp, fontWeight = FontWeight.ExtraBold),
+                    color = Color.White,
+                    modifier = Modifier
+                        .clickable { navController.navigate("forgotPassword") }
+                        .align(Alignment.Start)
                 )
 
                 // Eğer yükleme yapılırken buton, kullanıcıyı bilgilendirecek şekilde değiştirilebilir.
@@ -229,68 +245,38 @@ fun LoginScreen(navController: NavController) {
                                 ).show()
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .pointerInput(Unit) {
+                                // Hover için fare hareketini yakala
+                                awaitPointerEventScope {
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        isHovered = event.changes.any { it.pressed }
+                                    }
+                                }
+                            },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isHovered) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                            contentColor = Color.White
+                        ),
                     ) {
                         Text(text = "Giriş Yap")
                     }
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp), // Button'lar arasındaki mesafeyi daha da kısaltıyoruz
+
+                    TextButton(
+                        onClick = { navController.navigate("register") },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Kayıt Ol butonu
-                        Button(
-                            onClick = {
-                                navController.navigate("register")
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = 200.dp) // Butonun maksimum genişliğini 300dp ile sınırlandırıyoruz
-                                .padding(bottom = 4.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White, // Beyaz arka plan
-                                contentColor = Color.Black
-                            ),// Siyah yazı rengi
-                            shape = RoundedCornerShape(10.dp),
-                        ) {
-                            Text(
-                                text = "Hesabınız yok mu? Kayıt olun",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-
-                                )
-                            )
-                        }
-
-// Şifremi Unuttum butonu
-                        Button(
-                            onClick = {
-                                navController.navigate("forgotPassword")
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = 150.dp) // Butonun maksimum genişliğini 300dp ile sınırlandırıyoruz
-                                .padding(top = 4.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White, // Beyaz arka plan
-                                contentColor = Color.Black // Siyah yazı rengi
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-
-                            ) {
-                            Text(
-                                text = "Şifremi Unuttum?",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-
-                                )
-                            )
-                        }
+                        Text("Hesabınız yok mu? Kayıt olun", color = Color.White)
                     }
                 }
             }
         }
     }
-    }
+}
+
 
 
 
