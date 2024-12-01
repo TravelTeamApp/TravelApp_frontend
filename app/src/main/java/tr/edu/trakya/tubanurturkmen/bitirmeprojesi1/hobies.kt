@@ -119,6 +119,7 @@ fun HobiesScreen(navController: NavController) {
                             } else {
                                 selectedInterests.add(interest)
                             }
+
                         },
                         colors = ButtonDefaults.buttonColors(
                             if (isSelected) Color.LightGray else Color.White,
