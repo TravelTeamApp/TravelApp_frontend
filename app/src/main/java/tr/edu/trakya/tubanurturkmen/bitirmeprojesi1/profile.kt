@@ -136,7 +136,7 @@ fun TopSection(userName: String) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Hoşgeldiniz, $userName!", // API'den gelen dinamik isim
+                text =  "$userName",
                 fontSize = 22.sp,
                 fontFamily = FontFamily.SansSerif,
                 color = Color.Black

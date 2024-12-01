@@ -165,17 +165,6 @@ fun RegisterScreen(navController: NavController) {
                 )
             }
 
-            // Şifremi unuttum
-            Button(
-                onClick = {
-                    navController.navigate("forgotPassword") // Şifremi unuttum ekranına yönlendirme
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
-            ) {
-                Text(text = "Şifrenizi mi unuttunuz?")
-            }
-
             // Kayıt Ol Butonu
             Button(
                 onClick = {
@@ -196,6 +185,7 @@ fun RegisterScreen(navController: NavController) {
                                 Toast.makeText(context, "Bağlantı Hatası: ${t.message}", Toast.LENGTH_SHORT).show()
                             }
 
+
                             override fun onResponse(call: Call<RegisterResponse>, response: Response<RegisterResponse>) {
                                 isLoading = false
                                 if (!response.isSuccessful) {
@@ -213,6 +203,10 @@ fun RegisterScreen(navController: NavController) {
                         Toast.makeText(context, "Lütfen tüm alanları doğru şekilde doldurun.", Toast.LENGTH_SHORT).show()
                     }
                 },
+                colors = ButtonDefaults.buttonColors(
+                  Color.White, // Arka plan rengi
+                   Color.Black    // Yazı rengi
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading
             ) {

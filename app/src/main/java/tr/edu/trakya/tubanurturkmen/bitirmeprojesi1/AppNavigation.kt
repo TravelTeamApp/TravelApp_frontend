@@ -8,7 +8,8 @@ import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.LoginScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.RegisterScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HomeScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ForgotPasswordScreen
-import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.Hobies
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HobiesScreen
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HobiesScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ProfileScreen
 
 @Composable
@@ -20,7 +21,7 @@ fun AppNavigation() {
             LoginScreen(navController)
         }
         composable("hobies") {
-            Hobies(navController)
+            HobiesScreen(navController)
         }
         composable("register") {
             RegisterScreen(navController)

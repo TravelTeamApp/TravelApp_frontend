@@ -25,11 +25,18 @@ import androidx.compose.ui.viewinterop.AndroidView
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 
 // Retrofit
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.font.FontWeight
 
 // Media3 (ExoPlayer)
 import androidx.media3.common.MediaItem
@@ -45,8 +52,98 @@ import androidx.navigation.NavController
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Hobies(navController: NavController) {
-    val email = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
-    val context = LocalContext.current
-    var isPasswordVisible by remember { mutableStateOf(false) }}
+fun HobiesScreen(navController: NavController) {
+    val interests = listOf(
+        "Popüler Yerler",
+        "Tarihi Mekanlar ve Anıtlar",
+        "Mimari",
+        "Müzeler",
+        "Parklar ve Doğa",
+        "Dini Yapılar",
+        "Eğlence",
+        "Mahalleler ve Pazarlar",
+        "Manzara Noktaları",
+        "Gizli Hazineler",
+        "Aile Dostu",
+        "Kültürel Simgeler"
+    )
+
+    val selectedInterests = remember { mutableStateListOf<String>() }
+    val backgroundImage: Painter = painterResource(id = R.drawable.hobies)
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = backgroundImage,
+            contentDescription = "Background Image",
+            modifier = Modifier.fillMaxSize() // Arka plan resmini ekranın tamamına yay
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Gezmeye doyamadığınız yerleri bizimle paylaşın!",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), // Yazıyı kalın yapma
+                color = Color.White,
+                modifier = Modifier
+                    .padding(top = 32.dp) // Yazıyı biraz daha aşağıya indirme
+                    .padding(bottom = 8.dp)
+            )
+
+            Text(
+                text = "İlgi alanlarınızı seçin (Birden fazla olabilir).",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxHeight(0.8f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(interests) { interest ->
+                    val isSelected = interest in selectedInterests
+                    Button(
+                        onClick = {
+                            if (isSelected) {
+                                selectedInterests.remove(interest)
+                            } else {
+                                selectedInterests.add(interest)
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            if (isSelected) Color.LightGray else Color.White,
+                            if (isSelected) Color.White else Color.Black
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(interest)
+                    }
+                }
+            }
+
+            Button(
+                onClick = {
+                    Log.d("SelectedInterests", selectedInterests.joinToString(", "))
+                },
+                colors = ButtonDefaults.buttonColors(
+                    Color.White, Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            ) {
+                Text(text = "Hadi Başlayalım!")
+            }
+        }
+    }
+}
