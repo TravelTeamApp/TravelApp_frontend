@@ -1,5 +1,6 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -25,6 +26,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -147,6 +151,7 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
 
 data class TabItem(val title: String, val icon: ImageVector)
 
+@SuppressLint("SuspiciousIndentation")
 @Composable
 fun TopSection(userName: String, score: Int) {
     val firstLetter = userName?.firstOrNull()?.toUpperCase() ?: ""
@@ -282,13 +287,7 @@ fun FavoritesSection() {
         modifier = Modifier
             .padding(start = 14.dp, top = 13.dp)
     )
-    Spacer(modifier = Modifier.height(10.dp))
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .background(Color.LightGray) // Placeholder for favorites carousel
-    )
+
 }
 
 @Composable
@@ -302,3 +301,5 @@ fun VisitedSection() {
     )
     // Gidilen yerlerin listeleneceği bir alan
 }
+
+

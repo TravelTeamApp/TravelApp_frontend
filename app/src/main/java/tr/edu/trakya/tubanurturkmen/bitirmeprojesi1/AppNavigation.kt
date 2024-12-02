@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ExploreScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.LoginScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.RegisterScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HomeScreen
@@ -27,9 +28,13 @@ fun AppNavigation() {
         composable("register") {
             RegisterScreen(navController)
         }
-        composable("home") { HomeScreen(navController) } // Home ekranını ekledik
+        composable("home") {
+            HomeScreen(navController) } // Home ekranını ekledik
         composable("forgotPassword") {
             ForgotPasswordScreen(navController) // Add this route for ForgotPasswordScreen
+        }
+        composable("explore") {
+            ExploreScreen(navController) // Add this route for ForgotPasswordScreen
         }
         composable("profile") {
             ProfileScreen(navController, sharedViewModel = SharedViewModel())

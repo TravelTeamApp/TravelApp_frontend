@@ -56,18 +56,18 @@ import androidx.compose.ui.layout.ContentScale
 @Composable
 fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel) {
     val interests = listOf(
-        "Popüler Yerler",
-        "Tarihi Mekanlar ve Anıtlar",
-        "Mimari",
-        "Müzeler",
-        "Parklar ve Doğa",
-        "Dini Yapılar",
-        "Eğlence",
-        "Mahalleler ve Pazarlar",
-        "Manzara Noktaları",
-        "Gizli Hazineler",
-        "Aile Dostu",
-        "Kültürel Simgeler"
+        "🌉Popüler Yerler",
+        "🗿Tarihi Mekanlar ve Anıtlar",
+        "🏫Mimari",
+        "🏛️Müzeler",
+        "🏕️Parklar ve Doğa",
+        "🕌Dini Yapılar",
+        "🎡Eğlence",
+         "🍽️Restoranlar ve Cafeler",
+        "🌄Manzara Noktaları",
+        "🔒Gizli Hazineler",
+        "👫Aile Dostu",
+        "🗽Kültürel Simgeler"
     )
 
     val selectedInterests = remember { mutableStateListOf<String>() }
@@ -142,7 +142,7 @@ fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel)
                 onClick = {
                     val selectedInterestsString = selectedInterests.joinToString(",")
                     sharedViewModel.updateSelectedInterests(selectedInterests)
-                    navController.navigate("profile")
+                    navController.navigate("explore")
                 },
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
