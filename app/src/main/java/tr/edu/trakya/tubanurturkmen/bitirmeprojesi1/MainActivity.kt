@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ui.navigation.AppNavigation
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ui.theme.BitirmeProjesi1Theme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +12,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BitirmeProjesi1Theme {
-                AppNavigation() // Login ve Register ekranları arasında yönlendirme yapılacak
+                ExploreScreen() // Login ve Register ekranları arasında yönlendirme yapılacak
             }
         }
     }
