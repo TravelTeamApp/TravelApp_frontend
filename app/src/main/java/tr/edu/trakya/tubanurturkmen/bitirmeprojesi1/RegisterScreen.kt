@@ -1,10 +1,36 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 import com.google.gson.stream.JsonReader
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
+
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import java.io.StringReader
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
+
+import androidx.compose.ui.unit.dp
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+
+
+import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,20 +39,24 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import android.util.Log
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+
+import androidx.compose.ui.input.pointer.pointerInput
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,30 +70,51 @@ fun RegisterScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
+    val backgroundImage: Painter = painterResource(id = R.drawable.register)
+
+    var isHovered by remember { mutableStateOf(false) } // Hover durumu
+
+    fun validateEmail(email: String): String {
+        return if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            ""
+        } else {
+            "Geçerli bir email adresi girin."
+        }
+    }
+
+    fun validatePassword(password: String): String {
+        if (password.length < 6) return "Şifre en az 6 karakter olmalıdır."
+        if (!password.any { it.isUpperCase() }) return "Şifre en az bir büyük harf içermelidir."
+        if (!password.any { it.isLowerCase() }) return "Şifre en az bir küçük harf içermelidir."
+        if (!password.any { "!@#$%^&*()_+[]{}|;:,.<>?/".contains(it) }) return "Şifre en az bir özel karakter içermelidir."
+        return ""
+    }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .background(
-                MaterialTheme.colorScheme.surface,
-                RoundedCornerShape(16.dp)
-            )
-            .border(
-                BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
-                RoundedCornerShape(16.dp)
-            )
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        // Arka plan resmi
+        Image(
+            painter = backgroundImage,
+            contentDescription = "Background Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop // Resmi tam ekran doldur
+        )
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.padding(16.dp)
         ) {
             Text(
                 text = "Kayıt Ol",
-                style = MaterialTheme.typography.headlineLarge.copy(color = MaterialTheme.colorScheme.primary)
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.ExtraBold, // Daha kalın yazı
+                    fontSize = 32.sp, // Daha büyük boyut
+                    letterSpacing = 1.5.sp, // Harfler arasında boşluk
+                    color = Color.White
+                ),
             )
 
             // Kullanıcı Adı
@@ -71,7 +122,9 @@ fun RegisterScreen(navController: NavController) {
                 value = userName.value,
                 onValueChange = { userName.value = it },
                 label = { Text("Kullanıcı Adı") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Text,
@@ -84,11 +137,13 @@ fun RegisterScreen(navController: NavController) {
                 value = email.value,
                 onValueChange = {
                     email.value = it
-                    emailError = validateEmail(it) // E-posta doğrulama
+                    emailError = validateEmail(it)
                 },
                 label = { Text("Email") },
                 isError = emailError.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Email,
@@ -108,7 +163,9 @@ fun RegisterScreen(navController: NavController) {
                 value = tckimlik.value,
                 onValueChange = { tckimlik.value = it },
                 label = { Text("T.C. Kimlik No") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Number,
@@ -122,11 +179,13 @@ fun RegisterScreen(navController: NavController) {
                 value = password.value,
                 onValueChange = {
                     password.value = it
-                    passwordError = validatePassword(it) // Şifre doğrulama
+                    passwordError = validatePassword(it)
                 },
                 label = { Text("Şifre") },
                 isError = passwordError.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Password,
@@ -135,11 +194,7 @@ fun RegisterScreen(navController: NavController) {
                 visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     Icon(
-                        imageVector = if (isPasswordVisible) {
-                            ImageVector.vectorResource(id = R.drawable.baseline_visibility_24)
-                        } else {
-                            ImageVector.vectorResource(id = R.drawable.baseline_visibility_off_24)
-                        },
+                        painter = if (isPasswordVisible) painterResource(id = R.drawable.baseline_visibility_24) else painterResource(id = R.drawable.baseline_visibility_off_24),
                         contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
                         modifier = Modifier.clickable { isPasswordVisible = !isPasswordVisible }
                     )
@@ -153,22 +208,17 @@ fun RegisterScreen(navController: NavController) {
                 )
             }
 
-            // Şifremi unuttum linki
-            Text(
-                text = "Şifrenizi mi unuttunuz?",
-                style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.primary),
-                modifier = Modifier
-                    .clickable {
-                        navController.navigate("forgotPassword") // Şifremi unuttum ekranına yönlendirme
-                    }
-            )
-
             // Kayıt Ol Butonu
             Button(
                 onClick = {
-                    if (email.value.isNotEmpty() && password.value.isNotEmpty() && userName.value.isNotEmpty() && tckimlik.value.length == 11 && emailError.isEmpty() && passwordError.isEmpty()) {
+                    if (email.value.isNotEmpty() &&
+                        password.value.isNotEmpty() &&
+                        userName.value.isNotEmpty() &&
+                        tckimlik.value.length == 11 &&
+                        emailError.isEmpty() &&
+                        passwordError.isEmpty()
+                    ) {
                         isLoading = true
-
                         val registerRequest = RegisterRequest(
                             userName = userName.value,
                             email = email.value,
@@ -180,19 +230,19 @@ fun RegisterScreen(navController: NavController) {
                             override fun onFailure(call: Call<RegisterResponse>, t: Throwable) {
                                 isLoading = false
                                 Log.e("RegisterError", "Bağlantı Hatası: ${t.message}")
-                                Toast.makeText(context, "Bağlantı Hatası: ${t.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Bağlantı hatası meydana geldi: ${t.message}", Toast.LENGTH_SHORT).show()
                             }
 
                             override fun onResponse(call: Call<RegisterResponse>, response: Response<RegisterResponse>) {
                                 isLoading = false
-                                if (!response.isSuccessful) {
+                                if (response.isSuccessful) {
+                                    Log.d("RegisterSuccess", "Kayıt başarılı: ${response.body()}")
+                                    Toast.makeText(context, "Kayıt başarılı!", Toast.LENGTH_SHORT).show()
+                                    navController.navigate("hobies")
+                                } else {
                                     val rawError = response.errorBody()?.string()
                                     Log.e("RegisterError", "Sunucudan Gelen Yanıt: $rawError")
-                                    Toast.makeText(context, "Kayıt Hatası: $rawError", Toast.LENGTH_SHORT).show()
-
-                                } else {
-                                    Log.d("RegisterSuccess", "Kayıt başarılı: ${response.body()}")
-                                    navController.navigate("login")
+                                    Toast.makeText(context, "Kayıt hatası: $rawError", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         })
@@ -200,29 +250,38 @@ fun RegisterScreen(navController: NavController) {
                         Toast.makeText(context, "Lütfen tüm alanları doğru şekilde doldurun.", Toast.LENGTH_SHORT).show()
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+
+            modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        // Hover için fare hareketini yakala
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                isHovered = event.changes.any { it.pressed }
+                            }
+                        }
+                    },
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isHovered) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp) // Daha yumuşak kenarlar içi
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(color = Color.White)
                 } else {
-                    Text(text = "Kayıt Ol")
+                    Text(
+                        text = "Kayıt Ol",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                 }
             }
         }
     }
 }
-fun validatePassword(password: String): String {
-    if (password.length < 6) return "Şifre en az 6 karakter olmalıdır."
-    if (!password.any { it.isUpperCase() }) return "Şifre en az bir büyük harf içermelidir."
-    if (!password.any { it.isLowerCase() }) return "Şifre en az bir küçük harf içermelidir."
-    if (!password.any { "!@#$%^&*()_+[]{}|;:,.<>?/".contains(it) }) return "Şifre en az bir özel karakter içermelidir."
-    return ""
-}
-fun validateEmail(email: String): String {
-    return if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-        ""
-    } else {
-        "Geçerli bir email adresi girin."
-    }
-}
+
+
