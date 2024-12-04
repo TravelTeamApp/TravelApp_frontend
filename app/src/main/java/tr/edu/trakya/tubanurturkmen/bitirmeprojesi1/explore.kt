@@ -7,9 +7,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Favorite
@@ -26,9 +29,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 @Composable
-fun ExploreScreen() {
+fun ExploreScreen(navController: NavController) {
     val context = LocalContext.current
 
     val allAttractions = listOf(
@@ -84,14 +88,19 @@ fun ExploreScreen() {
     var visitedAttractions by remember { mutableStateOf(mutableSetOf<String>()) }
     val backgroundColor = if (isDarkMode) Color.Black else Color.White
     val textColor = if (isDarkMode) Color.White else Color.Black
+     val scrollState = rememberScrollState()
     var searchQuery by remember { mutableStateOf("") }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         if (selectedAttraction == null) {
             Column {
                 Box(modifier = Modifier.fillMaxSize().background(backgroundColor)) {
-                    Column {
-                        Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState) // Dikey kaydırmayı etkinleştir
+                    ){
+                    Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
                             Image(
                                 painter = painterResource(id = R.drawable.istanbul),
                                 contentDescription = "Istanbul Overview",
@@ -106,50 +115,53 @@ fun ExploreScreen() {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp)
-                                    .background(Color.Gray.copy(alpha = 0.7f))
-                                    .padding(16.dp)
+                                    .padding(10.dp)
+                                    .padding(10.dp)
                             ) {
-                                Text(
-                                    text = "İstanbul hakkında bilgi:\nHagia Sophia, 537 yılında katedral olarak inşa edilmiş ve sonrasında cami olarak kullanılmıştır. Bugün bir müze olarak ziyaretçilerini ağırlamaktadır.",
-                                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .background(Color.White.copy(alpha = 0.8f), shape = RoundedCornerShape(12.dp))
+                                        .padding(8.dp)
+                                        .align(Alignment.Center),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Search Icon",
+                                        tint = Color.Black,
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    )
+                                    BasicTextField(
+                                        value = searchQuery,
+                                        onValueChange = { searchQuery = it },
+                                        modifier = Modifier.weight(1f),
+                                        textStyle = TextStyle(color = Color.Black, fontSize = 16.sp),
+                                        decorationBox = { innerTextField ->
+                                            if (searchQuery.isEmpty()) {
+                                                Text(
+                                                    text = "Ara...",
+                                                    style = TextStyle(color = Color.Gray)
+                                                )
+                                            }
+                                            innerTextField()
+                                        }
+                                    )
+                                }
                             }
-                        }
-
+                    }
+                        // Fotoğrafın altına "İstanbul hakkında bilgi" kısmı
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .background(Color.Gray.copy(alpha = 0.1f))
                                 .padding(16.dp)
-                                .background(Color.Gray.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.CenterStart
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = "Arama İkonu",
-                                    tint = textColor,
-                                    modifier = Modifier.padding(8.dp)
-                                )
-                                BasicTextField(
-                                    value = searchQuery,
-                                    onValueChange = { searchQuery = it },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(8.dp),
-                                    textStyle = TextStyle(color = textColor, fontSize = 16.sp),
-                                    decorationBox = { innerTextField ->
-                                        if (searchQuery.isEmpty()) {
-                                            Text(
-                                                text = "Ara...",
-                                                style = TextStyle(color = textColor.copy(alpha = 0.5f))
-                                            )
-                                        }
-                                        innerTextField()
-                                    }
-                                )
-                            }
+                            Text(
+                                text = "İstanbul hakkında bilgi:\nHagia Sophia, 537 yılında katedral olarak inşa edilmiş ve sonrasında cami olarak kullanılmıştır. Bugün bir müze olarak ziyaretçilerini ağırlamaktadır.",
+                                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+                            )
                         }
+
 
                         Text(
                             text = "Top Attractions",
@@ -242,19 +254,81 @@ fun ExploreScreen() {
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
-                }
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = selectedAttraction!!["name"] as String,
-                        style = MaterialTheme.typography.headlineMedium.copy(color = Color.Black),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = selectedAttraction!!["description"] as String,
-                        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black)
-                    )
+                    // Geri ve diğer ikon butonlar
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                                .align( Alignment.TopStart),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            IconButton(onClick = { selectedAttraction = null }) { // Geri butonu
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = "Geri Dön",
+                                    tint = Color.White
+                                )
+                            }
+                            Row {
+                                // Favori Butonu
+                                IconButton(
+                                    onClick = {
+                                        if (selectedAttraction!!["name"] as String in favoriteAttractions) {
+                                            favoriteAttractions.remove(selectedAttraction!!["name"] as String)
+                                            Toast.makeText(context, "Favorilerden kaldırıldı", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            favoriteAttractions.add(selectedAttraction!!["name"] as String)
+                                            Toast.makeText(context, "Favorilere eklendi", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = if (selectedAttraction!!["name"] as String in favoriteAttractions) {
+                                            Icons.Default.Favorite
+                                        } else {
+                                            Icons.Default.FavoriteBorder
+                                        },
+                                        contentDescription = "Favorilere Ekle",
+                                        tint = if (selectedAttraction!!["name"] as String in favoriteAttractions) Color.Red else Color.White
+                                    )
+                                }
+                                // Gidilenlere Kaydet Butonu
+                                IconButton(
+                                    onClick = {
+                                        if (selectedAttraction!!["name"] as String in visitedAttractions) {
+                                            visitedAttractions.remove(selectedAttraction!!["name"] as String)
+                                            Toast.makeText(context, "Gidilenlerden kaldırıldı", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            visitedAttractions.add(selectedAttraction!!["name"] as String)
+                                            Toast.makeText(context, "Gidilenlere eklendi", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = if (selectedAttraction!!["name"] as String in visitedAttractions) {
+                                            Icons.Default.CheckBox
+                                        } else {
+                                            Icons.Default.CheckBoxOutlineBlank
+                                        },
+                                        contentDescription = "Gidilenlere Kaydet",
+                                        tint = if (selectedAttraction!!["name"] as String in visitedAttractions) Color.Green else Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = selectedAttraction!!["name"] as String,
+                            style = MaterialTheme.typography.headlineMedium.copy(color = Color.Black),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Text(
+                            text = selectedAttraction!!["description"] as String,
+                            style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black)
+                        )
+                    }
                 }
             }
         }
     }
-}

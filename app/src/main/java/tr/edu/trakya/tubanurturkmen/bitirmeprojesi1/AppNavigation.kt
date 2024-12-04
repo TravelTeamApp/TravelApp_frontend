@@ -34,7 +34,7 @@ fun AppNavigation() {
             ForgotPasswordScreen(navController) // Add this route for ForgotPasswordScreen
         }
         composable("explore") {
-            ExploreScreen() // Add this route for ForgotPasswordScreen
+            ExploreScreen(navController) // Add this route for ForgotPasswordScreen
         }
         composable("profile") {
             ProfileScreen(navController, sharedViewModel = SharedViewModel())
