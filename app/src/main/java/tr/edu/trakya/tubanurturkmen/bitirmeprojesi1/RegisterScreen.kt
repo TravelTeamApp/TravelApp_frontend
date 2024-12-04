@@ -238,7 +238,7 @@ fun RegisterScreen(navController: NavController) {
                                 if (response.isSuccessful) {
                                     Log.d("RegisterSuccess", "Kayıt başarılı: ${response.body()}")
                                     Toast.makeText(context, "Kayıt başarılı!", Toast.LENGTH_SHORT).show()
-                                    navController.navigate("login")
+                                    navController.navigate("hobies")
                                 } else {
                                     val rawError = response.errorBody()?.string()
                                     Log.e("RegisterError", "Sunucudan Gelen Yanıt: $rawError")
