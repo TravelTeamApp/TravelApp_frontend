@@ -38,16 +38,16 @@ fun showToastMessage(context: android.content.Context, message: String) {
 @Composable
 fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel) {
     val interests = listOf(
-        "Restaurant",
-        "Hotel",
-       "Museum",
-        "Park",
-        "Cafe",
-        "Shopping Mall",
-        "Historical Site",
-        "Beach",
-        "Theater",
-        "Library",
+        "Popüler Yerler",
+        "Tarihi Mekanlar ve Anıtlar",
+        "Müzeler",
+        "Parklar ve Doğa",
+        "Dini Yapılar",
+        "Eğlence",
+        "Restoranlar ve Cafeler",
+        "Manzara Noktaları",
+        "Aile Dostu",
+        "Kültürel Simgeler"
     )
     val selectedInterests = remember { mutableStateListOf<String>() }
     val backgroundImage: Painter = painterResource(id = R.drawable.hobies)
