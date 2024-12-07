@@ -489,7 +489,7 @@ fun ExploreScreen(
                                                 modifier = Modifier
                                                     .width(200.dp)
                                                     .padding(end = 16.dp)
-                                                    .clickable { /* Mekan detayını göster */ },
+                                                    .clickable { selectedAttraction = place },
                                                 shape = RoundedCornerShape(12.dp),
                                                 colors = CardDefaults.cardColors(
                                                     containerColor = Color.Gray.copy(alpha = 0.3f)
@@ -613,7 +613,8 @@ fun ExploreScreen(
             }
 
 
-        } else {
+        }
+        else {
             Column(modifier = Modifier.padding(16.dp).background(Color.White)) {
 
                 Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
