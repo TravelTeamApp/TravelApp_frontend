@@ -46,7 +46,7 @@ fun AppNavigation() {
     val currentRoute = remember { mutableStateOf("login") }
 
     // Bottom Navigation Bar'ın hangi ekranlarda gizleneceği
-    val hideBottomNavRoutes = listOf("login", "register", "hobies")
+    val hideBottomNavRoutes = listOf("login", "register", "hobies","forgotPassword")
     val showBottomNav = !hideBottomNavRoutes.contains(currentRoute.value)
 
     // Ekran içeriği ve yerleşim düzeni
