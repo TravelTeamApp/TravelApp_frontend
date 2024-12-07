@@ -1,5 +1,6 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -174,7 +175,7 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                             .fillMaxSize()
                             .padding(bottom = 56.dp) // BottomNavigationBar alanı
                             .verticalScroll(scrollState) // Dikey kaydırmayı etkinleştir
-                    ){
+                    ) {
                         Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
                             Image(
                                 painter = painterResource(id = R.drawable.istanbul),
@@ -195,7 +196,10 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                             ) {
                                 Row(
                                     modifier = Modifier
-                                        .background(Color.White.copy(alpha = 0.8f), shape = RoundedCornerShape(12.dp))
+                                        .background(
+                                            Color.White.copy(alpha = 0.8f),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
                                         .padding(8.dp)
                                         .align(Alignment.Center),
                                     verticalAlignment = Alignment.CenterVertically
@@ -210,7 +214,10 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                                         value = searchQuery,
                                         onValueChange = { searchQuery = it },
                                         modifier = Modifier.weight(1f),
-                                        textStyle = TextStyle(color = Color.Black, fontSize = 16.sp),
+                                        textStyle = TextStyle(
+                                            color = Color.Black,
+                                            fontSize = 16.sp
+                                        ),
                                         decorationBox = { innerTextField ->
                                             if (searchQuery.isEmpty()) {
                                                 Text(
@@ -251,7 +258,11 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                                         .padding(end = 16.dp)
                                         .clickable { selectedAttraction = attraction },
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color.Gray.copy(alpha = 0.3f))
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color.Gray.copy(
+                                            alpha = 0.3f
+                                        )
+                                    )
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Image(
@@ -283,7 +294,9 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                                 Button(
                                     onClick = { selectedCategory = category },
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (category == selectedCategory) Color(0xFF2196F3) else Color.White,
+                                        containerColor = if (category == selectedCategory) Color(
+                                            0xFF2196F3
+                                        ) else Color.White,
                                         contentColor = if (category == selectedCategory) Color.White else Color.Gray
                                     ),
                                     shape = RoundedCornerShape(16.dp),
@@ -297,13 +310,17 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
 
                         // LazyRow - Attraction items
                         LazyRow(modifier = Modifier.padding(16.dp)) {
-                            val filteredAttractions = places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
+                            val filteredAttractions =
+                                places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
 
 
                             if (filteredAttractions.isEmpty()) {
                                 // Eşleşen öğe yoksa, mesaj göster
                                 item {
-                                    Text("No attractions found for this category.", modifier = Modifier.padding(16.dp))
+                                    Text(
+                                        "No attractions found for this category.",
+                                        modifier = Modifier.padding(16.dp)
+                                    )
                                 }
 
                             } else {
@@ -315,7 +332,11 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
 
                                             .clickable { selectedAttraction = attraction },
                                         shape = RoundedCornerShape(12.dp),
-                                        colors = CardDefaults.cardColors(containerColor = Color.Gray.copy(alpha = 0.3f))
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color.Gray.copy(
+                                                alpha = 0.3f
+                                            )
+                                        )
                                     ) {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             Image(
@@ -327,7 +348,9 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                                             Spacer(modifier = Modifier.height(8.dp))
                                             Text(
                                                 text = attraction.placeName,
-                                                style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
+                                                style = MaterialTheme.typography.bodyLarge.copy(
+                                                    color = Color.Black
+                                                ),
                                                 modifier = Modifier.padding(horizontal = 8.dp)
                                             )
 
@@ -342,9 +365,7 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
             }
 
 
-
-        }
-        else {
+        } else {
             Column(modifier = Modifier.padding(16.dp).background(Color.White)) {
 
                 Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
@@ -359,18 +380,108 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
-                            .align( Alignment.TopStart),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .align(Alignment.TopStart),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { selectedAttraction = null }) { // Geri butonu
+                        // Geri Butonu
+                        IconButton(
+                            onClick = { selectedAttraction = null },
+                            modifier = Modifier
+                                .background(
+                                    Color.Gray.copy(alpha = 0.6f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(8.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Geri Dön",
                                 tint = Color.White
                             )
                         }
+
+                        // Favorilere Ekle ve Gidilenlere Kaydet İkonları
+                        Row {
+                            // Favori İkonu
+                            var isFavorite by remember { mutableStateOf(false) }
+
+                            LaunchedEffect(selectedAttraction) {
+                                isFavorite = selectedAttraction?.placeName in favoriteAttractions
+                            }
+
+                            IconButton(onClick = {
+                                selectedAttraction?.let { attraction ->
+                                    val placeName = attraction.placeName
+                                    if (favoriteAttractions.contains(placeName)) {
+                                        favoriteAttractions.remove(placeName)
+                                        isFavorite = false
+                                        Toast.makeText(
+                                            context,
+                                            "$placeName favorilerden çıkarıldı.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        favoriteAttractions.add(placeName)
+                                        isFavorite = true
+                                        Toast.makeText(
+                                            context,
+                                            "$placeName favorilere eklendi.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
+                                    ),
+                                    contentDescription = "Favorilere Ekle",
+                                    tint = Color.White
+                                )
+                            }
+
+                            // Gidilenler İkonu
+                            var isVisited by remember { mutableStateOf(false) }
+
+                            LaunchedEffect(selectedAttraction) {
+                                isVisited = selectedAttraction?.placeName in visitedAttractions
+                            }
+
+                            IconButton(onClick = {
+                                selectedAttraction?.let { attraction ->
+                                    val placeName = attraction.placeName
+                                    if (visitedAttractions.contains(placeName)) {
+                                        visitedAttractions.remove(placeName)
+                                        isVisited = false
+                                        Toast.makeText(
+                                            context,
+                                            "$placeName gidilenlerden çıkarıldı.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        visitedAttractions.add(placeName)
+                                        isVisited = true
+                                        Toast.makeText(
+                                            context,
+                                            "$placeName gidilenlere kaydedildi.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
+                                    ),
+                                    contentDescription = "Gidilenlere Kaydet",
+                                    tint = Color.White
+                                )
+                            }
+                        }
                     }
                 }
+
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = selectedAttraction!!.placeName,
@@ -384,12 +495,5 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewExploreScreen() {
-    ExploreScreen(navController = rememberNavController())
-}
-
+    }
 
