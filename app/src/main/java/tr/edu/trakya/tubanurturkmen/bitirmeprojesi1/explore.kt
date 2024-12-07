@@ -311,7 +311,8 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                                     Card(
                                         modifier = Modifier
                                             .width(200.dp)
-                                            .padding(end = 16.dp)
+                                            .padding(8.dp) // BottomNavigationBar alanı
+
                                             .clickable { selectedAttraction = attraction },
                                         shape = RoundedCornerShape(12.dp),
                                         colors = CardDefaults.cardColors(containerColor = Color.Gray.copy(alpha = 0.3f))
@@ -344,8 +345,9 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
 
         }
         else {
-            Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
-                Box(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.padding(16.dp).background(Color.White)) {
+
+                Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
                     Image(
                         painter = painterResource(id = R.drawable.istanbul),
                         contentDescription = "Istanbul",
