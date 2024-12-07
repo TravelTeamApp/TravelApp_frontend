@@ -3,9 +3,11 @@ package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Header
+import retrofit2.http.Path
 
 interface AuthService {
 
@@ -37,5 +39,25 @@ interface AuthService {
 
     @GET("place")  // Bu URL backend'deki endpoint'e bağlıdır, örneğin: http://localhost:5000/api/places/all
     fun getAllPlaces(): Call<List<Place>> // Tüm mekanları bir liste olarak alacak
+
+    // Yorum eklemek için
+    @POST("place/{placeId}/comments")
+    fun addComment(
+        @Path("placeId") placeId: Int,
+        @Body commentDto: CreateCommentDto
+    ): Call<Comment>
+
+    // Kullanıcının ziyaret ettiği bir mekanı eklemek için
+    @POST("visitedPlace")
+    fun addVisitedPlace(
+        @Path("placeId") placeId: Int,
+    ): Call<Unit>
+
+    @DELETE("visitedPlace")
+    fun deleteVisitedPlace(
+        @Path("placeId") placeId: Int,
+    ): Call<Unit>
+
+
 
 }

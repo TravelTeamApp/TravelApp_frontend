@@ -34,6 +34,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+
 data class Place(
     val placeId: Int,
     val placeName: String,
@@ -55,6 +56,12 @@ data class Comment(
     val text: String,
     val createdBy: String,
     val createdOn: String
+)
+
+// DTO for creating a comment
+data class CreateCommentDto(
+    val text: String,
+    val rating: Int
 )
 
 class PlaceViewModel : ViewModel() {
@@ -133,6 +140,62 @@ class ExploreViewModel : ViewModel() {
             }
         })
     }
+    fun addComment(placeId: Int, commentText: String, rating: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val commentDto = CreateCommentDto(text = commentText, rating = rating)
+
+        RetrofitClient.apiService.addComment(placeId, commentDto).enqueue(object : Callback<Comment> {
+            override fun onResponse(call: Call<Comment>, response: Response<Comment>) {
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError("API Error: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<Comment>, t: Throwable) {
+                onError("Network Error: ${t.message}")
+            }
+        })
+    }
+}
+
+class VisitedPlaceViewModel : ViewModel() {
+
+    private val apiService = RetrofitClient.apiService
+
+    // Bir yeri ziyaret edilenler listesine ekleme
+    fun addVisitedPlace(placeId: Int) {
+        apiService.addVisitedPlace(placeId).enqueue(object : Callback<Unit> {
+            override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                if (response.isSuccessful) {
+                    Log.d("VisitedPlace", "Place successfully added to visited list.")
+                } else {
+                    Log.e("VisitedPlace", "Error occurred: ${response.errorBody()?.string()}")
+                }
+            }
+
+            override fun onFailure(call: Call<Unit>, t: Throwable) {
+                Log.e("VisitedPlace", "API call failed: ${t.message}")
+            }
+        })
+    }
+
+    // Bir yeri ziyaret edilenler listesinden silme
+    fun deleteVisitedPlace(placeId: Int) {
+        apiService.deleteVisitedPlace(placeId).enqueue(object : Callback<Unit> {
+            override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                if (response.isSuccessful) {
+                    Log.d("VisitedPlace", "Place successfully removed from visited list.")
+                } else {
+                    Log.e("VisitedPlace", "Error occurred: ${response.errorBody()?.string()}")
+                }
+            }
+
+            override fun onFailure(call: Call<Unit>, t: Throwable) {
+                Log.e("VisitedPlace", "API call failed: ${t.message}")
+            }
+        })
+    }
 }
 
 @Composable
@@ -141,6 +204,7 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
     val categories by categoryViewModel.categories
 
     val context = LocalContext.current
+
 
     // Yükleme durumu kontrolü
     if (places.isEmpty()) {
@@ -165,6 +229,8 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
     val scrollState = rememberScrollState()
     var searchQuery by remember { mutableStateOf("") }
     val topAttractions = places
+    val visitedPlaceViewModel: VisitedPlaceViewModel = viewModel()
+
 
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         if (selectedAttraction == null) {
@@ -451,17 +517,30 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                             IconButton(onClick = {
                                 selectedAttraction?.let { attraction ->
                                     val placeName = attraction.placeName
+                                    val placeId =
+                                        attraction.placeId // Assuming `placeId` exists in the `selectedAttraction`
+
                                     if (visitedAttractions.contains(placeName)) {
+                                        // Gidilenlerden çıkar
                                         visitedAttractions.remove(placeName)
                                         isVisited = false
+
+                                        // Backend'de kaldırma işlemi
+                                        visitedPlaceViewModel.deleteVisitedPlace(placeId)
+
                                         Toast.makeText(
                                             context,
                                             "$placeName gidilenlerden çıkarıldı.",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     } else {
+                                        // Gidilenlere ekle
                                         visitedAttractions.add(placeName)
                                         isVisited = true
+
+                                        // Backend'e ekleme işlemi
+                                        visitedPlaceViewModel.addVisitedPlace(placeId)
+
                                         Toast.makeText(
                                             context,
                                             "$placeName gidilenlere kaydedildi.",
@@ -478,22 +557,20 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                                     tint = Color.White
                                 )
                             }
+
+
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = selectedAttraction!!.placeName,
+                                    style = MaterialTheme.typography.headlineMedium
+                                )
+                                Text(
+                                    text = selectedAttraction!!.description,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
                         }
                     }
                 }
-
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = selectedAttraction!!.placeName,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Text(
-                        text = selectedAttraction!!.description,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-        }
-    }
-    }
+            }}}}
 
