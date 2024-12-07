@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -305,6 +306,9 @@ fun BadgesSection(score: Int) {
 
 @Composable
 fun BadgeItem(badge: Badge, isUnlocked: Boolean) {
+    val context = LocalContext.current
+    val tooltipText = "Bu rozeti kazanmak için skorunuz ${badge.requiredScore} olmalı"
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(8.dp)
@@ -314,21 +318,27 @@ fun BadgeItem(badge: Badge, isUnlocked: Boolean) {
             modifier = Modifier
                 .size(80.dp)
                 .clip(CircleShape)
-                .background(badgeColor),
+                .background(badgeColor)
+                .clickable(enabled = !isUnlocked) {
+                    // Toast çağrısı güvenli
+                    Toast.makeText(
+                        context,
+                        tooltipText,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(id = badge.iconRes),
                 contentDescription = badge.name,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(50.dp)
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = badge.name,
             fontSize = 14.sp,
-            color = Color.Black,
-            fontFamily = FontFamily.Serif // Burada istediğiniz fontu seçebilirsiniz
+            color = Color.Black
         )
     }
 }
