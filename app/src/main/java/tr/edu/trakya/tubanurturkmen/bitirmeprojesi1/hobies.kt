@@ -26,6 +26,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 
@@ -36,21 +38,10 @@ fun showToastMessage(context: android.content.Context, message: String) {
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, UnstableApi::class)
 @Composable
-fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel) {
-    val interests = listOf(
-        "Popüler Yerler",
-        "Tarihi Mekanlar ve Anıtlar",
-        "Müzeler",
-        "Parklar ve Doğa",
-        "Dini Yapılar",
-        "Eğlence",
-        "Restoranlar ve Cafeler",
-        "Manzara Noktaları",
-        "Aile Dostu",
-        "Kültürel Simgeler"
-    )
+fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel,categoryViewModel: ExploreViewModel = viewModel()) {
+    val interests by categoryViewModel.categories
 
-    val selectedInterests = remember { mutableStateListOf<String>() }
+    val selectedInterests = remember { mutableStateListOf<PlaceType>() } // Matching type with PlaceType
     val backgroundImage: Painter = painterResource(id = R.drawable.hobies)
 
     var isHovered by remember { mutableStateOf(false) }
@@ -111,9 +102,8 @@ fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel)
                             containerColor = if (isSelected) Color.LightGray else Color.White,
                             contentColor = if (isSelected) Color.White else Color.Black
                         ),
-                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(interest)
+                        Text(interest.placeTypeName)
                     }
                 }
             }
@@ -121,7 +111,9 @@ fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel)
             Button(
                 onClick = {
                     val apiService = RetrofitClient.apiService
-                    val request = UserPlaceTypeDto(placeTypeNames = selectedInterests)
+                    val request = UserPlaceTypeDto(
+                        placeTypeNames = selectedInterests.map { it.placeTypeName }
+                    )
 
                     apiService.addUserPlaceTypes(request).enqueue(object : Callback<AddPlaceTypeResponse> {
                         override fun onResponse(
