@@ -108,7 +108,7 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFE3F2FD))
+            .background(Color.White)
     ) {
         // Dinamik isimle TopSection
         TopSection(userName = userProfile.userName, score = userProfile.score)
@@ -142,7 +142,7 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
         // Tab içerikleri
         when (selectedTabIndex) {
             0 -> ReviewsSection(reviews = listOf("Review 1 text", "Review 2 text", "Review 3 text"))
-            1 -> BadgesSection()
+            1 -> BadgesSection(score = userProfile.score)
             2 -> FavoritesSection()
             3 -> VisitedSection()
         }
@@ -267,16 +267,74 @@ fun ReviewCard(reviewText: String) {
 }
 
 @Composable
-fun BadgesSection() {
-    Text(
-        text = "Rozetleriniz",
-        fontSize = 20.sp,
-        color = Color.Black,
-        modifier = Modifier
-            .padding(start = 14.dp, top = 13.dp)
+fun BadgesSection(score: Int) {
+    val badges = listOf(
+        Badge("Amatör", R.drawable.neww, 1),
+        Badge("Kaşif", R.drawable.ic_explorer, 5),
+        Badge("Maceracı", R.drawable.maps, 100),
+        Badge("Koleksiyoncu", R.drawable.collector, 200),
+        Badge("Gezgin", R.drawable.maceraci, 300),
+        Badge("Öncü", R.drawable.light, 400),
+        Badge("Fatih", R.drawable.adventurer, 500),
+        Badge("Yön Bulucu", R.drawable.search, 700),
+        Badge("Dünya Turu", R.drawable.language, 800)
     )
-    // Rozetlerinizi gösterecek bir alan
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        LazyColumn {
+            items(badges.chunked(3)) { row ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    row.forEach { badge ->
+                        BadgeItem(badge = badge, isUnlocked = score >= badge.requiredScore)
+                    }
+                }
+            }
+        }
+    }
 }
+
+@Composable
+fun BadgeItem(badge: Badge, isUnlocked: Boolean) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(8.dp)
+    ) {
+        val badgeColor = if (isUnlocked) Color(0xFFFFD700) else Color(0xFFB0BEC5) // Altın veya gri
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(badgeColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = badge.iconRes),
+                contentDescription = badge.name,
+                modifier = Modifier.size(40.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = badge.name,
+            fontSize = 14.sp,
+            color = Color.Black,
+            fontFamily = FontFamily.Serif // Burada istediğiniz fontu seçebilirsiniz
+        )
+    }
+}
+
+data class Badge(val name: String, val iconRes: Int, val requiredScore: Int)
+
 
 @Composable
 fun FavoritesSection() {
