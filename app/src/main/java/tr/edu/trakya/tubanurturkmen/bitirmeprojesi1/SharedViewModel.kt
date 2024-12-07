@@ -5,9 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import retrofit2.Call
 
-data class UserPlaceTypeDto(
-    val placeTypeNames: List<String>
-)
+
 
 data class AddPlaceTypeResponse(
     val message: String,

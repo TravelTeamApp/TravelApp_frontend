@@ -1,5 +1,5 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
-
+import retrofit2.http.Query
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
@@ -46,18 +46,52 @@ interface AuthService {
         @Path("placeId") placeId: Int,
         @Body commentDto: CreateCommentDto
     ): Call<Comment>
+    @GET("visitedPlace")
+    fun getUserVisitedPlaces(): Call<List<VisitedPlaceDto>>
 
-    // Kullanıcının ziyaret ettiği bir mekanı eklemek için
+    // Ziyaret edilen yeri ekleme
     @POST("visitedPlace")
     fun addVisitedPlace(
-        @Path("placeId") placeId: Int,
-    ): Call<Unit>
+        @Query("placeId") placeId: Int
+    ): Call<Void>
 
+    // Ziyaret edilen yeri silme
     @DELETE("visitedPlace")
     fun deleteVisitedPlace(
+        @Query("placeId") placeId: Int
+    ): Call<Void>
+
+    // Favori ekleme işlemi
+    @POST("favorite")
+    fun addFavorite(
+        @Query("placeId") placeId: Int
+    ): Call<Void>
+
+    // Favori silme işlemi
+    @DELETE("favorite")
+    fun deleteFavorite(
+        @Query("placeId") placeId: Int
+    ): Call<Void>
+
+    // Kullanıcının favorilerini alma
+    @GET("favorite")
+    fun getUserFavorites(): Call<List<FavoriteDto>>
+
+    // Kullanıcının yorumlarını getir
+    @GET("comment/users")
+    fun getUserComments(): Call<List<CommentDto>>
+
+    // Yeni bir yorum oluştur
+    @POST("comment/{placeId}")
+    fun createComment(
         @Path("placeId") placeId: Int,
-    ): Call<Unit>
+        @Body createCommentRequest: CreateCommentDto
+    ): Call<CommentDto>
 
+    // Kullanıcıya ait mekan türlerini getirme
+    @GET("UserPlaceType")
+    fun getPlaceTypesByUserId(): Call<List<UserPlaceTypeDto>>
 
-
+    @GET("Place/userplace")  // BASE_URL'in sonuna eklenir
+    fun getPlacesByUserPlaceTypes(): Call<List<Place>>
 }

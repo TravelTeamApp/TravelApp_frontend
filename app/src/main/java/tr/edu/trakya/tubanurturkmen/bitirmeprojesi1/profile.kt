@@ -1,6 +1,9 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 
+import java.text.SimpleDateFormat
+import java.util.Locale
 import android.annotation.SuppressLint
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -24,8 +27,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,7 +38,57 @@ import androidx.navigation.compose.rememberNavController
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+data class FavoriteDto(
+    val favoriteId: Int,
+    val placeId: Int,
+    val placeName: String?,
+    val placeAddress: String?,
+    val description: String?,
+    val rating: Int?,
+    val placeType: PlaceTypeDto?, // Her mekanın türü (opsiyonel)
+    val comments: List<CommentDto>?, // Yorumlar
+    val userName: String? // Kullanıcı adı
+)
 
+data class PlaceTypeDto(
+    val id: Int,
+    val name: String
+)
+
+data class CommentDto(
+    val commentId: Int,
+    val placeId: Int,
+    val text: String?,
+    val createdOn: String,
+    val createdBy: String?,
+    val userId: Int
+)
+
+data class VisitedPlaceDto(
+    val visitedPlaceId: Int,
+    val placeId: Int,
+    val placeName: String?,
+    val placeAddress: String?,
+    val description: String?,
+    val rating: Int?,
+    val placeType: PlaceTypeDto?, // Mekan türü
+    val comments: List<CommentDto>?, // Mekan yorumları
+    val userName: String? // Ziyaret eden kullanıcı
+)
+
+data class PlaceDto(
+    val placeId: Int,
+    val placeName: String,
+    val placeAddress: String,
+    val description: String?,
+    val rating: Int?,
+    val placeType: PlaceTypeDto?,
+    val comments: List<CommentDto>?
+)
+
+data class UserPlaceTypeDto(
+    val placeTypeNames: List<String> // Mekan türü adlarını içeren liste
+)
 @Composable
 fun ProfileScreen(navController: NavController,sharedViewModel: SharedViewModel) {
     val selectedInterests by sharedViewModel.selectedInterests.collectAsState()
@@ -103,7 +158,9 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
         TabItem("Yorumlar", Icons.Default.Comment),
         TabItem("Rozetler", Icons.Default.Star),
         TabItem("Favoriler", Icons.Default.Favorite),
-        TabItem("Gidilenler", Icons.Default.Place)
+        TabItem("Gidilenler", Icons.Default.Place),
+        TabItem("Hobi", Icons.Default.SpatialTracking)
+
     )
 
     Column(
@@ -142,10 +199,11 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
 
         // Tab içerikleri
         when (selectedTabIndex) {
-            0 -> ReviewsSection(reviews = listOf("Review 1 text", "Review 2 text", "Review 3 text"))
+            0 -> UserCommentsSection()
             1 -> BadgesSection(score = userProfile.score)
             2 -> FavoritesSection()
-            3 -> VisitedSection()
+            3 -> VisitedPlacesSection()
+            4 -> PlaceTypesSection()
         }
     }
 }
@@ -218,54 +276,202 @@ fun TopSection(userName: String, score: Int) {
     }
 }
 
+
 @Composable
-fun ReviewsSection(reviews: List<String>) {
-    Text(
-        text = "Yorumlar",
-        fontSize = 20.sp,
-        color = Color.Black,
+fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
+    val context = LocalContext.current
+
+    // Durumlar
+    var placeTypes by remember { mutableStateOf<List<UserPlaceTypeDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Mekan türlerini backend'den çek
+    LaunchedEffect(Unit) {
+        placeViewModel.getPlaceTypesByUserId { fetchedPlaceTypes ->
+            if (fetchedPlaceTypes != null) {
+                placeTypes = fetchedPlaceTypes
+                isLoading = false
+            } else {
+                errorMessage = "Mekan türleri yüklenirken bir hata oluştu."
+                isLoading = false
+            }
+        }
+    }
+
+    // UI
+    Column(
         modifier = Modifier
-            .padding(start = 14.dp, top = 10.dp)
-    )
-    LazyColumn(
-        modifier = Modifier.padding(top = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .fillMaxSize()
+            .padding(14.dp)
     ) {
-        items(reviews) { reviewText ->
-            ReviewCard(reviewText)
+        Text(
+            text = "Mekan Türlerim",
+            fontSize = 20.sp,
+            color = Color.Black
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else if (errorMessage != null) {
+            Text(
+                text = "Hata: $errorMessage",
+                color = Color.Red,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        } else if (placeTypes.isEmpty()) {
+            Text(
+                text = "Henüz mekan türü seçmediniz.",
+                color = Color.Gray,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(placeTypes) { placeType ->
+                    PlaceTypeItem(placeType = placeType)
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ReviewCard(reviewText: String) {
-    Card(
+fun PlaceTypeItem(placeType: UserPlaceTypeDto) {
+    // Burada her bir mekan türünü gösteren bir item layout'u
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+            text = "Mekan Türü: ${placeType.placeTypeNames.joinToString(", ")}",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+
+
+@Composable
+fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel() ) {
+    val context = LocalContext.current
+
+    // Durumlar
+    var comments by remember { mutableStateOf<List<CommentDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Yorumları backend'den çek
+    LaunchedEffect(Unit) {
+        commentViewModel.fetchUserComments { fetchedComments, error ->
+            if (fetchedComments != null) {
+                comments = fetchedComments
+                isLoading = false
+            } else {
+                errorMessage = error
+                isLoading = false
+            }
+        }
+    }
+
+    // UI
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp)
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(8.dp)
+            .fillMaxSize()
+            .padding(14.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Image(
-                painter = painterResource(R.drawable.pull),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            )
-            Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = "Yorumlarım",
+            fontSize = 20.sp,
+            color = Color.Black
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else if (errorMessage != null) {
             Text(
-                text = reviewText,
+                text = "Hata: $errorMessage",
+                color = Color.Red,
                 fontSize = 16.sp,
-                color = Color.Black
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
+        } else if (comments.isEmpty()) {
+            Text(
+                text = "Henüz yorum yapmadınız.",
+                color = Color.Gray,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        } else {
+            LazyColumn {
+                items(comments) { comment ->
+                    UserCommentItem(comment = comment)
+                }
+            }
         }
     }
 }
+
+
+
+fun formatDateTime(isoDate: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault())
+        val date = inputFormat.parse(isoDate)
+        date?.let { outputFormat.format(it) } ?: "Tarih Bilinmiyor"
+    } catch (e: Exception) {
+        "Tarih Bilinmiyor"
+    }
+}
+
+
+@Composable
+fun UserCommentItem(comment: CommentDto) {
+    val formattedDate = formatDateTime(comment.createdOn)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            // Yorumun metni
+            Text(
+                text = comment.text ?: "Yorum yok",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            // Yazan kişinin bilgisi
+            Text(
+                text = "Yazan: ${comment.createdBy ?: "Anonim"}",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            Text(
+                text = "Tarih: $formattedDate",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+
+        }
+    }
+}
+
 
 @Composable
 fun BadgesSection(score: Int) {
@@ -347,27 +553,212 @@ data class Badge(val name: String, val iconRes: Int, val requiredScore: Int)
 
 
 @Composable
-fun FavoritesSection() {
-    Text(
-        text = "Favoriler",
-        fontSize = 20.sp,
-        color = Color.Black,
-        modifier = Modifier
-            .padding(start = 14.dp, top = 13.dp)
-    )
+fun FavoritesSection(favoriteViewModel: FavoriteViewModel = viewModel() ) {
+    val context = LocalContext.current
 
+    // Favori mekanların durumu
+    var favoritePlaces by remember { mutableStateOf<List<FavoriteDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Favori mekanları backend'den çek
+    LaunchedEffect(Unit) {
+        favoriteViewModel.fetchUserFavorites { favorites, error ->
+            if (favorites != null) {
+                favoritePlaces = favorites
+                isLoading = false
+            } else {
+                errorMessage = error
+                isLoading = false
+            }
+        }
+    }
+
+    // UI
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(14.dp)
+    ) {
+        Text(
+            text = "Favoriler",
+            fontSize = 20.sp,
+            color = Color.Black
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else if (errorMessage != null) {
+            Text(
+                text = "Hata: $errorMessage",
+                color = Color.Red,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        } else if (favoritePlaces.isEmpty()) {
+            Text(
+                text = "Henüz favori mekanınız yok.",
+                color = Color.Gray,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        } else {
+            LazyColumn {
+                items(favoritePlaces) { place ->
+                    FavoritePlaceItem(place = place)
+                }
+            }
+        }
+    }
 }
 
 @Composable
-fun VisitedSection() {
-    Text(
-        text = "Gidilen Yerler",
-        fontSize = 20.sp,
-        color = Color.Black,
+fun FavoritePlaceItem(place: FavoriteDto) {
+    Card(
         modifier = Modifier
-            .padding(start = 14.dp, top = 13.dp)
-    )
-    // Gidilen yerlerin listeleneceği bir alan
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = place.placeName ?: "Bilinmeyen Mekan",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Text(
+                text = place.placeAddress ?: "Adres bilgisi yok",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+            Text(
+                text = place.description ?: "Açıklama yok",
+                fontSize = 14.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            place.rating?.let {
+                Text(
+                    text = "Puan: $it",
+                    fontSize = 14.sp,
+                    color = Color.Blue,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+    }
 }
+
+
+@Composable
+fun VisitedPlacesSection(visitedPlaceViewModel: VisitedPlaceViewModel = viewModel()) {
+    val context = LocalContext.current
+
+    // Durumlar
+    var visitedPlaces by remember { mutableStateOf<List<VisitedPlaceDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Ziyaret edilen mekanları backend'den çek
+    LaunchedEffect(Unit) {
+        visitedPlaceViewModel.fetchUserVisitedPlaces { places, error ->
+            if (places != null) {
+                visitedPlaces = places
+                isLoading = false
+            } else {
+                errorMessage = error
+                isLoading = false
+            }
+        }
+    }
+
+    // UI
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(14.dp)
+    ) {
+        Text(
+            text = "Ziyaret Edilen Yerler",
+            fontSize = 20.sp,
+            color = Color.Black
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else if (errorMessage != null) {
+            Text(
+                text = "Hata: $errorMessage",
+                color = Color.Red,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        } else if (visitedPlaces.isEmpty()) {
+            Text(
+                text = "Henüz ziyaret ettiğiniz bir yer yok.",
+                color = Color.Gray,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        } else {
+            LazyColumn {
+                items(visitedPlaces) { place ->
+                    VisitedPlaceItem(place = place)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VisitedPlaceItem(place: VisitedPlaceDto) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = place.placeName ?: "Bilinmeyen Mekan",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Text(
+                text = place.placeAddress ?: "Adres bilgisi yok",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+            Text(
+                text = place.description ?: "Açıklama yok",
+                fontSize = 14.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            place.rating?.let {
+                Text(
+                    text = "Puan: $it",
+                    fontSize = 14.sp,
+                    color = Color.Blue,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+    }
+}
+
 
 

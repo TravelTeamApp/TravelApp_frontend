@@ -60,9 +60,9 @@ data class Comment(
 
 // DTO for creating a comment
 data class CreateCommentDto(
-    val text: String,
-    val rating: Int
+    val text: String
 )
+
 
 class PlaceViewModel : ViewModel() {
 
@@ -75,12 +75,12 @@ class PlaceViewModel : ViewModel() {
 
     private val _errorMessage = mutableStateOf<String?>(null)
     val errorMessage: State<String?> get() = _errorMessage
-
+    private val _suggestedPlaces = mutableStateOf<List<Place>>(emptyList())
+    val suggestedPlaces: State<List<Place>> get() = _suggestedPlaces
     init {
         fetchPlaces()
     }
 
-    // Mekanları API'den al
     private fun fetchPlaces() {
         _loading.value = true  // API çağrısı başladığında loading state'i true
         _errorMessage.value = null  // Hata mesajını sıfırla
@@ -110,7 +110,55 @@ class PlaceViewModel : ViewModel() {
             }
         })
     }
+
+    fun getPlaceTypesByUserId(callback: (List<UserPlaceTypeDto>?) -> Unit) {
+        RetrofitClient.apiService.getPlaceTypesByUserId().enqueue(object : Callback<List<UserPlaceTypeDto>> {
+            override fun onResponse(
+                call: Call<List<UserPlaceTypeDto>>,
+                response: Response<List<UserPlaceTypeDto>>
+            ) {
+                if (response.isSuccessful) {
+                    callback(response.body()) // API yanıtını başarılı bir şekilde aldık
+                } else {
+                    callback(null) // Hata durumunda null dönüyoruz
+                }
+            }
+
+            override fun onFailure(call: Call<List<UserPlaceTypeDto>>, t: Throwable) {
+                callback(null) // Hata durumunda null dönüyoruz
+            }
+        })
+    }
+
+
+    fun fetchPlacesByUserPlaceTypes() {
+        _loading.value = true
+        _errorMessage.value = null
+
+        RetrofitClient.apiService.getPlacesByUserPlaceTypes().enqueue(object : Callback<List<Place>> {
+            override fun onResponse(call: Call<List<Place>>, response: Response<List<Place>>) {
+                _loading.value = false
+
+                if (response.isSuccessful) {
+                    response.body()?.let { suggestedList ->
+                        _suggestedPlaces.value = suggestedList
+                        Log.d("PlaceViewModel", "Suggested Places: ${suggestedList.joinToString { it.placeName }}")
+                    }
+                } else {
+                    _errorMessage.value = "API Error: ${response.code()} - ${response.message()}"
+                    Log.e("API Error", "Error: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<List<Place>>, t: Throwable) {
+                _loading.value = false
+                _errorMessage.value = "Network Error: ${t.message}"
+                Log.e("Network Error", "Error: ${t.message}")
+            }
+        })
+    }
 }
+
 
 class ExploreViewModel : ViewModel() {
     private val _categories = mutableStateOf<List<PlaceType>>(emptyList())
@@ -140,68 +188,180 @@ class ExploreViewModel : ViewModel() {
             }
         })
     }
-    fun addComment(placeId: Int, commentText: String, rating: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        val commentDto = CreateCommentDto(text = commentText, rating = rating)
 
-        RetrofitClient.apiService.addComment(placeId, commentDto).enqueue(object : Callback<Comment> {
-            override fun onResponse(call: Call<Comment>, response: Response<Comment>) {
+}
+
+class VisitedPlaceViewModel() : ViewModel() {
+
+    // Ziyaret edilen yer ekleme
+    fun addVisitedPlace(placeId: Int, callback: (Boolean, String) -> Unit) {
+        RetrofitClient.apiService.addVisitedPlace(placeId).enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 if (response.isSuccessful) {
-                    onSuccess()
+                    callback(true, "Başarılı")
                 } else {
-                    onError("API Error: ${response.code()} - ${response.message()}")
+                    callback(false, "Hata: ${response.code()} - ${response.message()}")
                 }
             }
 
-            override fun onFailure(call: Call<Comment>, t: Throwable) {
-                onError("Network Error: ${t.message}")
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                callback(false, "İstek başarısız: ${t.message}")
+            }
+        })
+    }
+
+    // Ziyaret edilen yer silme
+    fun deleteVisitedPlace(placeId: Int, callback: (Boolean, String) -> Unit) {
+        RetrofitClient.apiService.deleteVisitedPlace(placeId).enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if (response.isSuccessful) {
+                    callback(true, "Başarılı")
+                } else {
+                    callback(false, "Hata: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                callback(false, "İstek başarısız: ${t.message}")
+            }
+        })
+    }
+    fun fetchUserVisitedPlaces(callback: (List<VisitedPlaceDto>?, String?) -> Unit) {
+        RetrofitClient.apiService.getUserVisitedPlaces().enqueue(object : Callback<List<VisitedPlaceDto>> {
+            override fun onResponse(
+                call: Call<List<VisitedPlaceDto>>,
+                response: Response<List<VisitedPlaceDto>>
+            ) {
+                if (response.isSuccessful) {
+                    callback(response.body(), null)
+                } else {
+                    callback(null, "Hata: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<List<VisitedPlaceDto>>, t: Throwable) {
+                callback(null, "İstek başarısız: ${t.message}")
             }
         })
     }
 }
 
-class VisitedPlaceViewModel : ViewModel() {
+class FavoriteViewModel() : ViewModel() {
 
-    private val apiService = RetrofitClient.apiService
-
-    // Bir yeri ziyaret edilenler listesine ekleme
-    fun addVisitedPlace(placeId: Int) {
-        apiService.addVisitedPlace(placeId).enqueue(object : Callback<Unit> {
-            override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+    // Favori ekleme metodu
+    fun addFavorite(placeId: Int, callback: (Boolean, String) -> Unit) {
+        RetrofitClient.apiService.addFavorite(placeId).enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 if (response.isSuccessful) {
-                    Log.d("VisitedPlace", "Place successfully added to visited list.")
+                    // Favori ekleme başarılı
+                    callback(true, "Favori başarıyla eklendi.")
                 } else {
-                    Log.e("VisitedPlace", "Error occurred: ${response.errorBody()?.string()}")
+                    // Hata durumu
+                    callback(false, "Hata: ${response.code()} - ${response.message()}")
                 }
             }
 
-            override fun onFailure(call: Call<Unit>, t: Throwable) {
-                Log.e("VisitedPlace", "API call failed: ${t.message}")
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                // İstek başarısız oldu
+                callback(false, "İstek başarısız: ${t.message}")
             }
         })
     }
 
-    // Bir yeri ziyaret edilenler listesinden silme
-    fun deleteVisitedPlace(placeId: Int) {
-        apiService.deleteVisitedPlace(placeId).enqueue(object : Callback<Unit> {
-            override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+    // Favori silme metodu
+    fun deleteFavorite(placeId: Int, callback: (Boolean, String) -> Unit) {
+        RetrofitClient.apiService.deleteFavorite(placeId).enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 if (response.isSuccessful) {
-                    Log.d("VisitedPlace", "Place successfully removed from visited list.")
+                    // Favori silme başarılı
+                    callback(true, "Favori başarıyla kaldırıldı.")
                 } else {
-                    Log.e("VisitedPlace", "Error occurred: ${response.errorBody()?.string()}")
+                    // Hata durumu
+                    callback(false, "Hata: ${response.code()} - ${response.message()}")
                 }
             }
 
-            override fun onFailure(call: Call<Unit>, t: Throwable) {
-                Log.e("VisitedPlace", "API call failed: ${t.message}")
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                // İstek başarısız oldu
+                callback(false, "İstek başarısız: ${t.message}")
+            }
+        })
+    }
+    fun fetchUserFavorites(callback: (List<FavoriteDto>?, String?) -> Unit) {
+        RetrofitClient.apiService.getUserFavorites().enqueue(object : Callback<List<FavoriteDto>> {
+            override fun onResponse(
+                call: Call<List<FavoriteDto>>,
+                response: Response<List<FavoriteDto>>
+            ) {
+                if (response.isSuccessful) {
+                    callback(response.body(), null) // Favoriler başarıyla alındı
+                } else {
+                    callback(null, "Hata: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<List<FavoriteDto>>, t: Throwable) {
+                callback(null, "İstek başarısız: ${t.message}")
+            }
+        })
+    }
+
+}
+
+class CommentViewModel() : ViewModel() {
+
+    fun fetchUserComments(callback: (List<CommentDto>?, String?) -> Unit) {
+        RetrofitClient.apiService.getUserComments().enqueue(object : Callback<List<CommentDto>> {
+            override fun onResponse(
+                call: Call<List<CommentDto>>,
+                response: Response<List<CommentDto>>
+            ) {
+                if (response.isSuccessful) {
+                    callback(response.body(), null)
+                } else {
+                    callback(null, "Hata: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<List<CommentDto>>, t: Throwable) {
+                callback(null, "İstek başarısız: ${t.message}")
+            }
+        })
+    }
+
+    fun createComment(placeId: Int, content: String, callback: (CommentDto?, String?) -> Unit) {
+        val createCommentRequest = CreateCommentDto(content)
+        RetrofitClient.apiService.createComment(placeId, createCommentRequest).enqueue(object : Callback<CommentDto> {
+            override fun onResponse(
+                call: Call<CommentDto>,
+                response: Response<CommentDto>
+            ) {
+                if (response.isSuccessful) {
+                    callback(response.body(), null)
+                } else {
+                    callback(null, "Hata: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<CommentDto>, t: Throwable) {
+                callback(null, "İstek başarısız: ${t.message}")
             }
         })
     }
 }
 
 @Composable
-fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel = viewModel(),categoryViewModel: ExploreViewModel = viewModel()) {
+fun ExploreScreen(
+    navController: NavController,
+    placeViewModel: PlaceViewModel = viewModel(),
+    categoryViewModel: ExploreViewModel = viewModel(),
+    visitedPlaceViewModel: VisitedPlaceViewModel = viewModel(), // Eklenen ViewModel
+    favoriteViewModel: FavoriteViewModel = viewModel() // Eklenen ViewModel
+
+) {
     val places by placeViewModel.places
     val categories by categoryViewModel.categories
+
 
     val context = LocalContext.current
 
@@ -229,8 +389,13 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
     val scrollState = rememberScrollState()
     var searchQuery by remember { mutableStateOf("") }
     val topAttractions = places
-    val visitedPlaceViewModel: VisitedPlaceViewModel = viewModel()
+    val suggestedPlaces by placeViewModel.suggestedPlaces
+    val isLoading by placeViewModel.loading
+    val errorMessage by placeViewModel.errorMessage
 
+    LaunchedEffect(Unit) {
+        placeViewModel.fetchPlacesByUserPlaceTypes()
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         if (selectedAttraction == null) {
@@ -309,48 +474,65 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
                             )
                         }
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            Text(
+                                text = "Suggested Attractions",
+                                style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
+                                modifier = Modifier.padding(16.dp)
+                            )
 
+                            when {
+                                suggestedPlaces.isNotEmpty() -> { // Önerilen mekanlar varsa göster
+                                    LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                        items(suggestedPlaces) { place ->
+                                            Card(
+                                                modifier = Modifier
+                                                    .width(200.dp)
+                                                    .padding(end = 16.dp)
+                                                    .clickable { /* Mekan detayını göster */ },
+                                                shape = RoundedCornerShape(12.dp),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = Color.Gray.copy(alpha = 0.3f)
+                                                )
+                                            ) {
+                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Image(
+                                                        painter = painterResource(id = R.drawable.istanbul),
+                                                        contentDescription = "Place Image",
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .height(120.dp),
+                                                        contentScale = ContentScale.Crop
+                                                    )
 
-                        Text(
-                            text = "Top Attractions",
-                            style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
-                            modifier = Modifier.padding(16.dp)
-                        )
-                        LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            items(topAttractions) { attraction ->
-                                Card(
-                                    modifier = Modifier
-                                        .width(200.dp)
-                                        .padding(end = 16.dp)
-                                        .clickable { selectedAttraction = attraction },
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Color.Gray.copy(
-                                            alpha = 0.3f
-                                        )
-                                    )
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.istanbul),
-                                            contentDescription = "Istanbul",
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentScale = ContentScale.Crop
-                                        )
-
-                                        Text(
-                                            text = attraction.placeName,
-                                            style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
-                                            modifier = Modifier.padding(horizontal = 8.dp)
-                                        )
-
+                                                    Text(
+                                                        text = place.placeName,
+                                                        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
+                                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
+                                }
+
+                                else -> { // Önerilen mekan yoksa bir mesaj göster
+                                    Text(
+                                        text = "No suggestions available",
+                                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                                        modifier = Modifier.padding(16.dp)
+                                    )
                                 }
                             }
                         }
+
+
+
+
+
                         // Kategoriler için Tablar
                         Text(
-                            text = "Suggested Attractions",
+                            text = "Top Attractions",
                             style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
                             modifier = Modifier.padding(16.dp)
                         )
@@ -470,6 +652,7 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                         // Favorilere Ekle ve Gidilenlere Kaydet İkonları
                         Row {
                             // Favori İkonu
+                            // Favori İkonu
                             var isFavorite by remember { mutableStateOf(false) }
 
                             LaunchedEffect(selectedAttraction) {
@@ -479,22 +662,48 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                             IconButton(onClick = {
                                 selectedAttraction?.let { attraction ->
                                     val placeName = attraction.placeName
+                                    val placeId = attraction.placeId // `placeId` mevcutsa backend ile işlem yapabilirsiniz.
+
                                     if (favoriteAttractions.contains(placeName)) {
-                                        favoriteAttractions.remove(placeName)
-                                        isFavorite = false
-                                        Toast.makeText(
-                                            context,
-                                            "$placeName favorilerden çıkarıldı.",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        // Backend'den favoriden çıkarma işlemi
+                                        favoriteViewModel.deleteFavorite(placeId) { success, message ->
+                                            if (success) {
+                                                favoriteAttractions.remove(placeName)
+                                                isFavorite = false
+                                                Toast.makeText(
+                                                    context,
+                                                    "$placeName favorilerden çıkarıldı.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                // Hata mesajı göster
+                                                Toast.makeText(
+                                                    context,
+                                                    "Hata: $message",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
                                     } else {
-                                        favoriteAttractions.add(placeName)
-                                        isFavorite = true
-                                        Toast.makeText(
-                                            context,
-                                            "$placeName favorilere eklendi.",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        // Backend'e favori ekleme işlemi
+                                        favoriteViewModel.addFavorite(placeId) { success, message ->
+                                            if (success) {
+                                                favoriteAttractions.add(placeName)
+                                                isFavorite = true
+                                                Toast.makeText(
+                                                    context,
+                                                    "$placeName favorilere eklendi.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                // Hata mesajı göster
+                                                Toast.makeText(
+                                                    context,
+                                                    "Hata: $message",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
                                     }
                                 }
                             }) {
@@ -507,6 +716,7 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                                 )
                             }
 
+
                             // Gidilenler İkonu
                             var isVisited by remember { mutableStateOf(false) }
 
@@ -517,35 +727,52 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                             IconButton(onClick = {
                                 selectedAttraction?.let { attraction ->
                                     val placeName = attraction.placeName
-                                    val placeId =
-                                        attraction.placeId // Assuming `placeId` exists in the `selectedAttraction`
+                                    val placeId = attraction.placeId // Assuming `placeId` exists in the `selectedAttraction`
 
                                     if (visitedAttractions.contains(placeName)) {
-                                        // Gidilenlerden çıkar
-                                        visitedAttractions.remove(placeName)
-                                        isVisited = false
-
                                         // Backend'de kaldırma işlemi
-                                        visitedPlaceViewModel.deleteVisitedPlace(placeId)
+                                        visitedPlaceViewModel.deleteVisitedPlace(placeId) { success, message ->
+                                            if (success) {
+                                                // Yerel listeden çıkarma
+                                                visitedAttractions.remove(placeName)
+                                                isVisited = false
 
-                                        Toast.makeText(
-                                            context,
-                                            "$placeName gidilenlerden çıkarıldı.",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                                Toast.makeText(
+                                                    context,
+                                                    "$placeName gidilenlerden çıkarıldı.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                // Hata mesajı göster
+                                                Toast.makeText(
+                                                    context,
+                                                    "Hata: $message",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
                                     } else {
-                                        // Gidilenlere ekle
-                                        visitedAttractions.add(placeName)
-                                        isVisited = true
-
                                         // Backend'e ekleme işlemi
-                                        visitedPlaceViewModel.addVisitedPlace(placeId)
+                                        visitedPlaceViewModel.addVisitedPlace(placeId) { success, message ->
+                                            if (success) {
+                                                // Yerel listeye ekleme
+                                                visitedAttractions.add(placeName)
+                                                isVisited = true
 
-                                        Toast.makeText(
-                                            context,
-                                            "$placeName gidilenlere kaydedildi.",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                                Toast.makeText(
+                                                    context,
+                                                    "$placeName gidilenlere kaydedildi.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                // Hata mesajı göster
+                                                Toast.makeText(
+                                                    context,
+                                                    "Hata: $message",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
                                     }
                                 }
                             }) {
@@ -557,6 +784,7 @@ fun ExploreScreen(navController: NavController, placeViewModel: PlaceViewModel =
                                     tint = Color.White
                                 )
                             }
+
 
 
                             Column(modifier = Modifier.padding(16.dp)) {
