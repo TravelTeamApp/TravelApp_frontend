@@ -49,7 +49,6 @@ fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel)
         "Theater",
         "Library",
     )
-
     val selectedInterests = remember { mutableStateListOf<String>() }
     val backgroundImage: Painter = painterResource(id = R.drawable.hobies)
 
@@ -66,7 +65,6 @@ fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel)
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -82,7 +80,6 @@ fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel)
                         .padding(top = 32.dp)
                         .padding(bottom = 8.dp)
                 )
-
                 Text(
                     text = "İlgi alanlarınızı seçin (Birden fazla olabilir).",
                     style = MaterialTheme.typography.bodyLarge,
