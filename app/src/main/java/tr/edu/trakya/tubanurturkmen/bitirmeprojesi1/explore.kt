@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
@@ -573,20 +574,26 @@ fun ExploreScreen(
                                                 )
                                             )
                                         ) {
-                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                modifier = Modifier.padding(16.dp) // Adding padding for better spacing
+                                            ) {
+                                                // Image of the attraction
                                                 Image(
                                                     painter = painterResource(
-                                                        id = getDrawableResourceByPlaceName(
-                                                            attraction.placeName
-                                                        )
+                                                        id = getDrawableResourceByPlaceName(attraction.placeName)
                                                     ),
                                                     contentDescription = attraction.placeName,
                                                     modifier = Modifier
-                                                        .height(120.dp)
-                                                        .fillMaxWidth(),
+                                                        .height(200.dp) // Adjusting the height for better appearance
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(16.dp)), // Adding rounded corners to the image
                                                     contentScale = ContentScale.Crop
                                                 )
-                                                Spacer(modifier = Modifier.height(8.dp))
+
+                                                Spacer(modifier = Modifier.height(16.dp)) // Adding some space between image and description
+
+                                                // Attraction name
                                                 Text(
                                                     text = attraction.placeName,
                                                     style = MaterialTheme.typography.bodyLarge.copy(
@@ -594,7 +601,20 @@ fun ExploreScreen(
                                                     ),
                                                     modifier = Modifier.padding(horizontal = 8.dp)
                                                 )
+
+                                                Spacer(modifier = Modifier.height(8.dp)) // Adding space between name and description
+
+                                                // Description of the attraction
+                                                Text(
+                                                    text = attraction.description,
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                                        color = Color.Gray
+                                                    ),
+                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                )
                                             }
+
+                                        }
                                         }
                                     }
                                 }
@@ -602,7 +622,7 @@ fun ExploreScreen(
                         }
                     }
                 }
-            }}
+            }
         else{
             Column(modifier = Modifier.padding(16.dp).background(Color.White)) {
 
@@ -613,7 +633,10 @@ fun ExploreScreen(
                                 ?: R.drawable.istanbul // Varsayılan görsel
                         ),
                         contentDescription = selectedAttraction?.placeName ?: "Istanbul",
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth() // Make the image take full width
+                            .height(200.dp) // You can adjust the height as needed
+                            .clip(RoundedCornerShape(16.dp)), // Rounded corners for the image
                         contentScale = ContentScale.Crop
                     )
                     // Geri ve diğer ikon butonlar
@@ -776,4 +799,5 @@ fun ExploreScreen(
                         }
                     }
                 }
-            }}}}
+            }}
+            }}
