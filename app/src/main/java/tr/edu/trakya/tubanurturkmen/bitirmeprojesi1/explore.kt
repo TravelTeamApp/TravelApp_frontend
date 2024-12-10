@@ -602,16 +602,7 @@ fun ExploreScreen(
                                                     modifier = Modifier.padding(horizontal = 8.dp)
                                                 )
 
-                                                Spacer(modifier = Modifier.height(8.dp)) // Adding space between name and description
-
-                                                // Description of the attraction
-                                                Text(
-                                                    text = attraction.description,
-                                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                                        color = Color.Gray
-                                                    ),
-                                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                                )
+                                                Spacer(modifier = Modifier.height(2.dp))
                                             }
 
                                         }
