@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'tr.edu.trakya.tubanurturkmen.bitirmeprojesi1'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "tr.edu.trakya.tubanurturkmen.bitirmeprojesi1"

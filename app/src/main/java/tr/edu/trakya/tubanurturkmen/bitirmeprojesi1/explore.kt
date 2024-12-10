@@ -316,22 +316,23 @@ fun ExploreScreen(
     val suggestedPlaces by placeViewModel.suggestedPlaces
     val isLoading by placeViewModel.loading
     val errorMessage by placeViewModel.errorMessage
+    val searchedPlaces = places.filter { it.placeName.contains(searchQuery, ignoreCase = true) }
     fun getDrawableResourceByPlaceName(placeName: String): Int {
         return when (placeName.lowercase()) {
-            "Ayasofya Camii" -> R.drawable.ayasofya
-            "Galata Kulesi" -> R.drawable.galata
-            "Topkapı Sarayı" -> R.drawable.topkapi
-            "Dolmabahçe Sarayı" -> R.drawable.dolmabahce
-            "İstanbul Arkeoloji Müzesi" -> R.drawable.arkeoloji
-            "Emirgan Korusu" -> R.drawable.emirgan
-            "Pierre Loti Tepesi" -> R.drawable.pierre
-            "Madame Tussauds Müzesi" -> R.drawable.madame
-            "Kapalıçarşı" -> R.drawable.kapali
-            "Miniatürk" -> R.drawable.miniaturk
-            "Çamlıca Kulesi" -> R.drawable.camlica
-            "Pelit Çikolata Müzesi" -> R.drawable.cikolata
-            "Nusr-Et Steakhouse " -> R.drawable.nusret
-            "Kariye Camii (Eski Chora Kilisesi)" -> R.drawable.kariye
+            "ayasofya camii" -> R.drawable.ayasofya
+            "galata kulesi" -> R.drawable.galata
+            "topkapı sarayı" -> R.drawable.topkapi
+            "dolmabahçe sarayı" -> R.drawable.dolmabahce
+            "istanbul arkeoloji müzesi" -> R.drawable.arkeoloji
+            "emirgan korusu" -> R.drawable.emirgan
+            "pierre loti tepesi" -> R.drawable.pierre
+            "madame tussauds müzesi" -> R.drawable.madame
+            "kapalıçarşı" -> R.drawable.kapali
+            "miniatürk" -> R.drawable.miniaturk
+            "çamlıca kulesi" -> R.drawable.camlica
+            "pelit çikolata müzesi" -> R.drawable.cikolata
+            "nusr-et steakhouse " -> R.drawable.nusret
+            "kariye camii (eski chora kilisesi)" -> R.drawable.kariye
             else -> R.drawable.istanbul // Varsayılan görsel
         }
     }
@@ -415,127 +416,185 @@ fun ExploreScreen(
                                 text = "İstanbul hakkında bilgi:\nHagia Sophia, 537 yılında katedral olarak inşa edilmiş ve sonrasında cami olarak kullanılmıştır. Bugün bir müze olarak ziyaretçilerini ağırlamaktadır.",
                                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
                             )
-                        }
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            Text(
-                                text = "Suggested Attractions",
-                                style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
-                                modifier = Modifier.padding(16.dp)
-                            )
 
-                            when {
-                                suggestedPlaces.isNotEmpty() -> { // Önerilen mekanlar varsa göster
-                                    LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                        items(suggestedPlaces) { place ->
-                                            Card(
-                                                modifier = Modifier
-                                                    .width(200.dp)
-                                                    .padding(end = 16.dp)
-                                                    .clickable { selectedAttraction = place },
-                                                shape = RoundedCornerShape(12.dp),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = Color.Gray.copy(alpha = 0.3f)
+                        }
+                        if (searchQuery.isNotEmpty()) {
+                            LazyRow(modifier = Modifier.padding(16.dp)) {
+                                if (searchedPlaces.isEmpty()) {
+                                    // No results found for the search
+                                    item {
+                                        Text(
+                                            "No attractions found for this search.",
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+                                } else {
+                                    items(searchedPlaces) { attraction ->
+                                        Card(
+                                            modifier = Modifier
+                                                .width(200.dp)
+                                                .padding(8.dp)
+                                                .clickable { selectedAttraction = attraction },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color.Gray.copy(alpha = 0.3f)
+                                            )
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Image(
+                                                    painter = painterResource(id = getDrawableResourceByPlaceName(attraction.placeName)), // Fixed
+                                                    contentDescription = null,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(120.dp), // Example height
+                                                    contentScale = ContentScale.Crop
                                                 )
-                                            ) {
-                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                    Image(
-                                                        painter = painterResource(id = getDrawableResourceByPlaceName(place.placeName)),
-                                                        contentDescription = place.placeName,
-                                                        modifier = Modifier
-                                                            .height(120.dp)
-                                                            .fillMaxWidth(),
-                                                        contentScale = ContentScale.Crop
-                                                    )
-                                                    Text(
-                                                        text = place.placeName,
-                                                        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
-                                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                                    )
-                                                }
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = attraction.placeName,
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                                        color = Color.Black
+                                                    ),
+                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                )
                                             }
                                         }
                                     }
                                 }
-                                else -> { // Önerilen mekan yoksa bir mesaj göster
-                                    Text(
-                                        text = "No suggestions available",
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
-                                        modifier = Modifier.padding(16.dp)
-                                    )
-                                }
                             }
-                        }
-                        // Kategoriler için Tablar
-                        Text(
-                            text = "Top Attractions",
-                            style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
-                            modifier = Modifier.padding(16.dp)
-                        )
+                        } else if (searchQuery.isEmpty()) {
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = "Suggested Attractions",
+                                    style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
+                                    modifier = Modifier.padding(16.dp)
+                                )
 
-                        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
-                            items(categories) { category ->
-                                Button(
-                                    onClick = { selectedCategory = category },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (category == selectedCategory) Color(
-                                            0xFF2196F3
-                                        ) else Color.White,
-                                        contentColor = if (category == selectedCategory) Color.White else Color.Gray
-                                    ),
-                                    shape = RoundedCornerShape(16.dp),
-                                    modifier = Modifier.padding(end = 8.dp)
-                                ) {
-                                    Text(text = category.placeTypeName)
-                                }
-                            }
-                        }
-                        // LazyRow - Attraction items
-                        LazyRow(modifier = Modifier.padding(16.dp)) {
-                            val filteredAttractions =
-                                places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
+                                when {
+                                    suggestedPlaces.isNotEmpty() -> { // Önerilen mekanlar varsa göster
+                                        LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                            items(suggestedPlaces) { place ->
+                                                Card(
+                                                    modifier = Modifier
+                                                        .width(200.dp)
+                                                        .padding(end = 16.dp)
+                                                        .clickable { selectedAttraction = place },
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = Color.Gray.copy(alpha = 0.3f)
+                                                    )
+                                                ) {
+                                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                        Image(
+                                                            painter = painterResource(
+                                                                id = getDrawableResourceByPlaceName(
+                                                                    place.placeName
+                                                                )
+                                                            ),
+                                                            contentDescription = place.placeName,
+                                                            modifier = Modifier
+                                                                .height(120.dp)
+                                                                .fillMaxWidth(),
+                                                            contentScale = ContentScale.Crop
+                                                        )
+                                                        Text(
+                                                            text = place.placeName,
+                                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                                color = Color.Black
+                                                            ),
+                                                            modifier = Modifier.padding(horizontal = 8.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
 
-
-                            if (filteredAttractions.isEmpty()) {
-                                // Eşleşen öğe yoksa, mesaj göster
-                                item {
-                                    Text(
-                                        "No attractions found for this category.",
-                                        modifier = Modifier.padding(16.dp)
-                                    )
-                                }
-
-                            } else {
-                                items(filteredAttractions) { attraction ->
-                                    Card(
-                                        modifier = Modifier
-                                            .width(200.dp)
-                                            .padding(8.dp) // BottomNavigationBar alanı
-
-                                            .clickable { selectedAttraction = attraction },
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color.Gray.copy(
-                                                alpha = 0.3f
-                                            )
+                                    else -> { // Önerilen mekan yoksa bir mesaj göster
+                                        Text(
+                                            text = "No suggestions available",
+                                            style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                                            modifier = Modifier.padding(16.dp)
                                         )
+                                    }
+                                }
+                            }
+                            // Kategoriler için Tablar
+                            Text(
+                                text = "Top Attractions",
+                                style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
+                                modifier = Modifier.padding(16.dp)
+                            )
+
+                            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
+                                items(categories) { category ->
+                                    Button(
+                                        onClick = { selectedCategory = category },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (category == selectedCategory) Color(
+                                                0xFF2196F3
+                                            ) else Color.White,
+                                            contentColor = if (category == selectedCategory) Color.White else Color.Gray
+                                        ),
+                                        shape = RoundedCornerShape(16.dp),
+                                        modifier = Modifier.padding(end = 8.dp)
                                     ) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Image(
-                                                painter = painterResource(id = getDrawableResourceByPlaceName(attraction.placeName)),
-                                                contentDescription = attraction.placeName,
-                                                modifier = Modifier
-                                                    .height(120.dp)
-                                                    .fillMaxWidth(),
-                                                contentScale = ContentScale.Crop
+                                        Text(text = category.placeTypeName)
+                                    }
+                                }
+                            }
+                            // LazyRow - Attraction items
+                            LazyRow(modifier = Modifier.padding(16.dp)) {
+                                val filteredAttractions =
+                                    places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
+
+
+                                if (filteredAttractions.isEmpty()) {
+                                    // Eşleşen öğe yoksa, mesaj göster
+                                    item {
+                                        Text(
+                                            "No attractions found for this category.",
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+
+                                } else {
+                                    items(filteredAttractions) { attraction ->
+                                        Card(
+                                            modifier = Modifier
+                                                .width(200.dp)
+                                                .padding(8.dp) // BottomNavigationBar alanı
+
+                                                .clickable { selectedAttraction = attraction },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color.Gray.copy(
+                                                    alpha = 0.3f
+                                                )
                                             )
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Text(
-                                                text = attraction.placeName,
-                                                style = MaterialTheme.typography.bodyLarge.copy(
-                                                    color = Color.Black
-                                                ),
-                                                modifier = Modifier.padding(horizontal = 8.dp)
-                                            )
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Image(
+                                                    painter = painterResource(
+                                                        id = getDrawableResourceByPlaceName(
+                                                            attraction.placeName
+                                                        )
+                                                    ),
+                                                    contentDescription = attraction.placeName,
+                                                    modifier = Modifier
+                                                        .height(120.dp)
+                                                        .fillMaxWidth(),
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = attraction.placeName,
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                                        color = Color.Black
+                                                    ),
+                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -543,9 +602,8 @@ fun ExploreScreen(
                         }
                     }
                 }
-            }
-        }
-        else {
+            }}
+        else{
             Column(modifier = Modifier.padding(16.dp).background(Color.White)) {
 
                 Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {

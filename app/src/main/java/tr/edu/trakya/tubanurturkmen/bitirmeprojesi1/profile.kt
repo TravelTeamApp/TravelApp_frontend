@@ -303,11 +303,12 @@ fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(14.dp)
+            .padding(16.dp)
     ) {
         Text(
             text = "Mekan Türlerim",
             fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
             color = Color.Black
         )
 
@@ -330,11 +331,12 @@ fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         } else {
+            // Mekan türlerini butonumsu şekilde göster
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(placeTypes) { placeType ->
-                    PlaceTypeItem(placeType = placeType)
+                    PlaceTypeButton(placeType = placeType)
                 }
             }
         }
@@ -342,18 +344,32 @@ fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
 }
 
 @Composable
-fun PlaceTypeItem(placeType: UserPlaceTypeDto) {
-    // Burada her bir mekan türünü gösteren bir item layout'u
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(
-            text = "Mekan Türü: ${placeType.placeTypeNames.joinToString(", ")}",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
+fun PlaceTypeButton(placeType: UserPlaceTypeDto) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+
+    ) {
+        placeType.placeTypeNames.forEach { placeTypeName ->
+            Box(
+                modifier = Modifier
+                    .padding(4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.LightGray)
+                    .clickable { /* Mekan türüne tıklama aksiyonu */ }
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = placeTypeName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
+                )
+            }
+        }
     }
 }
-
-
 
 @Composable
 fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel() ) {
