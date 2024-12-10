@@ -290,15 +290,10 @@ fun ExploreScreen(
     categoryViewModel: ExploreViewModel = viewModel(),
     visitedPlaceViewModel: VisitedPlaceViewModel = viewModel(), // Eklenen ViewModel
     favoriteViewModel: FavoriteViewModel = viewModel() // Eklenen ViewModel
-
 ) {
     val places by placeViewModel.places
     val categories by categoryViewModel.categories
-
-
     val context = LocalContext.current
-
-
     // Yükleme durumu kontrolü
     if (places.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -306,14 +301,10 @@ fun ExploreScreen(
         }
         return
     }
-
     // Seçili kategori kontrolü
     var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: PlaceType(1, "Restaurant")) }
-
-
     // Yükleme işlemi devam ederken, kategoriler ve çekilen verileri gözlemle
     var selectedAttraction by remember { mutableStateOf<Place?>(null) }
-
     var favoriteAttractions by remember { mutableStateOf(mutableSetOf<String>()) }
     var isDarkMode by remember { mutableStateOf(false) }
     var visitedAttractions by remember { mutableStateOf(mutableSetOf<String>()) }
@@ -325,7 +316,25 @@ fun ExploreScreen(
     val suggestedPlaces by placeViewModel.suggestedPlaces
     val isLoading by placeViewModel.loading
     val errorMessage by placeViewModel.errorMessage
-
+    fun getDrawableResourceByPlaceName(placeName: String): Int {
+        return when (placeName.lowercase()) {
+            "Ayasofya Camii" -> R.drawable.ayasofya
+            "Galata Kulesi" -> R.drawable.galata
+            "Topkapı Sarayı" -> R.drawable.topkapi
+            "Dolmabahçe Sarayı" -> R.drawable.dolmabahce
+            "İstanbul Arkeoloji Müzesi" -> R.drawable.arkeoloji
+            "Emirgan Korusu" -> R.drawable.emirgan
+            "Pierre Loti Tepesi" -> R.drawable.pierre
+            "Madame Tussauds Müzesi" -> R.drawable.madame
+            "Kapalıçarşı" -> R.drawable.kapali
+            "Miniatürk" -> R.drawable.miniaturk
+            "Çamlıca Kulesi" -> R.drawable.camlica
+            "Pelit Çikolata Müzesi" -> R.drawable.cikolata
+            "Nusr-Et Steakhouse " -> R.drawable.nusret
+            "Kariye Camii (Eski Chora Kilisesi)" -> R.drawable.kariye
+            else -> R.drawable.istanbul // Varsayılan görsel
+        }
+    }
     LaunchedEffect(Unit) {
         placeViewModel.fetchPlacesByUserPlaceTypes()
     }
@@ -430,14 +439,13 @@ fun ExploreScreen(
                                             ) {
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                     Image(
-                                                        painter = painterResource(id = R.drawable.istanbul),
-                                                        contentDescription = "Place Image",
+                                                        painter = painterResource(id = getDrawableResourceByPlaceName(place.placeName)),
+                                                        contentDescription = place.placeName,
                                                         modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .height(120.dp),
+                                                            .height(120.dp)
+                                                            .fillMaxWidth(),
                                                         contentScale = ContentScale.Crop
                                                     )
-
                                                     Text(
                                                         text = place.placeName,
                                                         style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
@@ -448,7 +456,6 @@ fun ExploreScreen(
                                         }
                                     }
                                 }
-
                                 else -> { // Önerilen mekan yoksa bir mesaj göster
                                     Text(
                                         text = "No suggestions available",
@@ -458,11 +465,6 @@ fun ExploreScreen(
                                 }
                             }
                         }
-
-
-
-
-
                         // Kategoriler için Tablar
                         Text(
                             text = "Top Attractions",
@@ -487,8 +489,6 @@ fun ExploreScreen(
                                 }
                             }
                         }
-
-
                         // LazyRow - Attraction items
                         LazyRow(modifier = Modifier.padding(16.dp)) {
                             val filteredAttractions =
@@ -521,9 +521,11 @@ fun ExploreScreen(
                                     ) {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             Image(
-                                                painter = painterResource(id = R.drawable.istanbul),
-                                                contentDescription = "Istanbul",
-                                                modifier = Modifier.fillMaxSize(),
+                                                painter = painterResource(id = getDrawableResourceByPlaceName(attraction.placeName)),
+                                                contentDescription = attraction.placeName,
+                                                modifier = Modifier
+                                                    .height(120.dp)
+                                                    .fillMaxWidth(),
                                                 contentScale = ContentScale.Crop
                                             )
                                             Spacer(modifier = Modifier.height(8.dp))
@@ -534,8 +536,6 @@ fun ExploreScreen(
                                                 ),
                                                 modifier = Modifier.padding(horizontal = 8.dp)
                                             )
-
-
                                         }
                                     }
                                 }
@@ -544,16 +544,17 @@ fun ExploreScreen(
                     }
                 }
             }
-
-
         }
         else {
             Column(modifier = Modifier.padding(16.dp).background(Color.White)) {
 
                 Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
                     Image(
-                        painter = painterResource(id = R.drawable.istanbul),
-                        contentDescription = "Istanbul",
+                        painter = painterResource(
+                            id = selectedAttraction?.let { getDrawableResourceByPlaceName(it.placeName) }
+                                ?: R.drawable.istanbul // Varsayılan görsel
+                        ),
+                        contentDescription = selectedAttraction?.placeName ?: "Istanbul",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -582,22 +583,17 @@ fun ExploreScreen(
                                 tint = Color.White
                             )
                         }
-
                         // Favorilere Ekle ve Gidilenlere Kaydet İkonları
                         Row {
                             // Favori İkonu
-                            // Favori İkonu
                             var isFavorite by remember { mutableStateOf(false) }
-
                             LaunchedEffect(selectedAttraction) {
                                 isFavorite = selectedAttraction?.placeName in favoriteAttractions
                             }
-
                             IconButton(onClick = {
                                 selectedAttraction?.let { attraction ->
                                     val placeName = attraction.placeName
                                     val placeId = attraction.placeId // `placeId` mevcutsa backend ile işlem yapabilirsiniz.
-
                                     if (favoriteAttractions.contains(placeName)) {
                                         // Backend'den favoriden çıkarma işlemi
                                         favoriteViewModel.deleteFavorite(placeId) { success, message ->
@@ -610,7 +606,6 @@ fun ExploreScreen(
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
-                                                // Hata mesajı göster
                                                 Toast.makeText(
                                                     context,
                                                     "Hata: $message",
@@ -630,7 +625,6 @@ fun ExploreScreen(
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
-                                                // Hata mesajı göster
                                                 Toast.makeText(
                                                     context,
                                                     "Hata: $message",
@@ -649,15 +643,11 @@ fun ExploreScreen(
                                     tint = Color.White
                                 )
                             }
-
-
                             // Gidilenler İkonu
                             var isVisited by remember { mutableStateOf(false) }
-
                             LaunchedEffect(selectedAttraction) {
                                 isVisited = selectedAttraction?.placeName in visitedAttractions
                             }
-
                             IconButton(onClick = {
                                 selectedAttraction?.let { attraction ->
                                     val placeName = attraction.placeName
@@ -677,7 +667,6 @@ fun ExploreScreen(
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
-                                                // Hata mesajı göster
                                                 Toast.makeText(
                                                     context,
                                                     "Hata: $message",
