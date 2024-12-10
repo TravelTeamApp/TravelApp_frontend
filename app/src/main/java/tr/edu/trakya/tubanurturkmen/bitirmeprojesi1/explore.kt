@@ -33,8 +33,6 @@ import androidx.navigation.compose.rememberNavController
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-
-
 data class Place(
     val placeId: Int,
     val placeName: String,
@@ -44,35 +42,27 @@ data class Place(
     val placeType: PlaceType,
     val comments: List<Comment>
 )
-
 // Data model
 data class PlaceType(
     val placeTypeId: Int,
     val placeTypeName: String
 )
-
 data class Comment(
     val commentId: Int,
     val text: String,
     val createdBy: String,
     val createdOn: String
 )
-
 // DTO for creating a comment
 data class CreateCommentDto(
     val text: String
 )
-
-
 class PlaceViewModel : ViewModel() {
-
     // State'ler: List of places, loading state, and error message
     private val _places = mutableStateOf<List<Place>>(emptyList())
     val places: State<List<Place>> get() = _places
-
     private val _loading = mutableStateOf(false)
     val loading: State<Boolean> get() = _loading
-
     private val _errorMessage = mutableStateOf<String?>(null)
     val errorMessage: State<String?> get() = _errorMessage
     private val _suggestedPlaces = mutableStateOf<List<Place>>(emptyList())
@@ -80,19 +70,15 @@ class PlaceViewModel : ViewModel() {
     init {
         fetchPlaces()
     }
-
     private fun fetchPlaces() {
         _loading.value = true  // API çağrısı başladığında loading state'i true
         _errorMessage.value = null  // Hata mesajını sıfırla
-
         RetrofitClient.apiService.getAllPlaces().enqueue(object : Callback<List<Place>> {
             override fun onResponse(call: Call<List<Place>>, response: Response<List<Place>>) {
                 _loading.value = false  // API yanıtı alındığında loading state'i false
-
                 if (response.isSuccessful) {
                     response.body()?.let { placesList ->
                         _places.value = placesList
-
                         // Mekanları log'la
                         Log.d("PlaceViewModel", "Places: ${placesList.joinToString { it.placeName }}")
                     }
@@ -102,7 +88,6 @@ class PlaceViewModel : ViewModel() {
                     Log.e("API Error", "Error: ${response.code()} - ${response.message()}")
                 }
             }
-
             override fun onFailure(call: Call<List<Place>>, t: Throwable) {
                 _loading.value = false  // Hata durumunda loading state'i false
                 _errorMessage.value = "Network Error: ${t.message}"
@@ -110,7 +95,6 @@ class PlaceViewModel : ViewModel() {
             }
         })
     }
-
     fun getPlaceTypesByUserId(callback: (List<UserPlaceTypeDto>?) -> Unit) {
         RetrofitClient.apiService.getPlaceTypesByUserId().enqueue(object : Callback<List<UserPlaceTypeDto>> {
             override fun onResponse(
@@ -123,18 +107,14 @@ class PlaceViewModel : ViewModel() {
                     callback(null) // Hata durumunda null dönüyoruz
                 }
             }
-
             override fun onFailure(call: Call<List<UserPlaceTypeDto>>, t: Throwable) {
                 callback(null) // Hata durumunda null dönüyoruz
             }
         })
     }
-
-
     fun fetchPlacesByUserPlaceTypes() {
         _loading.value = true
         _errorMessage.value = null
-
         RetrofitClient.apiService.getPlacesByUserPlaceTypes().enqueue(object : Callback<List<Place>> {
             override fun onResponse(call: Call<List<Place>>, response: Response<List<Place>>) {
                 _loading.value = false
@@ -149,7 +129,6 @@ class PlaceViewModel : ViewModel() {
                     Log.e("API Error", "Error: ${response.code()} - ${response.message()}")
                 }
             }
-
             override fun onFailure(call: Call<List<Place>>, t: Throwable) {
                 _loading.value = false
                 _errorMessage.value = "Network Error: ${t.message}"
@@ -158,23 +137,18 @@ class PlaceViewModel : ViewModel() {
         })
     }
 }
-
-
 class ExploreViewModel : ViewModel() {
     private val _categories = mutableStateOf<List<PlaceType>>(emptyList())
     val categories: State<List<PlaceType>> = _categories
-
     init {
         fetchCategories()
     }
-
     private fun fetchCategories() {
         RetrofitClient.apiService.getAllPlaceTypes().enqueue(object : Callback<List<PlaceType>> {
             override fun onResponse(call: Call<List<PlaceType>>, response: Response<List<PlaceType>>) {
                 if (response.isSuccessful) {
                     response.body()?.let { placeTypes ->
                         _categories.value = placeTypes
-
                         // categories listesini log yazdır
                         Log.d("ExploreViewModel", "Categories: ${placeTypes.joinToString { it.placeTypeName }}")
                     }
@@ -182,17 +156,13 @@ class ExploreViewModel : ViewModel() {
                     android.util.Log.e("API Error", "Error: ${response.code()} - ${response.message()}")
                 }
             }
-
             override fun onFailure(call: Call<List<PlaceType>>, t: Throwable) {
                 android.util.Log.e("Network Error", "Error: ${t.message}")
             }
         })
     }
-
 }
-
 class VisitedPlaceViewModel() : ViewModel() {
-
     // Ziyaret edilen yer ekleme
     fun addVisitedPlace(placeId: Int, callback: (Boolean, String) -> Unit) {
         RetrofitClient.apiService.addVisitedPlace(placeId).enqueue(object : Callback<Void> {
@@ -203,13 +173,11 @@ class VisitedPlaceViewModel() : ViewModel() {
                     callback(false, "Hata: ${response.code()} - ${response.message()}")
                 }
             }
-
             override fun onFailure(call: Call<Void>, t: Throwable) {
                 callback(false, "İstek başarısız: ${t.message}")
             }
         })
     }
-
     // Ziyaret edilen yer silme
     fun deleteVisitedPlace(placeId: Int, callback: (Boolean, String) -> Unit) {
         RetrofitClient.apiService.deleteVisitedPlace(placeId).enqueue(object : Callback<Void> {
@@ -220,12 +188,9 @@ class VisitedPlaceViewModel() : ViewModel() {
                     callback(false, "Hata: ${response.code()} - ${response.message()}")
                 }
             }
-
             override fun onFailure(call: Call<Void>, t: Throwable) {
                 callback(false, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
+            } }) }
     fun fetchUserVisitedPlaces(callback: (List<VisitedPlaceDto>?, String?) -> Unit) {
         RetrofitClient.apiService.getUserVisitedPlaces().enqueue(object : Callback<List<VisitedPlaceDto>> {
             override fun onResponse(
@@ -238,16 +203,10 @@ class VisitedPlaceViewModel() : ViewModel() {
                     callback(null, "Hata: ${response.code()} - ${response.message()}")
                 }
             }
-
             override fun onFailure(call: Call<List<VisitedPlaceDto>>, t: Throwable) {
                 callback(null, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-}
-
+            } }) } }
 class FavoriteViewModel() : ViewModel() {
-
     // Favori ekleme metodu
     fun addFavorite(placeId: Int, callback: (Boolean, String) -> Unit) {
         RetrofitClient.apiService.addFavorite(placeId).enqueue(object : Callback<Void> {
@@ -264,10 +223,7 @@ class FavoriteViewModel() : ViewModel() {
             override fun onFailure(call: Call<Void>, t: Throwable) {
                 // İstek başarısız oldu
                 callback(false, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-
+            } }) }
     // Favori silme metodu
     fun deleteFavorite(placeId: Int, callback: (Boolean, String) -> Unit) {
         RetrofitClient.apiService.deleteFavorite(placeId).enqueue(object : Callback<Void> {
@@ -278,15 +234,11 @@ class FavoriteViewModel() : ViewModel() {
                 } else {
                     // Hata durumu
                     callback(false, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
+                } }
             override fun onFailure(call: Call<Void>, t: Throwable) {
                 // İstek başarısız oldu
                 callback(false, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
+            } }) }
     fun fetchUserFavorites(callback: (List<FavoriteDto>?, String?) -> Unit) {
         RetrofitClient.apiService.getUserFavorites().enqueue(object : Callback<List<FavoriteDto>> {
             override fun onResponse(
@@ -296,20 +248,11 @@ class FavoriteViewModel() : ViewModel() {
                 if (response.isSuccessful) {
                     callback(response.body(), null) // Favoriler başarıyla alındı
                 } else {
-                    callback(null, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
+                    callback(null, "Hata: ${response.code()} - ${response.message()}") } }
             override fun onFailure(call: Call<List<FavoriteDto>>, t: Throwable) {
                 callback(null, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-
-}
-
+            } }) } }
 class CommentViewModel() : ViewModel() {
-
     fun fetchUserComments(callback: (List<CommentDto>?, String?) -> Unit) {
         RetrofitClient.apiService.getUserComments().enqueue(object : Callback<List<CommentDto>> {
             override fun onResponse(
@@ -319,16 +262,10 @@ class CommentViewModel() : ViewModel() {
                 if (response.isSuccessful) {
                     callback(response.body(), null)
                 } else {
-                    callback(null, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
+                    callback(null, "Hata: ${response.code()} - ${response.message()}") } }
             override fun onFailure(call: Call<List<CommentDto>>, t: Throwable) {
                 callback(null, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-
+            } }) }
     fun createComment(placeId: Int, content: String, callback: (CommentDto?, String?) -> Unit) {
         val createCommentRequest = CreateCommentDto(content)
         RetrofitClient.apiService.createComment(placeId, createCommentRequest).enqueue(object : Callback<CommentDto> {
@@ -339,17 +276,13 @@ class CommentViewModel() : ViewModel() {
                 if (response.isSuccessful) {
                     callback(response.body(), null)
                 } else {
-                    callback(null, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
+                    callback(null, "Hata: ${response.code()} - ${response.message()}") } }
             override fun onFailure(call: Call<CommentDto>, t: Throwable) {
                 callback(null, "İstek başarısız: ${t.message}")
             }
         })
     }
 }
-
 @Composable
 fun ExploreScreen(
     navController: NavController,
@@ -759,14 +692,12 @@ fun ExploreScreen(
                                                 // Yerel listeye ekleme
                                                 visitedAttractions.add(placeName)
                                                 isVisited = true
-
                                                 Toast.makeText(
                                                     context,
                                                     "$placeName gidilenlere kaydedildi.",
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
-                                                // Hata mesajı göster
                                                 Toast.makeText(
                                                     context,
                                                     "Hata: $message",
@@ -785,9 +716,6 @@ fun ExploreScreen(
                                     tint = Color.White
                                 )
                             }
-
-
-
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
                                     text = selectedAttraction!!.placeName,
@@ -802,4 +730,3 @@ fun ExploreScreen(
                     }
                 }
             }}}}
-
