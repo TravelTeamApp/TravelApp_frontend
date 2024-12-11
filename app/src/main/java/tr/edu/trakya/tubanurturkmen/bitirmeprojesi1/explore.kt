@@ -150,7 +150,7 @@ class ExploreViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     response.body()?.let { placeTypes ->
                         _categories.value = placeTypes
-                        // categories listesini log yazdır
+
                         Log.d("ExploreViewModel", "Categories: ${placeTypes.joinToString { it.placeTypeName }}")
                     }
                 } else {
@@ -295,7 +295,6 @@ fun ExploreScreen(
     val places by placeViewModel.places
     val categories by categoryViewModel.categories
     val context = LocalContext.current
-    // Yükleme durumu kontrolü
     if (places.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -304,7 +303,6 @@ fun ExploreScreen(
     }
     // Seçili kategori kontrolü
     var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: PlaceType(1, "Restaurant")) }
-    // Yükleme işlemi devam ederken, kategoriler ve çekilen verileri gözlemle
     var selectedAttraction by remember { mutableStateOf<Place?>(null) }
     var favoriteAttractions by remember { mutableStateOf(mutableSetOf<String>()) }
     var isDarkMode by remember { mutableStateOf(false) }
@@ -414,7 +412,7 @@ fun ExploreScreen(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                text = "İstanbul hakkında bilgi:\nHagia Sophia, 537 yılında katedral olarak inşa edilmiş ve sonrasında cami olarak kullanılmıştır. Bugün bir müze olarak ziyaretçilerini ağırlamaktadır.",
+                                text = "Hagia Sophia, 537 yılında katedral olarak inşa edilmiş ve sonrasında cami olarak kullanılmıştır. Bugün bir müze olarak ziyaretçilerini ağırlamaktadır.",
                                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
                             )
 
@@ -592,8 +590,6 @@ fun ExploreScreen(
                                                 )
 
                                                 Spacer(modifier = Modifier.height(16.dp)) // Adding some space between image and description
-
-                                                // Attraction name
                                                 Text(
                                                     text = attraction.placeName,
                                                     style = MaterialTheme.typography.bodyLarge.copy(

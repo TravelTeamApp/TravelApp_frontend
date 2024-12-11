@@ -8,10 +8,14 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,8 +28,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -159,7 +165,7 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
         TabItem("Rozetler", Icons.Default.Star),
         TabItem("Favoriler", Icons.Default.Favorite),
         TabItem("Gidilenler", Icons.Default.Place),
-        TabItem("Hobi", Icons.Default.SpatialTracking)
+
 
     )
 
@@ -203,7 +209,6 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
             1 -> BadgesSection(score = userProfile.score)
             2 -> FavoritesSection()
             3 -> VisitedPlacesSection()
-            4 -> PlaceTypesSection()
         }
     }
 }
@@ -213,46 +218,54 @@ data class TabItem(val title: String, val icon: ImageVector)
 @SuppressLint("SuspiciousIndentation")
 @Composable
 fun TopSection(userName: String, score: Int) {
-    val firstLetter = userName?.firstOrNull()?.toUpperCase() ?: ""
-       Box(
+    val firstLetter = userName.firstOrNull()?.toUpperCase() ?: ""
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(280.dp)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF64B5F6), Color(0xFF1E88E5))
-                ),
-                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
-            )
     ) {
+        // Arka plan görseli
+        Image(
+            painter = painterResource(id = R.drawable.profile), // Drawable görsel
+            contentDescription = "Profile Background",
+            contentScale = ContentScale.Crop, // Görselin boyutlandırılması
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)) // Yuvarlak köşe
+        )
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
-        ) { Box(
+        ) {
+            Box(
                 modifier = Modifier
                     .size(110.dp)
                     .clip(CircleShape)
                     .background(Color.White)
-                ) {
-            Text(
-                firstLetter.toString(),
-                fontSize = 48.sp, // Harfin büyüklüğü
-                color = Color(0xFF1E88E5), // Harf rengi
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
+            ) {
+                Text(
+                    firstLetter.toString(),
+                    fontSize = 48.sp, // Harfin büyüklüğü
+                    color = Color(0xFF1E88E5), // Harf rengi
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "$userName",
                 fontSize = 22.sp,
                 fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight.Bold, // Kalın yazı stili
                 color = Color.Black
             )
+
             Text(
                 text = "Traveler",
                 fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
+            PlaceTypesSection()
         }
 
         Row(
@@ -265,12 +278,14 @@ fun TopSection(userName: String, score: Int) {
             Text(
                 text = "Badges",
                 fontSize = 20.sp,
-                color = Color.Black
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
             Text(
                 text = "Score $score",
                 fontSize = 20.sp,
-                color = Color.Black
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
         }
     }
@@ -305,14 +320,6 @@ fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "Mekan Türlerim",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
 
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -331,41 +338,31 @@ fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         } else {
-            // Mekan türlerini butonumsu şekilde göster
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(placeTypes) { placeType ->
-                    PlaceTypeButton(placeType = placeType)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PlaceTypeButton(placeType: UserPlaceTypeDto) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-
-    ) {
-        placeType.placeTypeNames.forEach { placeTypeName ->
-            Box(
+            Row(
                 modifier = Modifier
-                    .padding(4.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.LightGray)
-                    .clickable { /* Mekan türüne tıklama aksiyonu */ }
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()) // Tüm butonları yatay kaydırılabilir yap
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp) // Butonlar arasında boşluk
             ) {
-                Text(
-                    text = placeTypeName,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black
-                )
+                placeTypes.forEach { placeType ->
+                    placeType.placeTypeNames.forEach { placeTypeName ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(1.dp, Color.White, RoundedCornerShape(12.dp))
+                                .background(Color.White)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = placeTypeName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -432,8 +429,6 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel() ) {
         }
     }
 }
-
-
 
 fun formatDateTime(isoDate: String): String {
     return try {
