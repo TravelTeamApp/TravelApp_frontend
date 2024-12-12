@@ -615,9 +615,17 @@ fun ExploreScreen(
 
         }
         else {
-            Column(modifier = Modifier.padding(16.dp).background(Color.White)) {
-
-                Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .background(Color.White)
+            ) {
+                // Resim Bölümü
+                Box(
+                    modifier = Modifier
+                        .height(200.dp)
+                        .fillMaxWidth()
+                ) {
                     Image(
                         painter = painterResource(id = R.drawable.istanbul),
                         contentDescription = "Istanbul",
@@ -653,7 +661,6 @@ fun ExploreScreen(
                         // Favorilere Ekle ve Gidilenlere Kaydet İkonları
                         Row {
                             // Favori İkonu
-                            // Favori İkonu
                             var isFavorite by remember { mutableStateOf(false) }
 
                             LaunchedEffect(selectedAttraction) {
@@ -663,10 +670,9 @@ fun ExploreScreen(
                             IconButton(onClick = {
                                 selectedAttraction?.let { attraction ->
                                     val placeName = attraction.placeName
-                                    val placeId = attraction.placeId // `placeId` mevcutsa backend ile işlem yapabilirsiniz.
+                                    val placeId = attraction.placeId
 
                                     if (favoriteAttractions.contains(placeName)) {
-                                        // Backend'den favoriden çıkarma işlemi
                                         favoriteViewModel.deleteFavorite(placeId) { success, message ->
                                             if (success) {
                                                 favoriteAttractions.remove(placeName)
@@ -677,7 +683,6 @@ fun ExploreScreen(
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
-                                                // Hata mesajı göster
                                                 Toast.makeText(
                                                     context,
                                                     "Hata: $message",
@@ -686,7 +691,6 @@ fun ExploreScreen(
                                             }
                                         }
                                     } else {
-                                        // Backend'e favori ekleme işlemi
                                         favoriteViewModel.addFavorite(placeId) { success, message ->
                                             if (success) {
                                                 favoriteAttractions.add(placeName)
@@ -697,7 +701,6 @@ fun ExploreScreen(
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
-                                                // Hata mesajı göster
                                                 Toast.makeText(
                                                     context,
                                                     "Hata: $message",
@@ -717,7 +720,6 @@ fun ExploreScreen(
                                 )
                             }
 
-
                             // Gidilenler İkonu
                             var isVisited by remember { mutableStateOf(false) }
 
@@ -728,13 +730,11 @@ fun ExploreScreen(
                             IconButton(onClick = {
                                 selectedAttraction?.let { attraction ->
                                     val placeName = attraction.placeName
-                                    val placeId = attraction.placeId // Assuming `placeId` exists in the `selectedAttraction`
+                                    val placeId = attraction.placeId
 
                                     if (visitedAttractions.contains(placeName)) {
-                                        // Backend'de kaldırma işlemi
                                         visitedPlaceViewModel.deleteVisitedPlace(placeId) { success, message ->
                                             if (success) {
-                                                // Yerel listeden çıkarma
                                                 visitedAttractions.remove(placeName)
                                                 isVisited = false
 
@@ -744,7 +744,6 @@ fun ExploreScreen(
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
-                                                // Hata mesajı göster
                                                 Toast.makeText(
                                                     context,
                                                     "Hata: $message",
@@ -753,10 +752,8 @@ fun ExploreScreen(
                                             }
                                         }
                                     } else {
-                                        // Backend'e ekleme işlemi
                                         visitedPlaceViewModel.addVisitedPlace(placeId) { success, message ->
                                             if (success) {
-                                                // Yerel listeye ekleme
                                                 visitedAttractions.add(placeName)
                                                 isVisited = true
 
@@ -766,7 +763,6 @@ fun ExploreScreen(
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
-                                                // Hata mesajı göster
                                                 Toast.makeText(
                                                     context,
                                                     "Hata: $message",
@@ -785,21 +781,22 @@ fun ExploreScreen(
                                     tint = Color.White
                                 )
                             }
-
-
-
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = selectedAttraction!!.placeName,
-                                    style = MaterialTheme.typography.headlineMedium
-                                )
-                                Text(
-                                    text = selectedAttraction!!.description,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                            }
                         }
                     }
                 }
-            }}}}
+
+                // Açıklama ve Metin Bölümü (Resimden Sonra)
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = selectedAttraction?.placeName.orEmpty(),
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    Text(
+                        text = selectedAttraction?.description.orEmpty(),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        }
+}}
 
