@@ -14,6 +14,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.layout.ContentScale
@@ -326,7 +328,6 @@ fun ExploreScreen(
             "emirgan korusu" -> R.drawable.emirgan
             "pierre loti tepesi" -> R.drawable.pierre
             "madame tussauds müzesi" -> R.drawable.madame
-            "kapalıçarşı" -> R.drawable.kapali
             "miniatürk" -> R.drawable.miniaturk
             "çamlıca kulesi" -> R.drawable.camlica
             "pelit çikolata müzesi" -> R.drawable.cikolata
@@ -795,6 +796,69 @@ fun ExploreScreen(
                         text = selectedAttraction?.description.orEmpty(),
                         style = MaterialTheme.typography.bodyLarge
                     )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp) // Add space between the icon and text
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.place),
+                            contentDescription = "Gidilenlere Kaydet",
+                            tint = Color.Gray
+                        )
+                        Text(
+                            text = selectedAttraction?.placeAddress.orEmpty(),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+
+
+                }
+                var rating by remember { mutableStateOf(0f) } // Store rating value
+                var comment by remember { mutableStateOf("") } // Store the comment text
+
+                // Rating Bar
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    repeat(5) { index ->
+                        IconButton(onClick = { rating = (index + 1).toFloat() }) {
+                            Icon(
+                                imageVector = if (index < rating) Icons.Default.Star else Icons.Default.StarBorder,
+                                contentDescription = "Rating Star",
+                                tint = if (index < rating) Color.Yellow else Color.Gray
+                            )
+                        }
+                    }
+                }
+
+                // TextField for the review comment
+                TextField(
+                    value = comment,
+                    onValueChange = { comment = it },
+                    label = { Text("Your comment") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = false,
+                    maxLines = 5
+                )
+
+                // Submit Button
+                Button(
+                    onClick = {
+                        // Handle review submission directly here
+                        selectedAttraction?.let { attraction ->
+                            val placeId = attraction.placeId // Use placeId for backend interaction
+
+                            // Simulate review submission logic (e.g., call backend API)
+                            // Replace this with your backend call or local database update logic
+                            val success = true  // Assume the submission is successful for now
+                            val message = if (success) "Review submitted successfully" else "Failed to submit review"
+
+                            // Show Toast based on success or failure
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Submit Review")
                 }
             }
-        }}}
+            }
+        }}
