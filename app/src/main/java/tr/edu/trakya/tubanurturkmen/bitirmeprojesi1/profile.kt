@@ -67,7 +67,8 @@ data class CommentDto(
     val text: String?,
     val createdOn: String,
     val createdBy: String?,
-    val userId: Int
+    val userId: Int,
+    val rate:Int
 )
 
 data class VisitedPlaceDto(
@@ -478,6 +479,20 @@ fun UserCommentItem(comment: CommentDto) {
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 2.dp)
             )
+            // Rating (Star icons)
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                repeat(5) { index ->
+                    Icon(
+                        imageVector = if (index < comment.rate) Icons.Default.Star else Icons.Default.StarBorder,
+                        contentDescription = "Rating Star",
+                        tint = if (index < comment.rate) Color.Yellow else Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }}
 
         }
     }

@@ -50,15 +50,18 @@ data class PlaceType(
     val placeTypeId: Int,
     val placeTypeName: String
 )
+
 data class Comment(
     val commentId: Int,
     val text: String,
+    val rate: Int,
     val createdBy: String,
     val createdOn: String
 )
 // DTO for creating a comment
 data class CreateCommentDto(
-    val text: String
+    val text: String,
+    val rate: Int
 )
 class PlaceViewModel : ViewModel() {
     // State'ler: List of places, loading state, and error message
@@ -269,8 +272,9 @@ class CommentViewModel() : ViewModel() {
             override fun onFailure(call: Call<List<CommentDto>>, t: Throwable) {
                 callback(null, "İstek başarısız: ${t.message}")
             } }) }
-    fun createComment(placeId: Int, content: String, callback: (CommentDto?, String?) -> Unit) {
-        val createCommentRequest = CreateCommentDto(content)
+    // Create a new comment
+    fun createComment(placeId: Int, content: String, rate: Int, callback: (CommentDto?, String?) -> Unit) {
+        val createCommentRequest = CreateCommentDto(content, rate)
         RetrofitClient.apiService.createComment(placeId, createCommentRequest).enqueue(object : Callback<CommentDto> {
             override fun onResponse(
                 call: Call<CommentDto>,
@@ -279,7 +283,10 @@ class CommentViewModel() : ViewModel() {
                 if (response.isSuccessful) {
                     callback(response.body(), null)
                 } else {
-                    callback(null, "Hata: ${response.code()} - ${response.message()}") } }
+                    callback(null, "Hata: ${response.code()} - ${response.message()}")
+                }
+            }
+
             override fun onFailure(call: Call<CommentDto>, t: Throwable) {
                 callback(null, "İstek başarısız: ${t.message}")
             }
@@ -292,7 +299,8 @@ fun ExploreScreen(
     placeViewModel: PlaceViewModel = viewModel(),
     categoryViewModel: ExploreViewModel = viewModel(),
     visitedPlaceViewModel: VisitedPlaceViewModel = viewModel(), // Eklenen ViewModel
-    favoriteViewModel: FavoriteViewModel = viewModel() // Eklenen ViewModel
+    favoriteViewModel: FavoriteViewModel = viewModel(), // Eklenen ViewModel
+    commentViewModel: CommentViewModel = viewModel()
 ) {
     val places by placeViewModel.places
     val categories by categoryViewModel.categories
@@ -846,13 +854,18 @@ fun ExploreScreen(
                         selectedAttraction?.let { attraction ->
                             val placeId = attraction.placeId // Use placeId for backend interaction
 
-                            // Simulate review submission logic (e.g., call backend API)
-                            // Replace this with your backend call or local database update logic
-                            val success = true  // Assume the submission is successful for now
-                            val message = if (success) "Review submitted successfully" else "Failed to submit review"
-
-                            // Show Toast based on success or failure
-                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            // Call the ViewModel's createComment method
+                            commentViewModel.createComment(
+                                placeId = placeId,
+                                content = comment,
+                                rate = rating.toInt() // Pass the rating as an integer
+                            ) { createdComment, errorMessage ->
+                                if (createdComment != null) {
+                                    Toast.makeText(context, "Review submitted successfully", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to submit review: $errorMessage", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
