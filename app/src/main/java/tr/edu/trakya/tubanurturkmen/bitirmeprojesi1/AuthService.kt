@@ -35,17 +35,12 @@ interface AuthService {
 
     // Tüm mekan türlerini getiren metod
     @GET("UserPlaceType/all")  // Backend URL'ini buraya ekleyin
-    fun getAllPlaceTypes(): Call<List<PlaceType>>
+    fun getAllPlaceTypes(): Call<List<PlaceTypeDto>>
 
     @GET("place")  // Bu URL backend'deki endpoint'e bağlıdır, örneğin: http://localhost:5000/api/places/all
-    fun getAllPlaces(): Call<List<Place>> // Tüm mekanları bir liste olarak alacak
+    fun getAllPlaces(): Call<List<PlaceDto>> // Tüm mekanları bir liste olarak alacak
 
-    // Yorum eklemek için
-    @POST("place/{placeId}/comments")
-    fun addComment(
-        @Path("placeId") placeId: Int,
-        @Body commentDto: CreateCommentDto
-    ): Call<Comment>
+
     @GET("visitedPlace")
     fun getUserVisitedPlaces(): Call<List<VisitedPlaceDto>>
 
@@ -81,6 +76,12 @@ interface AuthService {
     @GET("comment/users")
     fun getUserComments(): Call<List<CommentDto>>
 
+    // Kullanıcının yorumlarını getir
+    // Belirli bir mekana ait yorumları getir
+    @GET("comment/place/{placeId}")
+    fun getCommentsByPlaceId(@Path("placeId") placeId: Int): Call<List<CommentDto>>
+
+
     // Yeni bir yorum oluştur
     @POST("comment/{placeId}")
     fun createComment(
@@ -93,5 +94,5 @@ interface AuthService {
     fun getPlaceTypesByUserId(): Call<List<UserPlaceTypeDto>>
 
     @GET("Place/userplace")  // BASE_URL'in sonuna eklenir
-    fun getPlacesByUserPlaceTypes(): Call<List<Place>>
+    fun getPlacesByUserPlaceTypes(): Call<List<PlaceDto>>
 }

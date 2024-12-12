@@ -44,58 +44,8 @@ import androidx.navigation.compose.rememberNavController
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-data class FavoriteDto(
-    val favoriteId: Int,
-    val placeId: Int,
-    val placeName: String?,
-    val placeAddress: String?,
-    val description: String?,
-    val rating: Int?,
-    val placeType: PlaceTypeDto?, // Her mekanın türü (opsiyonel)
-    val comments: List<CommentDto>?, // Yorumlar
-    val userName: String? // Kullanıcı adı
-)
 
-data class PlaceTypeDto(
-    val id: Int,
-    val name: String
-)
 
-data class CommentDto(
-    val commentId: Int,
-    val placeId: Int,
-    val text: String?,
-    val createdOn: String,
-    val createdBy: String?,
-    val userId: Int,
-    val rate:Int
-)
-
-data class VisitedPlaceDto(
-    val visitedPlaceId: Int,
-    val placeId: Int,
-    val placeName: String?,
-    val placeAddress: String?,
-    val description: String?,
-    val rating: Int?,
-    val placeType: PlaceTypeDto?, // Mekan türü
-    val comments: List<CommentDto>?, // Mekan yorumları
-    val userName: String? // Ziyaret eden kullanıcı
-)
-
-data class PlaceDto(
-    val placeId: Int,
-    val placeName: String,
-    val placeAddress: String,
-    val description: String?,
-    val rating: Int?,
-    val placeType: PlaceTypeDto?,
-    val comments: List<CommentDto>?
-)
-
-data class UserPlaceTypeDto(
-    val placeTypeNames: List<String> // Mekan türü adlarını içeren liste
-)
 @Composable
 fun ProfileScreen(navController: NavController,sharedViewModel: SharedViewModel) {
     val selectedInterests by sharedViewModel.selectedInterests.collectAsState()
@@ -468,6 +418,12 @@ fun UserCommentItem(comment: CommentDto) {
             // Yazan kişinin bilgisi
             Text(
                 text = "Yazan: ${comment.createdBy ?: "Anonim"}",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            Text(
+                text = "Mekan: ${comment.placeName ?: "Anonim"}",
                 fontSize = 14.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 4.dp)

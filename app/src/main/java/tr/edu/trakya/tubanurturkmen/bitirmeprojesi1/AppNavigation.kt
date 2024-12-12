@@ -20,7 +20,6 @@ import androidx.navigation.compose.rememberNavController
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ExploreScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.LoginScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.RegisterScreen
-import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HomeScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ForgotPasswordScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HobiesScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ProfileScreen
@@ -72,10 +71,6 @@ fun AppNavigation() {
                 currentRoute.value = "register"
                 RegisterScreen(navController)
             }
-            composable("home") {
-                currentRoute.value = "home"
-                HomeScreen(navController)
-            }
             composable("forgotPassword") {
                 currentRoute.value = "forgotPassword"
                 ForgotPasswordScreen(navController)
@@ -95,12 +90,11 @@ fun AppNavigation() {
             NavigationBar(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(4.dp)
-                    .height(52.dp),
-                MaterialTheme.colorScheme.surface, // BottomNavigation yüksekliğini küçültüyoruz
-
-            ) {
+                    .padding(2.dp)
+                    .height(72.dp)
+                    .align(Alignment.BottomCenter),
+                containerColor = MaterialTheme.colorScheme.surface
+            )  {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -112,7 +106,7 @@ fun AppNavigation() {
                             Icon(
                                 imageVector = Icons.Filled.Person,
                                 contentDescription = "Profile",
-                                modifier = Modifier.size(46.dp) // Varsayılan boyut
+                                modifier = Modifier.size(40.dp) // Varsayılan boyut
                             )
                         },
                         selected = currentRoute.value == "profile",
@@ -128,7 +122,7 @@ fun AppNavigation() {
                             Icon(
                                 imageVector = Icons.Filled.Explore,
                                 contentDescription = "Explore",
-                                modifier = Modifier.size(46.dp) // Varsayılan boyut
+                                modifier = Modifier.size(40.dp) // Varsayılan boyut
                             )
                         },
                         selected = currentRoute.value == "explore",
