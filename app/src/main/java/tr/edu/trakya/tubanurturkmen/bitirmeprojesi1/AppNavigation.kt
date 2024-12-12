@@ -1,4 +1,5 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ui.navigation
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +20,6 @@ import androidx.navigation.compose.rememberNavController
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ExploreScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.LoginScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.RegisterScreen
-import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HomeScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ForgotPasswordScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HobiesScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ProfileScreen
@@ -57,7 +57,7 @@ fun AppNavigation() {
             startDestination = "login",
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = if (showBottomNav) 56.dp else 0.dp) // BottomNavigationBar için padding ekleniyor
+                .padding(bottom = if (showBottomNav) 48.dp else 0.dp) // BottomNavigationBar için padding ekleniyor
         ) {
             composable("login") {
                 currentRoute.value = "login"
@@ -70,10 +70,6 @@ fun AppNavigation() {
             composable("register") {
                 currentRoute.value = "register"
                 RegisterScreen(navController)
-            }
-            composable("home") {
-                currentRoute.value = "home"
-                HomeScreen(navController)
             }
             composable("forgotPassword") {
                 currentRoute.value = "forgotPassword"
@@ -94,42 +90,50 @@ fun AppNavigation() {
             NavigationBar(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(4.dp),
+                    .padding(2.dp)
+                    .height(72.dp)
+                    .align(Alignment.BottomCenter),
                 containerColor = MaterialTheme.colorScheme.surface
-            ) {
-                NavigationBarItem(
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Filled.Person,
-                            contentDescription = "Profile",
-                            modifier = Modifier.size(24.dp) // Varsayılan boyut
-                        )
-                    },
-                    selected = currentRoute.value == "profile",
-                    onClick = {
-                        navController.navigate("profile") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    },
-                    alwaysShowLabel = false
-                )
-                NavigationBarItem(
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Filled.Explore,
-                            contentDescription = "Explore",
-                            modifier = Modifier.size(24.dp) // Varsayılan boyut
-                        )
-                    },
-                    selected = currentRoute.value == "explore",
-                    onClick = {
-                        navController.navigate("explore") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    },
-                    alwaysShowLabel = false
-                )
+            )  {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                // Simgeleri yatayda ortalar
+                ) {
+                    NavigationBarItem(
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Filled.Person,
+                                contentDescription = "Profile",
+                                modifier = Modifier.size(40.dp) // Varsayılan boyut
+                            )
+                        },
+                        selected = currentRoute.value == "profile",
+                        onClick = {
+                            navController.navigate("profile") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        alwaysShowLabel = false
+                    )
+                    NavigationBarItem(
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Filled.Explore,
+                                contentDescription = "Explore",
+                                modifier = Modifier.size(40.dp) // Varsayılan boyut
+                            )
+                        },
+                        selected = currentRoute.value == "explore",
+                        onClick = {
+                            navController.navigate("explore") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        alwaysShowLabel = false
+                    )
+                }
             }
         }
     }
