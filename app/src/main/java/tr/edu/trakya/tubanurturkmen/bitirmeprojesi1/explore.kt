@@ -178,8 +178,11 @@ fun ExploreScreen(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                text = "Hagia Sophia, 537 yılında katedral olarak inşa edilmiş ve sonrasında cami olarak kullanılmıştır. Bugün bir müze olarak ziyaretçilerini ağırlamaktadır.",
-                                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+                                text = "İstanbul, Asya ve Avrupa’yı birleştiren, zengin tarihi ve büyüleyici atmosferiyle eşsiz bir metropoldür. Roma, Bizans ve Osmanlı gibi imparatorluklara başkentlik yapan şehir, Sultanahmet’teki Ayasofya, Topkapı Sarayı ve Sultanahmet Camii gibi tarihi yapılarla geçmişin izlerini günümüze taşır. İstanbul Boğazı’nda bir yürüyüş veya tekne turu, şehrin doğal güzelliklerini ve siluetini keşfetmek için harika bir fırsattır. Doğu ve Batı’nın ruhunu barındıran İstanbul, her köşesinde farklı bir hikâye sunar.",
+                                style = TextStyle(
+                                    fontSize = 18.sp,
+                                    color = Color.Black
+                                )
                             )
 
                         }
@@ -412,15 +415,15 @@ fun ExploreScreen(
                             onClick = { selectedAttraction = null },
                             modifier = Modifier
                                 .background(
-                                    Color.Gray.copy(alpha = 0.6f),
-                                    shape = RoundedCornerShape(12.dp)
+                                    Color.White, // Arka plan rengini beyaz yaptık
+                                    shape = RoundedCornerShape(50.dp) // Oval bir şekil için köşe yarıçapını artırdık
                                 )
                                 .padding(8.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Geri Dön",
-                                tint = Color.White
+                                tint = Color.Black // İkon rengini siyah yaptık
                             )
                         }
 
@@ -577,8 +580,6 @@ fun ExploreScreen(
                         }
                     }
                 }
-
-
                     var selectedTabIndex by remember { mutableStateOf(0) }
                     val commentsState = remember { mutableStateOf<List<CommentDto>?>(null) }
                     var rating by remember { mutableStateOf(0f) }
@@ -586,14 +587,30 @@ fun ExploreScreen(
 
                     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                         // Tab Row for switching between "Details" and "Comments"
-                        TabRow(selectedTabIndex = selectedTabIndex) {
-                            Tab(selected = selectedTabIndex == 0, onClick = { selectedTabIndex = 0 }) {
-                                Text("Details", modifier = Modifier.padding(16.dp))
+                        TabRow(
+                            selectedTabIndex = selectedTabIndex,
+                            containerColor = Color.White, // TabRow background color
+                            contentColor = Color.Black // Text color for selected tab
+                        ) {
+                            Tab(
+                                selected = selectedTabIndex == 0,
+                                onClick = { selectedTabIndex = 0 },
+                                selectedContentColor = Color.Black,
+                                unselectedContentColor = Color.Gray
+                            ) {
+                                Text("Detaylar", modifier = Modifier.padding(16.dp), color = Color.Black)
                             }
-                            Tab(selected = selectedTabIndex == 1, onClick = { selectedTabIndex = 1 }) {
-                                Text("Comments", modifier = Modifier.padding(16.dp))
+                            Tab(
+                                selected = selectedTabIndex == 1,
+                                onClick = { selectedTabIndex = 1 },
+                                selectedContentColor = Color.Black,
+                                unselectedContentColor = Color.Gray
+                            ) {
+                                Text("Yorumlar", modifier = Modifier.padding(16.dp), color = Color.Black)
                             }
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
+
 
                         when (selectedTabIndex) {
                             0 -> { // Details Tab
@@ -719,61 +736,63 @@ fun ExploreScreen(
                                                 }
                                             }
                                         }
-
                                         // Add Comment Section
-                                        Column(modifier = Modifier.padding(16.dp)) {
-                                            Text("Mekan Hakkında Düşüncelerinizi Yazın", style = MaterialTheme.typography.headlineSmall)
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                repeat(5) { index ->
-                                                    IconButton(onClick = { rating = (index + 1).toFloat() }) {
-                                                        Icon(
-                                                            imageVector = if (index < rating) Icons.Default.Star else Icons.Default.StarBorder,
-                                                            contentDescription = null,
-                                                            tint = if (index < rating) Color( 0xFFFFC107) else Color.Gray
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            TextField(
-                                                value = comment,
-                                                onValueChange = { comment = it },
-                                                label = { Text("Your comment") },
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 8.dp),
-                                                maxLines = 5
-                                            )
-                                            Button(
-                                                onClick = {
-                                                    selectedAttraction?.let { attraction ->
-                                                        val placeId = attraction.placeId
-                                                        commentViewModel.createComment(
-                                                            placeId = placeId,
-                                                            content = comment,
-                                                            rate = rating.toInt()
-                                                        ) { createdComment, errorMessage ->
-                                                            if (createdComment != null) {
-                                                                Toast.makeText(context, "Review submitted successfully", Toast.LENGTH_SHORT).show()
-                                                                // Reset text field and rating
-                                                                comment = ""
-                                                                rating = 0f
-                                                            }
-                                                                else {
-                                                                Toast.makeText(context, "Failed to submit review: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                    var comment by remember { mutableStateOf("") }
+                                                    var rating by remember { mutableStateOf(0f) }
+
+                                                    Column(modifier = Modifier.padding(16.dp)) {
+                                                        Text("Yorum Yapın", style = MaterialTheme.typography.headlineSmall)
+                                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                                        // Star Rating Row
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            repeat(5) { index ->
+                                                                IconButton(onClick = { rating = (index + 1).toFloat() }) {
+                                                                    Icon(
+                                                                        imageVector = if (index < rating) Icons.Default.Star else Icons.Default.StarBorder,
+                                                                        contentDescription = null,
+                                                                        tint = if (index < rating) Color(0xFFFFC107) else Color.Gray
+                                                                    )
+                                                                }
                                                             }
                                                         }
+                                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                                        // Styled TextField with Rounded Corners
+                                                        OutlinedTextField(
+                                                            value = comment,
+                                                            onValueChange = { comment = it },
+                                                            label = { Text("Your comment") },
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .height(150.dp)
+                                                                .padding(vertical = 8.dp),
+                                                            shape = RoundedCornerShape(12.dp),
+                                                            colors = OutlinedTextFieldDefaults.colors(
+                                                                focusedBorderColor = Color(0xFF3F51B5),
+                                                                unfocusedBorderColor = Color.Gray,
+                                                                focusedContainerColor = Color(0xFFF5F5F5),
+                                                                unfocusedContainerColor = Color(0xFFF5F5F5)
+                                                            ),
+                                                            maxLines = 5
+                                                        )
+
+                                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                                        // Submit Button
+                                                        Button(
+                                                            onClick = {
+                                                                // Handle button click logic here if needed
+                                                                comment = ""
+                                                                rating = 0f
+                                                            },
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .height(50.dp),
+                                                            shape = RoundedCornerShape(12.dp),
+                                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
+                                                        ) {
+                                                            Text("Yorum Yap", color = Color.White, fontSize = 16.sp)
+                                                        }
                                                     }
-                                                },
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Text("Submit Review")
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }}}}
+                                                }}}}}}}}}
