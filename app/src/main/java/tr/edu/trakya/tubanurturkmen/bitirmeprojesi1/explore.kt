@@ -13,7 +13,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -29,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
@@ -72,11 +75,18 @@ fun ExploreScreen(
     val suggestedPlaces by placeViewModel.suggestedPlaces
     val isLoading by placeViewModel.loading
     val errorMessage by placeViewModel.errorMessage
+    val imageName = "ayasofya"
+    val imageName2 = "emirgan"
+
+    val resourceId = context.resources.getIdentifier(imageName, "drawable", context.packageName)
+    val resourceId2 = context.resources.getIdentifier(imageName2, "drawable", context.packageName)
+
+
     val searchedPlaces = places.filter { it.placeName.contains(searchQuery, ignoreCase = true) }
     fun getDrawableResourceByPlaceName(placeName: String): Int {
         return when (placeName.lowercase()) {
-            "ayasofya camii" -> R.drawable.ayasofya
-            "galata kulesi" -> R.drawable.galata
+            "Nusr-Et Steakhouse" -> resourceId
+            "Saray Muhallebicisi" -> resourceId2
             "topkapı sarayı" -> R.drawable.topkapi
             "dolmabahçe sarayı" -> R.drawable.dolmabahce
             "istanbul arkeoloji müzesi" -> R.drawable.arkeoloji
@@ -420,7 +430,21 @@ fun ExploreScreen(
                             var isFavorite by remember { mutableStateOf(false) }
 
                             LaunchedEffect(selectedAttraction) {
-                                isFavorite = selectedAttraction?.placeName in favoriteAttractions
+                                selectedAttraction?.placeName?.let { placeName ->
+                                    favoriteViewModel.fetchUserFavorites { favorites, error ->
+                                        if (favorites != null) {
+                                            // Favorilerde mi kontrolü
+                                            isFavorite = favorites.any { it.placeName == placeName }
+                                        } else {
+                                            // Hata durumunda mesaj gösterilebilir
+                                            Toast.makeText(
+                                                context,
+                                                error ?: "Favoriler alınırken hata oluştu.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
                             }
 
                             IconButton(onClick = {
@@ -428,10 +452,10 @@ fun ExploreScreen(
                                     val placeName = attraction.placeName
                                     val placeId = attraction.placeId
 
-                                    if (favoriteAttractions.contains(placeName)) {
+                                    if (isFavorite) {
                                         favoriteViewModel.deleteFavorite(placeId) { success, message ->
                                             if (success) {
-                                                favoriteAttractions.remove(placeName)
+                                                // Favorilerden çıkarıldıktan sonra listeyi güncelle
                                                 isFavorite = false
                                                 Toast.makeText(
                                                     context,
@@ -449,7 +473,7 @@ fun ExploreScreen(
                                     } else {
                                         favoriteViewModel.addFavorite(placeId) { success, message ->
                                             if (success) {
-                                                favoriteAttractions.add(placeName)
+                                                // Favorilere eklendikten sonra listeyi güncelle
                                                 isFavorite = true
                                                 Toast.makeText(
                                                     context,
@@ -480,7 +504,22 @@ fun ExploreScreen(
                             var isVisited by remember { mutableStateOf(false) }
 
                             LaunchedEffect(selectedAttraction) {
-                                isVisited = selectedAttraction?.placeName in visitedAttractions
+                                selectedAttraction?.placeName?.let { placeName ->
+                                    visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
+                                        if (visitedPlaces != null) {
+                                            // Ziyaret edilenler listesinde mi kontrolü
+                                            isVisited =
+                                                visitedPlaces.any { it.placeName == placeName }
+                                        } else {
+                                            // Hata durumunda mesaj gösterilebilir
+                                            Toast.makeText(
+                                                context,
+                                                error ?: "Ziyaret edilenler alınırken hata oluştu.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
                             }
 
                             IconButton(onClick = {
@@ -488,12 +527,11 @@ fun ExploreScreen(
                                     val placeName = attraction.placeName
                                     val placeId = attraction.placeId
 
-                                    if (visitedAttractions.contains(placeName)) {
+                                    if (isVisited) {
                                         visitedPlaceViewModel.deleteVisitedPlace(placeId) { success, message ->
                                             if (success) {
-                                                visitedAttractions.remove(placeName)
+                                                // Gidilenlerden çıkarıldıktan sonra listeyi güncelle
                                                 isVisited = false
-
                                                 Toast.makeText(
                                                     context,
                                                     "$placeName gidilenlerden çıkarıldı.",
@@ -510,9 +548,8 @@ fun ExploreScreen(
                                     } else {
                                         visitedPlaceViewModel.addVisitedPlace(placeId) { success, message ->
                                             if (success) {
-                                                visitedAttractions.add(placeName)
+                                                // Gidilenlere eklendikten sonra listeyi güncelle
                                                 isVisited = true
-
                                                 Toast.makeText(
                                                     context,
                                                     "$placeName gidilenlere kaydedildi.",
@@ -604,32 +641,72 @@ fun ExploreScreen(
                                                         verticalArrangement = Arrangement.spacedBy(16.dp)
                                                     ) {
                                                         items(commentsState.value!!) { comment ->
-                                                            Card(
-                                                                modifier = Modifier.fillMaxWidth(),
-                                                                shape = RoundedCornerShape(12.dp),
+                                                            Row(
+                                                                modifier = Modifier
+                                                                    .fillMaxWidth()
+                                                                    .padding(8.dp),
+                                                                verticalAlignment = Alignment.Top
                                                             ) {
-                                                                Column(modifier = Modifier.padding(16.dp)) {
-                                                                    comment.text?.let {
-                                                                        Text(
-                                                                            text = it,
-                                                                            style = MaterialTheme.typography.bodyMedium,
-                                                                            modifier = Modifier.padding(bottom = 8.dp)
+                                                                Icon(
+                                                                    imageVector = Icons.Default.AccountCircle,
+                                                                    contentDescription = null,
+                                                                    modifier = Modifier
+                                                                        .size(40.dp)
+                                                                        .padding(end = 8.dp),
+                                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                )
+                                                                Column(modifier = Modifier.weight(1f)) {
+                                                                    Text(
+                                                                        text = comment.createdBy
+                                                                            ?: "Unknown",
+                                                                        style = MaterialTheme.typography.bodyMedium,
+                                                                        color = MaterialTheme.colorScheme.onSurface,
+                                                                        fontWeight = FontWeight.Bold
+                                                                    )
+                                                                    Text(
+                                                                        text = comment.text ?: "",
+                                                                        style = MaterialTheme.typography.bodyMedium,
+                                                                        modifier = Modifier.padding(
+                                                                            vertical = 4.dp
                                                                         )
-                                                                    }
-                                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                                    )
+                                                                    Row {
                                                                         repeat(5) { index ->
                                                                             Icon(
                                                                                 imageVector = if (index < comment.rate) Icons.Default.Star else Icons.Default.StarBorder,
                                                                                 contentDescription = null,
-                                                                                tint = if (index < comment.rate) Color.Yellow else Color.Gray
+                                                                                tint = if (index < comment.rate) Color(
+                                                                                    0xFFFFC107
+                                                                                ) else MaterialTheme.colorScheme.onSurfaceVariant
                                                                             )
                                                                         }
                                                                     }
-                                                                    Spacer(modifier = Modifier.height(8.dp))
-                                                                    Text("Created by: ${comment.createdBy}")
-                                                                    Text("Date: ${comment.createdOn}")
+                                                                    Spacer(
+                                                                        modifier = Modifier.height(
+                                                                            8.dp
+                                                                        )
+                                                                    )
+                                                                    Text(
+                                                                        text = comment.createdOn,
+                                                                        style = MaterialTheme.typography.bodySmall,
+                                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                    )
+                                                                }
+                                                                IconButton(onClick = {
+                                                                    // Yorum düzenleme fonksiyonu
+                                                                    // editComment(comment)
+                                                                }) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.Edit,
+                                                                        contentDescription = "Edit Comment",
+                                                                        tint = MaterialTheme.colorScheme.primary
+                                                                    )
                                                                 }
                                                             }
+                                                            Divider(
+                                                                color = MaterialTheme.colorScheme.outline,
+                                                                thickness = 1.dp
+                                                            )
                                                         }
                                                     }
                                                 }
@@ -645,7 +722,7 @@ fun ExploreScreen(
 
                                         // Add Comment Section
                                         Column(modifier = Modifier.padding(16.dp)) {
-                                            Text("Add Your Review", style = MaterialTheme.typography.headlineSmall)
+                                            Text("Mekan Hakkında Düşüncelerinizi Yazın", style = MaterialTheme.typography.headlineSmall)
                                             Spacer(modifier = Modifier.height(8.dp))
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 repeat(5) { index ->
@@ -653,7 +730,7 @@ fun ExploreScreen(
                                                         Icon(
                                                             imageVector = if (index < rating) Icons.Default.Star else Icons.Default.StarBorder,
                                                             contentDescription = null,
-                                                            tint = if (index < rating) Color.Yellow else Color.Gray
+                                                            tint = if (index < rating) Color( 0xFFFFC107) else Color.Gray
                                                         )
                                                     }
                                                 }
