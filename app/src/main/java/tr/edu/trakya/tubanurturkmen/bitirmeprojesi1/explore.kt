@@ -85,12 +85,19 @@ fun ExploreScreen(
     val searchedPlaces = places.filter { it.placeName.contains(searchQuery, ignoreCase = true) }
     fun getDrawableResourceByPlaceName(placeName: String): Int {
         return when (placeName.lowercase()) {
-            "Nusr-Et Steakhouse" -> resourceId
-            "Saray Muhallebicisi" -> resourceId2
+            "saray muhallebicisi" -> R.drawable.saray
             "topkapı sarayı" -> R.drawable.topkapi
             "dolmabahçe sarayı" -> R.drawable.dolmabahce
             "istanbul arkeoloji müzesi" -> R.drawable.arkeoloji
             "emirgan korusu" -> R.drawable.emirgan
+            "gülhane parkı"->R.drawable.gulhane
+            "yıldız parkı"->R.drawable.yildiz
+            "mandabatmaz"->R.drawable.mandabatmaz
+            "yerebatan sarnıcı"->R.drawable.yerebatan
+            "sultanahmet camii"->R.drawable.sultanahmet
+            "taksim meydanı"->R.drawable.taksim
+            "kız kulesi"->R.drawable.kiz
+            "çamlıca tepesi"->R.drawable.camlica
             "pierre loti tepesi" -> R.drawable.pierre
             "madame tussauds müzesi" -> R.drawable.madame
             "miniatürk" -> R.drawable.miniaturk
