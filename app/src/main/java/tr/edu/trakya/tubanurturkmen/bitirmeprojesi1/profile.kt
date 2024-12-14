@@ -445,7 +445,7 @@ fun UserCommentItem(comment: CommentDto) {
                     Icon(
                         imageVector = if (index < comment.rate) Icons.Default.Star else Icons.Default.StarBorder,
                         contentDescription = "Rating Star",
-                        tint = if (index < comment.rate) Color.Yellow else Color.Gray,
+                        tint = if (index < comment.rate) Color(0xFFFFD700) else Color.Gray,
                         modifier = Modifier.size(20.dp)
                     )
                 }}

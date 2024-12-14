@@ -16,9 +16,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.StarHalf
+import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.layout.ContentScale
@@ -103,8 +106,9 @@ fun ExploreScreen(
             "miniatürk" -> R.drawable.miniaturk
             "çamlıca kulesi" -> R.drawable.camlica
             "pelit çikolata müzesi" -> R.drawable.cikolata
-            "nusr-et steakhouse " -> R.drawable.nusret
+            "nusr-et restoran " -> R.drawable.nusret
             "kariye camii (eski chora kilisesi)" -> R.drawable.kariye
+
             else -> R.drawable.istanbul // Varsayılan görsel
         }
     }
@@ -189,8 +193,9 @@ fun ExploreScreen(
                                 style = TextStyle(
                                     fontSize = 18.sp,
                                     color = Color.Black
-                                )
-                            )
+                                ))
+
+
 
                         }
                         if (searchQuery.isNotEmpty()) {
@@ -626,15 +631,10 @@ fun ExploreScreen(
                                         text = selectedAttraction?.placeName.orEmpty(),
                                         style = MaterialTheme.typography.headlineMedium
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = selectedAttraction?.description.orEmpty(),
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(10.dp))
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
-                                            painter = painterResource(id = R.drawable.place),
+                                            imageVector = Icons.Default.Place,
                                             contentDescription = null,
                                             tint = Color.Gray
                                         )
@@ -644,9 +644,69 @@ fun ExploreScreen(
                                             style = MaterialTheme.typography.bodyLarge
                                         )
                                     }
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    // Star Rating Section
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        // Ensure rating is valid and not null. If null, set it to 0.0
+                                        val rating = (selectedAttraction?.rating ?: 0.0).coerceIn(0.0, 5.0) // Clamp to a valid range between 0.0 and 5.0
+
+                                        val fullStars = rating.toInt()
+                                        val hasHalfStar = rating % 1 >= 0.5
+
+                                        // Full stars
+                                        repeat(fullStars) {
+                                            Icon(
+                                                imageVector = Icons.Default.Star,
+                                                contentDescription = "Full Star",
+                                                tint = Color(0xFFFFD700) // Gold color
+                                            )
+                                        }
+
+                                        // Half star
+                                        if (hasHalfStar) {
+                                            Icon(
+                                                imageVector = Icons.Default.StarHalf,
+                                                contentDescription = "Half Star",
+                                                tint = Color(0xFFFFD700) // Gold color
+                                            )
+                                        }
+
+                                        // Empty stars (to fill up to 5 stars)
+                                        repeat(5 - fullStars - if (hasHalfStar) 1 else 0) {
+                                            Icon(
+                                                imageVector = Icons.Default.StarOutline,
+                                                contentDescription = "Empty Star",
+                                                tint = Color.Gray
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(8.dp))
+
+                                        // Ensure rating is properly formatted to 1 decimal place and avoid invalid format exceptions
+                                        val formattedRating = try {
+                                            String.format("%.1f", rating) // Format to 1 decimal place
+                                        } catch (e: Exception) {
+                                            "0.0" // Fallback to a default value if formatting fails
+                                        }
+
+                                        Text(
+                                            text = formattedRating, // Display the formatted rating
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                    }
+
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Text(
+                                        text = selectedAttraction?.description.orEmpty(),
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
                                 }
                             }
-                            1 -> { // Comments Tab
+                                1 -> { // Comments Tab
                                 Column(modifier = Modifier.fillMaxSize()) {
                                     selectedAttraction?.let { attraction ->
                                         val placeId = attraction.placeId
@@ -789,9 +849,24 @@ fun ExploreScreen(
                                                         // Submit Button
                                                         Button(
                                                             onClick = {
-                                                                // Handle button click logic here if needed
-                                                                comment = ""
-                                                                rating = 0f
+                                                                selectedAttraction?.let { attraction ->
+                                                                    val placeId = attraction.placeId
+                                                                    commentViewModel.createComment(
+                                                                        placeId = placeId,
+                                                                        content = comment,
+                                                                        rate = rating.toInt()
+                                                                    ) { createdComment, errorMessage ->
+                                                                        if (createdComment != null) {
+                                                                            Toast.makeText(context, "Review submitted successfully", Toast.LENGTH_SHORT).show()
+                                                                            // Reset text field and rating
+                                                                            comment = ""
+                                                                            rating = 0f
+                                                                        }
+                                                                        else {
+                                                                            Toast.makeText(context, "Failed to submit review: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                                        }
+                                                                    }
+                                                                }
                                                             },
                                                             modifier = Modifier
                                                                 .fillMaxWidth()

@@ -6,7 +6,7 @@ data class FavoriteDto(
     val placeName: String?,
     val placeAddress: String?,
     val description: String?,
-    val rating: Int?,
+    val rating: Double?,
     val placeType: PlaceTypeDto?, // Her mekanın türü (opsiyonel)
     val comments: List<CommentDto>?, // Yorumlar
     val userName: String? // Kullanıcı adı
@@ -33,7 +33,7 @@ data class VisitedPlaceDto(
     val placeName: String?,
     val placeAddress: String?,
     val description: String?,
-    val rating: Int?,
+    val rating: Double?,
     val placeType: PlaceTypeDto?, // Mekan türü
     val comments: List<CommentDto>?, // Mekan yorumları
     val userName: String? // Ziyaret eden kullanıcı
@@ -48,7 +48,7 @@ data class PlaceDto(
     val placeName: String,
     val placeAddress: String,
     val description: String,
-    val rating: Int,
+    val rating: Double,
     val placeType: PlaceTypeDto,
     val comments: List<CommentDto>
 )
