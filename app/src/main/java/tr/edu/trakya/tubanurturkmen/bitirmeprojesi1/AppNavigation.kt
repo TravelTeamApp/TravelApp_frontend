@@ -42,101 +42,78 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.navigation.NavController
-import androidx.preference.PreferenceManager
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-
-import org.osmdroid.views.MapView
-
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.FinalLearningApp
-import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.setMapConfigurations
 
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val context = LocalContext.current
-    val mapView = remember {
-        MapView(context).apply {
-            val defaultLocation = GeoPoint(41.008238, 28.978359)
-            controller.setZoom(15.0)
-            controller.setCenter(defaultLocation)
-        }
-    }
 
-
+    // BottomNavigation için state tutmak
     val currentRoute = remember { mutableStateOf("login") }
-    val hideBottomNavRoutes = listOf("login", "register", "hobies", "forgotPassword")
+
+    // Bottom Navigation Bar'ın hangi ekranlarda gizleneceği
+    val hideBottomNavRoutes = listOf("login", "register", "hobies","forgotPassword")
     val showBottomNav = !hideBottomNavRoutes.contains(currentRoute.value)
 
-    // NavController'dan hedef değişikliklerini dinleme
-    DisposableEffect(navController) {
-        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            currentRoute.value = destination.route ?: "login"
-            if (destination.route == "map") {
-                mapView.onResume() // Harita ekranına girişte çalıştır
-            } else {
-                mapView.onPause() // Harita ekranından çıkışta durdur
-            }
-        }
-        navController.addOnDestinationChangedListener(listener)
-        onDispose {
-            navController.removeOnDestinationChangedListener(listener)
-        }
-    }
-
+    // Ekran içeriği ve yerleşim düzeni
     Box(modifier = Modifier.fillMaxSize()) {
+        // NavHost
         NavHost(
             navController = navController,
             startDestination = "login",
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = if (showBottomNav) 72.dp else 0.dp)
+                .padding(bottom = if (showBottomNav) 48.dp else 0.dp) // BottomNavigationBar için padding ekleniyor
         ) {
-            composable("login") { LoginScreen(navController) }
-            composable("hobies") { HobiesScreen(navController, SharedViewModel()) }
-            composable("register") { RegisterScreen(navController) }
-            composable("home") { HomeScreen(navController) }
-            composable("forgotPassword") { ForgotPasswordScreen(navController) }
-            composable("explore") { ExploreScreen(navController) }
-            composable("profile") { ProfileScreen(navController, SharedViewModel()) }
+            composable("login") {
+                currentRoute.value = "login"
+                LoginScreen(navController)
+            }
+            composable("hobies") {
+                currentRoute.value = "hobies"
+                HobiesScreen(navController, sharedViewModel = SharedViewModel())
+            }
+            composable("register") {
+                currentRoute.value = "register"
+                RegisterScreen(navController)
+            }
+            composable("forgotPassword") {
+                currentRoute.value = "forgotPassword"
+                ForgotPasswordScreen(navController)
+            }
+
+            composable("profile") {
+                currentRoute.value = "profile"
+                ProfileScreen(navController, sharedViewModel = SharedViewModel())
+            }
             composable("map") {
-                MapScreen(mapView = mapView) {
-                    // Harita animasyonları için callback kullanılabilir
-                }
+                FinalLearningApp()
             }
         }
 
+        // Bottom Navigation Bar
         if (showBottomNav) {
             NavigationBar(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(4.dp)
+                    .padding(2.dp)
                     .height(72.dp)
                     .align(Alignment.BottomCenter),
                 containerColor = MaterialTheme.colorScheme.surface
-            ) {
+            )  {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
+                    // Simgeleri yatayda ortalar
                 ) {
                     NavigationBarItem(
                         icon = {
                             Icon(
                                 imageVector = Icons.Filled.Person,
                                 contentDescription = "Profile",
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(40.dp) // Varsayılan boyut
                             )
                         },
                         selected = currentRoute.value == "profile",
@@ -147,22 +124,7 @@ fun AppNavigation() {
                         },
                         alwaysShowLabel = false
                     )
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Filled.Explore,
-                                contentDescription = "Explore",
-                                modifier = Modifier.size(36.dp)
-                            )
-                        },
-                        selected = currentRoute.value == "explore",
-                        onClick = {
-                            navController.navigate("explore") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        },
-                        alwaysShowLabel = false
-                    )
+
                     NavigationBarItem(
                         icon = {
                             Icon(
@@ -185,36 +147,3 @@ fun AppNavigation() {
     }
 }
 
-@Composable
-fun MapScreen(
-    mapView: MapView, // Harita bileşeni dışarıdan alınır
-    onPlaceChangeAnimate: (() -> Unit) -> Unit // Animasyon tetikleme callback'i
-) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-
-
-    // Yaşam döngüsü olaylarını yönet
-    DisposableEffect(mapView) {
-        val lifecycle = lifecycleOwner.lifecycle
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                else -> {}
-            }
-        }
-        lifecycle.addObserver(observer)
-
-        // DisposableEffectResult döndürmek için cleanup işlemi
-        onDispose {
-            lifecycle.removeObserver(observer)
-        }
-    }
-
-    // Haritayı FinalLearningApp bileşenine gönder
-    FinalLearningApp(
-        mapView = mapView,
-        onPlaceChangeAnimate = onPlaceChangeAnimate
-    )
-}

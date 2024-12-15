@@ -204,7 +204,7 @@ fun LoginScreen(navController: NavController) {
                                                     ).show()
 
                                                     // Başarıyla giriş yaptıktan sonra Home sayfasına yönlendir
-                                                    navController.navigate("explore") // Home ekranına yönlendirme
+                                                    navController.navigate("profile") // Home ekranına yönlendirme
 
                                                     // Token'ı saklama veya diğer işlemler yapılabilir
                                                 }

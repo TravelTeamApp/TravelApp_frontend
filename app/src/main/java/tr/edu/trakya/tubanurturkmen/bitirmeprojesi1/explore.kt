@@ -614,7 +614,7 @@ fun ExploreScreen(
 
 
         }
-        else {
+        /*else {
             Column(
                 modifier = Modifier
                     .padding(16.dp)
@@ -797,6 +797,6 @@ fun ExploreScreen(
                     )
                 }
             }
-        }
+        }*/
 }}
 
