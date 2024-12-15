@@ -8,10 +8,14 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,8 +28,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,57 +44,8 @@ import androidx.navigation.compose.rememberNavController
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-data class FavoriteDto(
-    val favoriteId: Int,
-    val placeId: Int,
-    val placeName: String?,
-    val placeAddress: String?,
-    val description: String?,
-    val rating: Int?,
-    val placeType: PlaceTypeDto?, // Her mekanın türü (opsiyonel)
-    val comments: List<CommentDto>?, // Yorumlar
-    val userName: String? // Kullanıcı adı
-)
 
-data class PlaceTypeDto(
-    val id: Int,
-    val name: String
-)
 
-data class CommentDto(
-    val commentId: Int,
-    val placeId: Int,
-    val text: String?,
-    val createdOn: String,
-    val createdBy: String?,
-    val userId: Int
-)
-
-data class VisitedPlaceDto(
-    val visitedPlaceId: Int,
-    val placeId: Int,
-    val placeName: String?,
-    val placeAddress: String?,
-    val description: String?,
-    val rating: Int?,
-    val placeType: PlaceTypeDto?, // Mekan türü
-    val comments: List<CommentDto>?, // Mekan yorumları
-    val userName: String? // Ziyaret eden kullanıcı
-)
-
-data class PlaceDto(
-    val placeId: Int,
-    val placeName: String,
-    val placeAddress: String,
-    val description: String?,
-    val rating: Int?,
-    val placeType: PlaceTypeDto?,
-    val comments: List<CommentDto>?
-)
-
-data class UserPlaceTypeDto(
-    val placeTypeNames: List<String> // Mekan türü adlarını içeren liste
-)
 @Composable
 fun ProfileScreen(navController: NavController,sharedViewModel: SharedViewModel) {
     val selectedInterests by sharedViewModel.selectedInterests.collectAsState()
@@ -159,9 +116,9 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
         TabItem("Rozetler", Icons.Default.Star),
         TabItem("Favoriler", Icons.Default.Favorite),
         TabItem("Gidilenler", Icons.Default.Place),
-        TabItem("Hobi", Icons.Default.SpatialTracking)
 
-    )
+
+        )
 
     Column(
         modifier = Modifier
@@ -203,7 +160,6 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
             1 -> BadgesSection(score = userProfile.score)
             2 -> FavoritesSection()
             3 -> VisitedPlacesSection()
-            4 -> PlaceTypesSection()
         }
     }
 }
@@ -213,46 +169,54 @@ data class TabItem(val title: String, val icon: ImageVector)
 @SuppressLint("SuspiciousIndentation")
 @Composable
 fun TopSection(userName: String, score: Int) {
-    val firstLetter = userName?.firstOrNull()?.toUpperCase() ?: ""
-       Box(
+    val firstLetter = userName.firstOrNull()?.toUpperCase() ?: ""
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(280.dp)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF64B5F6), Color(0xFF1E88E5))
-                ),
-                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
-            )
     ) {
+        // Arka plan görseli
+        Image(
+            painter = painterResource(id = R.drawable.profile), // Drawable görsel
+            contentDescription = "Profile Background",
+            contentScale = ContentScale.Crop, // Görselin boyutlandırılması
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)) // Yuvarlak köşe
+        )
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
-        ) { Box(
+        ) {
+            Box(
                 modifier = Modifier
                     .size(110.dp)
                     .clip(CircleShape)
                     .background(Color.White)
-                ) {
-            Text(
-                firstLetter.toString(),
-                fontSize = 48.sp, // Harfin büyüklüğü
-                color = Color(0xFF1E88E5), // Harf rengi
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
+            ) {
+                Text(
+                    firstLetter.toString(),
+                    fontSize = 48.sp, // Harfin büyüklüğü
+                    color = Color(0xFF1E88E5), // Harf rengi
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "$userName",
                 fontSize = 22.sp,
                 fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight.Bold, // Kalın yazı stili
                 color = Color.Black
             )
+
             Text(
                 text = "Traveler",
                 fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
+            PlaceTypesSection()
         }
 
         Row(
@@ -265,12 +229,14 @@ fun TopSection(userName: String, score: Int) {
             Text(
                 text = "Badges",
                 fontSize = 20.sp,
-                color = Color.Black
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
             Text(
                 text = "Score $score",
                 fontSize = 20.sp,
-                color = Color.Black
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
         }
     }
@@ -303,15 +269,8 @@ fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(14.dp)
+            .padding(16.dp)
     ) {
-        Text(
-            text = "Mekan Türlerim",
-            fontSize = 20.sp,
-            color = Color.Black
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
 
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -330,30 +289,35 @@ fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()) // Tüm butonları yatay kaydırılabilir yap
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp) // Butonlar arasında boşluk
             ) {
-                items(placeTypes) { placeType ->
-                    PlaceTypeItem(placeType = placeType)
+                placeTypes.forEach { placeType ->
+                    placeType.placeTypeNames.forEach { placeTypeName ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(1.dp, Color.White, RoundedCornerShape(12.dp))
+                                .background(Color.White)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = placeTypeName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Black
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
-
-@Composable
-fun PlaceTypeItem(placeType: UserPlaceTypeDto) {
-    // Burada her bir mekan türünü gösteren bir item layout'u
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(
-            text = "Mekan Türü: ${placeType.placeTypeNames.joinToString(", ")}",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-
 
 @Composable
 fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel() ) {
@@ -417,8 +381,6 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel() ) {
     }
 }
 
-
-
 fun formatDateTime(isoDate: String): String {
     return try {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
@@ -460,6 +422,12 @@ fun UserCommentItem(comment: CommentDto) {
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 4.dp)
             )
+            Text(
+                text = "Mekan: ${comment.placeName ?: "Anonim"}",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp)
+            )
 
             Text(
                 text = "Tarih: $formattedDate",
@@ -467,6 +435,20 @@ fun UserCommentItem(comment: CommentDto) {
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 2.dp)
             )
+            // Rating (Star icons)
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                repeat(5) { index ->
+                    Icon(
+                        imageVector = if (index < comment.rate) Icons.Default.Star else Icons.Default.StarBorder,
+                        contentDescription = "Rating Star",
+                        tint = if (index < comment.rate) Color(0xFFFFD700) else Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }}
 
         }
     }
@@ -621,7 +603,7 @@ fun FavoritePlaceItem(place: FavoriteDto) {
             .fillMaxWidth()
             .padding(vertical = 8.dp),
 
-    ) {
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -759,6 +741,5 @@ fun VisitedPlaceItem(place: VisitedPlaceDto) {
         }
     }
 }
-
 
 

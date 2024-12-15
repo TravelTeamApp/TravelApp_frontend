@@ -41,7 +41,7 @@ fun showToastMessage(context: android.content.Context, message: String) {
 fun HobiesScreen(navController: NavController, sharedViewModel: SharedViewModel,categoryViewModel: ExploreViewModel = viewModel()) {
     val interests by categoryViewModel.categories
 
-    val selectedInterests = remember { mutableStateListOf<PlaceType>() } // Matching type with PlaceType
+    val selectedInterests = remember { mutableStateListOf<PlaceTypeDto>() } // Matching type with PlaceType
     val backgroundImage: Painter = painterResource(id = R.drawable.hobies)
 
     var isHovered by remember { mutableStateOf(false) }

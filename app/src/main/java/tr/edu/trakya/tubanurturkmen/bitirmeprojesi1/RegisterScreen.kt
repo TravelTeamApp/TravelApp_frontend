@@ -251,7 +251,7 @@ fun RegisterScreen(navController: NavController) {
                     }
                 },
 
-            modifier = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .pointerInput(Unit) {
                         // Hover için fare hareketini yakala
@@ -283,5 +283,4 @@ fun RegisterScreen(navController: NavController) {
         }
     }
 }
-
 

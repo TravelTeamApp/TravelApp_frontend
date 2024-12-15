@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -12,8 +13,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.StarHalf
+import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.layout.ContentScale
@@ -24,7 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,352 +46,27 @@ import retrofit2.Callback
 import retrofit2.Response
 
 
-data class Place(
-    val placeId: Int,
-    val placeName: String,
-    val placeAddress: String,
-    val description: String,
-    val rating: Int,
-    val placeType: PlaceType,
-    val comments: List<Comment>
-)
-
-// Data model
-data class PlaceType(
-    val placeTypeId: Int,
-    val placeTypeName: String
-)
-
-data class Comment(
-    val commentId: Int,
-    val text: String,
-    val createdBy: String,
-    val createdOn: String
-)
-
-// DTO for creating a comment
-data class CreateCommentDto(
-    val text: String
-)
-
-
-class PlaceViewModel : ViewModel() {
-
-    // State'ler: List of places, loading state, and error message
-    private val _places = mutableStateOf<List<Place>>(emptyList())
-    val places: State<List<Place>> get() = _places
-
-    private val _loading = mutableStateOf(false)
-    val loading: State<Boolean> get() = _loading
-
-    private val _errorMessage = mutableStateOf<String?>(null)
-    val errorMessage: State<String?> get() = _errorMessage
-    private val _suggestedPlaces = mutableStateOf<List<Place>>(emptyList())
-    val suggestedPlaces: State<List<Place>> get() = _suggestedPlaces
-    init {
-        fetchPlaces()
-    }
-
-    private fun fetchPlaces() {
-        _loading.value = true  // API çağrısı başladığında loading state'i true
-        _errorMessage.value = null  // Hata mesajını sıfırla
-
-        RetrofitClient.apiService.getAllPlaces().enqueue(object : Callback<List<Place>> {
-            override fun onResponse(call: Call<List<Place>>, response: Response<List<Place>>) {
-                _loading.value = false  // API yanıtı alındığında loading state'i false
-
-                if (response.isSuccessful) {
-                    response.body()?.let { placesList ->
-                        _places.value = placesList
-
-                        // Mekanları log'la
-                        Log.d("PlaceViewModel", "Places: ${placesList.joinToString { it.placeName }}")
-                    }
-                } else {
-                    // API hatası durumunda
-                    _errorMessage.value = "API Error: ${response.code()} - ${response.message()}"
-                    Log.e("API Error", "Error: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<List<Place>>, t: Throwable) {
-                _loading.value = false  // Hata durumunda loading state'i false
-                _errorMessage.value = "Network Error: ${t.message}"
-                Log.e("Network Error", "Error: ${t.message}")
-            }
-        })
-    }
-
-    fun getPlaceTypesByUserId(callback: (List<UserPlaceTypeDto>?) -> Unit) {
-        RetrofitClient.apiService.getPlaceTypesByUserId().enqueue(object : Callback<List<UserPlaceTypeDto>> {
-            override fun onResponse(
-                call: Call<List<UserPlaceTypeDto>>,
-                response: Response<List<UserPlaceTypeDto>>
-            ) {
-                if (response.isSuccessful) {
-                    callback(response.body()) // API yanıtını başarılı bir şekilde aldık
-                } else {
-                    callback(null) // Hata durumunda null dönüyoruz
-                }
-            }
-
-            override fun onFailure(call: Call<List<UserPlaceTypeDto>>, t: Throwable) {
-                callback(null) // Hata durumunda null dönüyoruz
-            }
-        })
-    }
-
-
-    fun fetchPlacesByUserPlaceTypes() {
-        _loading.value = true
-        _errorMessage.value = null
-
-        RetrofitClient.apiService.getPlacesByUserPlaceTypes().enqueue(object : Callback<List<Place>> {
-            override fun onResponse(call: Call<List<Place>>, response: Response<List<Place>>) {
-                _loading.value = false
-
-                if (response.isSuccessful) {
-                    response.body()?.let { suggestedList ->
-                        _suggestedPlaces.value = suggestedList
-                        Log.d("PlaceViewModel", "Suggested Places: ${suggestedList.joinToString { it.placeName }}")
-                    }
-                } else {
-                    _errorMessage.value = "API Error: ${response.code()} - ${response.message()}"
-                    Log.e("API Error", "Error: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<List<Place>>, t: Throwable) {
-                _loading.value = false
-                _errorMessage.value = "Network Error: ${t.message}"
-                Log.e("Network Error", "Error: ${t.message}")
-            }
-        })
-    }
-}
-
-
-class ExploreViewModel : ViewModel() {
-    private val _categories = mutableStateOf<List<PlaceType>>(emptyList())
-    val categories: State<List<PlaceType>> = _categories
-
-    init {
-        fetchCategories()
-    }
-
-    private fun fetchCategories() {
-        RetrofitClient.apiService.getAllPlaceTypes().enqueue(object : Callback<List<PlaceType>> {
-            override fun onResponse(call: Call<List<PlaceType>>, response: Response<List<PlaceType>>) {
-                if (response.isSuccessful) {
-                    response.body()?.let { placeTypes ->
-                        _categories.value = placeTypes
-
-                        // categories listesini log yazdır
-                        Log.d("ExploreViewModel", "Categories: ${placeTypes.joinToString { it.placeTypeName }}")
-                    }
-                } else {
-                    android.util.Log.e("API Error", "Error: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<List<PlaceType>>, t: Throwable) {
-                android.util.Log.e("Network Error", "Error: ${t.message}")
-            }
-        })
-    }
-
-}
-
-class VisitedPlaceViewModel() : ViewModel() {
-
-    // Ziyaret edilen yer ekleme
-    fun addVisitedPlace(placeId: Int, callback: (Boolean, String) -> Unit) {
-        RetrofitClient.apiService.addVisitedPlace(placeId).enqueue(object : Callback<Void> {
-            override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                if (response.isSuccessful) {
-                    callback(true, "Başarılı")
-                } else {
-                    callback(false, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<Void>, t: Throwable) {
-                callback(false, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-
-    // Ziyaret edilen yer silme
-    fun deleteVisitedPlace(placeId: Int, callback: (Boolean, String) -> Unit) {
-        RetrofitClient.apiService.deleteVisitedPlace(placeId).enqueue(object : Callback<Void> {
-            override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                if (response.isSuccessful) {
-                    callback(true, "Başarılı")
-                } else {
-                    callback(false, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<Void>, t: Throwable) {
-                callback(false, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-    fun fetchUserVisitedPlaces(callback: (List<VisitedPlaceDto>?, String?) -> Unit) {
-        RetrofitClient.apiService.getUserVisitedPlaces().enqueue(object : Callback<List<VisitedPlaceDto>> {
-            override fun onResponse(
-                call: Call<List<VisitedPlaceDto>>,
-                response: Response<List<VisitedPlaceDto>>
-            ) {
-                if (response.isSuccessful) {
-                    callback(response.body(), null)
-                } else {
-                    callback(null, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<List<VisitedPlaceDto>>, t: Throwable) {
-                callback(null, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-}
-
-class FavoriteViewModel() : ViewModel() {
-
-    // Favori ekleme metodu
-    fun addFavorite(placeId: Int, callback: (Boolean, String) -> Unit) {
-        RetrofitClient.apiService.addFavorite(placeId).enqueue(object : Callback<Void> {
-            override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                if (response.isSuccessful) {
-                    // Favori ekleme başarılı
-                    callback(true, "Favori başarıyla eklendi.")
-                } else {
-                    // Hata durumu
-                    callback(false, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<Void>, t: Throwable) {
-                // İstek başarısız oldu
-                callback(false, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-
-    // Favori silme metodu
-    fun deleteFavorite(placeId: Int, callback: (Boolean, String) -> Unit) {
-        RetrofitClient.apiService.deleteFavorite(placeId).enqueue(object : Callback<Void> {
-            override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                if (response.isSuccessful) {
-                    // Favori silme başarılı
-                    callback(true, "Favori başarıyla kaldırıldı.")
-                } else {
-                    // Hata durumu
-                    callback(false, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<Void>, t: Throwable) {
-                // İstek başarısız oldu
-                callback(false, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-    fun fetchUserFavorites(callback: (List<FavoriteDto>?, String?) -> Unit) {
-        RetrofitClient.apiService.getUserFavorites().enqueue(object : Callback<List<FavoriteDto>> {
-            override fun onResponse(
-                call: Call<List<FavoriteDto>>,
-                response: Response<List<FavoriteDto>>
-            ) {
-                if (response.isSuccessful) {
-                    callback(response.body(), null) // Favoriler başarıyla alındı
-                } else {
-                    callback(null, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<List<FavoriteDto>>, t: Throwable) {
-                callback(null, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-
-}
-
-class CommentViewModel() : ViewModel() {
-
-    fun fetchUserComments(callback: (List<CommentDto>?, String?) -> Unit) {
-        RetrofitClient.apiService.getUserComments().enqueue(object : Callback<List<CommentDto>> {
-            override fun onResponse(
-                call: Call<List<CommentDto>>,
-                response: Response<List<CommentDto>>
-            ) {
-                if (response.isSuccessful) {
-                    callback(response.body(), null)
-                } else {
-                    callback(null, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<List<CommentDto>>, t: Throwable) {
-                callback(null, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-
-    fun createComment(placeId: Int, content: String, callback: (CommentDto?, String?) -> Unit) {
-        val createCommentRequest = CreateCommentDto(content)
-        RetrofitClient.apiService.createComment(placeId, createCommentRequest).enqueue(object : Callback<CommentDto> {
-            override fun onResponse(
-                call: Call<CommentDto>,
-                response: Response<CommentDto>
-            ) {
-                if (response.isSuccessful) {
-                    callback(response.body(), null)
-                } else {
-                    callback(null, "Hata: ${response.code()} - ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<CommentDto>, t: Throwable) {
-                callback(null, "İstek başarısız: ${t.message}")
-            }
-        })
-    }
-}
-
 @Composable
 fun ExploreScreen(
     navController: NavController,
     placeViewModel: PlaceViewModel = viewModel(),
     categoryViewModel: ExploreViewModel = viewModel(),
     visitedPlaceViewModel: VisitedPlaceViewModel = viewModel(), // Eklenen ViewModel
-    favoriteViewModel: FavoriteViewModel = viewModel() // Eklenen ViewModel
-
+    favoriteViewModel: FavoriteViewModel = viewModel(), // Eklenen ViewModel
+    commentViewModel: CommentViewModel = viewModel()
 ) {
     val places by placeViewModel.places
     val categories by categoryViewModel.categories
-
-
     val context = LocalContext.current
-
-
-    // Yükleme durumu kontrolü
     if (places.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
-
     // Seçili kategori kontrolü
-    var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: PlaceType(1, "Restaurant")) }
-
-
-    // Yükleme işlemi devam ederken, kategoriler ve çekilen verileri gözlemle
-    var selectedAttraction by remember { mutableStateOf<Place?>(null) }
-
+    var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: PlaceTypeDto(1, "Restaurant")) }
+    var selectedAttraction by remember { mutableStateOf<PlaceDto?>(null) }
     var favoriteAttractions by remember { mutableStateOf(mutableSetOf<String>()) }
     var isDarkMode by remember { mutableStateOf(false) }
     var visitedAttractions by remember { mutableStateOf(mutableSetOf<String>()) }
@@ -392,7 +78,37 @@ fun ExploreScreen(
     val suggestedPlaces by placeViewModel.suggestedPlaces
     val isLoading by placeViewModel.loading
     val errorMessage by placeViewModel.errorMessage
+    val imageName = "ayasofya"
+    val imageName2 = "emirgan"
 
+    val resourceId = context.resources.getIdentifier(imageName, "drawable", context.packageName)
+    val resourceId2 = context.resources.getIdentifier(imageName2, "drawable", context.packageName)
+
+
+    val searchedPlaces = places.filter { it.placeName.contains(searchQuery, ignoreCase = true) }
+    fun getDrawableResourceByPlaceName(placeName: String): Int {
+        return when (placeName.lowercase()) {
+            "saray muhallebicisi" -> R.drawable.saray
+
+            "gülhane parkı"->R.drawable.gulhane
+            "yıldız parkı"->R.drawable.yildiz
+            "mandabatmaz"->R.drawable.mandabatmaz
+            "yerebatan sarnıcı"->R.drawable.yerebatan
+            "sultanahmet camii"->R.drawable.sultanahmet
+            "taksim meydanı"->R.drawable.taksim
+            "kız kulesi"->R.drawable.kiz
+            //"çamlıca tepesi"->R.drawable.camlica
+            //"pierre loti tepesi" -> R.drawable.pierre
+            //"madame tussauds müzesi" -> R.drawable.madame
+            //"miniatürk" -> R.drawable.miniaturk
+            //"çamlıca kulesi" -> R.drawable.camlica
+            //"pelit çikolata müzesi" -> R.drawable.cikolata
+            "nusr-et restoran " -> R.drawable.nusret
+            //"kariye camii (eski chora kilisesi)" -> R.drawable.kariye
+
+            else -> R.drawable.istanbul // Varsayılan görsel
+        }
+    }
     LaunchedEffect(Unit) {
         placeViewModel.fetchPlacesByUserPlaceTypes()
     }
@@ -470,138 +186,198 @@ fun ExploreScreen(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                text = "İstanbul hakkında bilgi:\nHagia Sophia, 537 yılında katedral olarak inşa edilmiş ve sonrasında cami olarak kullanılmıştır. Bugün bir müze olarak ziyaretçilerini ağırlamaktadır.",
-                                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                            )
+                                text = "İstanbul, Asya ve Avrupa’yı birleştiren, zengin tarihi ve büyüleyici atmosferiyle eşsiz bir metropoldür. Roma, Bizans ve Osmanlı gibi imparatorluklara başkentlik yapan şehir, Sultanahmet’teki Ayasofya, Topkapı Sarayı ve Sultanahmet Camii gibi tarihi yapılarla geçmişin izlerini günümüze taşır. İstanbul Boğazı’nda bir yürüyüş veya tekne turu, şehrin doğal güzelliklerini ve siluetini keşfetmek için harika bir fırsattır. Doğu ve Batı’nın ruhunu barındıran İstanbul, her köşesinde farklı bir hikâye sunar.",
+                                style = TextStyle(
+                                    fontSize = 18.sp,
+                                    color = Color.Black
+                                ))
+
+
+
                         }
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            Text(
-                                text = "Suggested Attractions",
-                                style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
-                                modifier = Modifier.padding(16.dp)
-                            )
-
-                            when {
-                                suggestedPlaces.isNotEmpty() -> { // Önerilen mekanlar varsa göster
-                                    LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                        items(suggestedPlaces) { place ->
-                                            Card(
-                                                modifier = Modifier
-                                                    .width(200.dp)
-                                                    .padding(end = 16.dp)
-                                                    .clickable { selectedAttraction = place },
-                                                shape = RoundedCornerShape(12.dp),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = Color.Gray.copy(alpha = 0.3f)
+                        if (searchQuery.isNotEmpty()) {
+                            LazyRow(modifier = Modifier.padding(16.dp)) {
+                                if (searchedPlaces.isEmpty()) {
+                                    // No results found for the search
+                                    item {
+                                        Text(
+                                            "No attractions found for this search.",
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+                                } else {
+                                    items(searchedPlaces) { attraction ->
+                                        Card(
+                                            modifier = Modifier
+                                                .width(200.dp)
+                                                .padding(8.dp)
+                                                .clickable { selectedAttraction = attraction },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color.Gray.copy(alpha = 0.3f)
+                                            )
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Image(
+                                                    painter = painterResource(id = getDrawableResourceByPlaceName(attraction.placeName)), // Fixed
+                                                    contentDescription = null,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(120.dp), // Example height
+                                                    contentScale = ContentScale.Crop
                                                 )
-                                            ) {
-                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                    Image(
-                                                        painter = painterResource(id = R.drawable.istanbul),
-                                                        contentDescription = "Place Image",
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .height(120.dp),
-                                                        contentScale = ContentScale.Crop
-                                                    )
-
-                                                    Text(
-                                                        text = place.placeName,
-                                                        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
-                                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                                    )
-                                                }
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = attraction.placeName,
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                                        color = Color.Black
+                                                    ),
+                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                )
                                             }
                                         }
                                     }
                                 }
-
-                                else -> { // Önerilen mekan yoksa bir mesaj göster
-                                    Text(
-                                        text = "No suggestions available",
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
-                                        modifier = Modifier.padding(16.dp)
-                                    )
-                                }
                             }
-                        }
+                        } else if (searchQuery.isEmpty()) {
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = "Suggested Attractions",
+                                    style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
+                                    modifier = Modifier.padding(16.dp)
+                                )
 
+                                when {
+                                    suggestedPlaces.isNotEmpty() -> { // Önerilen mekanlar varsa göster
+                                        LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                            items(suggestedPlaces) { place ->
+                                                Card(
+                                                    modifier = Modifier
+                                                        .width(200.dp)
+                                                        .padding(end = 16.dp)
+                                                        .clickable { selectedAttraction = place },
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = Color.Gray.copy(alpha = 0.3f)
+                                                    )
+                                                ) {
+                                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                        Image(
+                                                            painter = painterResource(
+                                                                id = getDrawableResourceByPlaceName(
+                                                                    place.placeName
+                                                                )
+                                                            ),
+                                                            contentDescription = place.placeName,
+                                                            modifier = Modifier
+                                                                .height(120.dp)
+                                                                .fillMaxWidth(),
+                                                            contentScale = ContentScale.Crop
+                                                        )
+                                                        Text(
+                                                            text = place.placeName,
+                                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                                color = Color.Black
+                                                            ),
+                                                            modifier = Modifier.padding(horizontal = 8.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
 
-
-
-
-                        // Kategoriler için Tablar
-                        Text(
-                            text = "Top Attractions",
-                            style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
-                            modifier = Modifier.padding(16.dp)
-                        )
-
-                        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
-                            items(categories) { category ->
-                                Button(
-                                    onClick = { selectedCategory = category },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (category == selectedCategory) Color(
-                                            0xFF2196F3
-                                        ) else Color.White,
-                                        contentColor = if (category == selectedCategory) Color.White else Color.Gray
-                                    ),
-                                    shape = RoundedCornerShape(16.dp),
-                                    modifier = Modifier.padding(end = 8.dp)
-                                ) {
-                                    Text(text = category.placeTypeName)
-                                }
-                            }
-                        }
-
-
-                        // LazyRow - Attraction items
-                        LazyRow(modifier = Modifier.padding(16.dp)) {
-                            val filteredAttractions =
-                                places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
-
-
-                            if (filteredAttractions.isEmpty()) {
-                                // Eşleşen öğe yoksa, mesaj göster
-                                item {
-                                    Text(
-                                        "No attractions found for this category.",
-                                        modifier = Modifier.padding(16.dp)
-                                    )
-                                }
-
-                            } else {
-                                items(filteredAttractions) { attraction ->
-                                    Card(
-                                        modifier = Modifier
-                                            .width(200.dp)
-                                            .padding(8.dp) // BottomNavigationBar alanı
-
-                                            .clickable { selectedAttraction = attraction },
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color.Gray.copy(
-                                                alpha = 0.3f
-                                            )
+                                    else -> { // Önerilen mekan yoksa bir mesaj göster
+                                        Text(
+                                            text = "No suggestions available",
+                                            style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                                            modifier = Modifier.padding(16.dp)
                                         )
-                                    ) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Image(
-                                                painter = painterResource(id = R.drawable.istanbul),
-                                                contentDescription = "Istanbul",
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentScale = ContentScale.Crop
-                                            )
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Text(
-                                                text = attraction.placeName,
-                                                style = MaterialTheme.typography.bodyLarge.copy(
-                                                    color = Color.Black
-                                                ),
-                                                modifier = Modifier.padding(horizontal = 8.dp)
-                                            )
+                                    }
+                                }
+                            }
+                            // Kategoriler için Tablar
+                            Text(
+                                text = "Top Attractions",
+                                style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
+                                modifier = Modifier.padding(16.dp)
+                            )
 
+                            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
+                                items(categories) { category ->
+                                    Button(
+                                        onClick = { selectedCategory = category },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (category == selectedCategory) Color(
+                                                0xFF2196F3
+                                            ) else Color.White,
+                                            contentColor = if (category == selectedCategory) Color.White else Color.Gray
+                                        ),
+                                        shape = RoundedCornerShape(16.dp),
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    ) {
+                                        Text(text = category.placeTypeName)
+                                    }
+                                }
+                            }
+                            // LazyRow - Attraction items
+                            LazyRow(modifier = Modifier.padding(16.dp)) {
+                                val filteredAttractions =
+                                    places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
+
+
+                                if (filteredAttractions.isEmpty()) {
+                                    // Eşleşen öğe yoksa, mesaj göster
+                                    item {
+                                        Text(
+                                            "No attractions found for this category.",
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+
+                                } else {
+                                    items(filteredAttractions) { attraction ->
+                                        Card(
+                                            modifier = Modifier
+                                                .width(200.dp)
+                                                .padding(8.dp) // BottomNavigationBar alanı
+
+                                                .clickable { selectedAttraction = attraction },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color.Gray.copy(
+                                                    alpha = 0.3f
+                                                )
+                                            )
+                                        ) {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                modifier = Modifier.padding(16.dp) // Adding padding for better spacing
+                                            ) {
+                                                // Image of the attraction
+                                                Image(
+                                                    painter = painterResource(
+                                                        id = getDrawableResourceByPlaceName(attraction.placeName)
+                                                    ),
+                                                    contentDescription = attraction.placeName,
+                                                    modifier = Modifier
+                                                        .height(200.dp) // Adjusting the height for better appearance
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(16.dp)), // Adding rounded corners to the image
+                                                    contentScale = ContentScale.Crop
+                                                )
+
+                                                Spacer(modifier = Modifier.height(16.dp)) // Adding some space between image and description
+                                                Text(
+                                                    text = attraction.placeName,
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                                        color = Color.Black
+                                                    ),
+                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                )
+
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                            }
 
                                         }
                                     }
@@ -611,10 +387,8 @@ fun ExploreScreen(
                     }
                 }
             }
-
-
         }
-        /*else {
+        else {
             Column(
                 modifier = Modifier
                     .padding(16.dp)
@@ -627,11 +401,15 @@ fun ExploreScreen(
                         .fillMaxWidth()
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.istanbul),
-                        contentDescription = "Istanbul",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        painter = painterResource(
+                            id = selectedAttraction?.let { getDrawableResourceByPlaceName(it.placeName) }
+                                ?: R.drawable.istanbul // Default image
+                        ),
+                        contentDescription = "Selected Place Image", // Add meaningful content description
+                        modifier = Modifier.fillMaxSize(), // Add a modifier to specify the size or alignment
+                        contentScale = ContentScale.Crop // Optionally set the scale for the image
                     )
+
                     // Geri ve diğer ikon butonlar
                     Row(
                         modifier = Modifier
@@ -646,15 +424,15 @@ fun ExploreScreen(
                             onClick = { selectedAttraction = null },
                             modifier = Modifier
                                 .background(
-                                    Color.Gray.copy(alpha = 0.6f),
-                                    shape = RoundedCornerShape(12.dp)
+                                    Color.White, // Arka plan rengini beyaz yaptık
+                                    shape = RoundedCornerShape(50.dp) // Oval bir şekil için köşe yarıçapını artırdık
                                 )
                                 .padding(8.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Geri Dön",
-                                tint = Color.White
+                                tint = Color.Black // İkon rengini siyah yaptık
                             )
                         }
 
@@ -664,7 +442,21 @@ fun ExploreScreen(
                             var isFavorite by remember { mutableStateOf(false) }
 
                             LaunchedEffect(selectedAttraction) {
-                                isFavorite = selectedAttraction?.placeName in favoriteAttractions
+                                selectedAttraction?.placeName?.let { placeName ->
+                                    favoriteViewModel.fetchUserFavorites { favorites, error ->
+                                        if (favorites != null) {
+                                            // Favorilerde mi kontrolü
+                                            isFavorite = favorites.any { it.placeName == placeName }
+                                        } else {
+                                            // Hata durumunda mesaj gösterilebilir
+                                            Toast.makeText(
+                                                context,
+                                                error ?: "Favoriler alınırken hata oluştu.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
                             }
 
                             IconButton(onClick = {
@@ -672,10 +464,10 @@ fun ExploreScreen(
                                     val placeName = attraction.placeName
                                     val placeId = attraction.placeId
 
-                                    if (favoriteAttractions.contains(placeName)) {
+                                    if (isFavorite) {
                                         favoriteViewModel.deleteFavorite(placeId) { success, message ->
                                             if (success) {
-                                                favoriteAttractions.remove(placeName)
+                                                // Favorilerden çıkarıldıktan sonra listeyi güncelle
                                                 isFavorite = false
                                                 Toast.makeText(
                                                     context,
@@ -693,7 +485,7 @@ fun ExploreScreen(
                                     } else {
                                         favoriteViewModel.addFavorite(placeId) { success, message ->
                                             if (success) {
-                                                favoriteAttractions.add(placeName)
+                                                // Favorilere eklendikten sonra listeyi güncelle
                                                 isFavorite = true
                                                 Toast.makeText(
                                                     context,
@@ -724,7 +516,22 @@ fun ExploreScreen(
                             var isVisited by remember { mutableStateOf(false) }
 
                             LaunchedEffect(selectedAttraction) {
-                                isVisited = selectedAttraction?.placeName in visitedAttractions
+                                selectedAttraction?.placeName?.let { placeName ->
+                                    visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
+                                        if (visitedPlaces != null) {
+                                            // Ziyaret edilenler listesinde mi kontrolü
+                                            isVisited =
+                                                visitedPlaces.any { it.placeName == placeName }
+                                        } else {
+                                            // Hata durumunda mesaj gösterilebilir
+                                            Toast.makeText(
+                                                context,
+                                                error ?: "Ziyaret edilenler alınırken hata oluştu.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
                             }
 
                             IconButton(onClick = {
@@ -732,12 +539,11 @@ fun ExploreScreen(
                                     val placeName = attraction.placeName
                                     val placeId = attraction.placeId
 
-                                    if (visitedAttractions.contains(placeName)) {
+                                    if (isVisited) {
                                         visitedPlaceViewModel.deleteVisitedPlace(placeId) { success, message ->
                                             if (success) {
-                                                visitedAttractions.remove(placeName)
+                                                // Gidilenlerden çıkarıldıktan sonra listeyi güncelle
                                                 isVisited = false
-
                                                 Toast.makeText(
                                                     context,
                                                     "$placeName gidilenlerden çıkarıldı.",
@@ -754,9 +560,8 @@ fun ExploreScreen(
                                     } else {
                                         visitedPlaceViewModel.addVisitedPlace(placeId) { success, message ->
                                             if (success) {
-                                                visitedAttractions.add(placeName)
+                                                // Gidilenlere eklendikten sonra listeyi güncelle
                                                 isVisited = true
-
                                                 Toast.makeText(
                                                     context,
                                                     "$placeName gidilenlere kaydedildi.",
@@ -784,19 +589,289 @@ fun ExploreScreen(
                         }
                     }
                 }
+                var selectedTabIndex by remember { mutableStateOf(0) }
+                val commentsState = remember { mutableStateOf<List<CommentDto>?>(null) }
+                var rating by remember { mutableStateOf(0f) }
+                var comment by remember { mutableStateOf("") }
 
-                // Açıklama ve Metin Bölümü (Resimden Sonra)
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = selectedAttraction?.placeName.orEmpty(),
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Text(
-                        text = selectedAttraction?.description.orEmpty(),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-        }*/
-}}
+                Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                    // Tab Row for switching between "Details" and "Comments"
+                    TabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        containerColor = Color.White, // TabRow background color
+                        contentColor = Color.Black // Text color for selected tab
+                    ) {
+                        Tab(
+                            selected = selectedTabIndex == 0,
+                            onClick = { selectedTabIndex = 0 },
+                            selectedContentColor = Color.Black,
+                            unselectedContentColor = Color.Gray
+                        ) {
+                            Text("Detaylar", modifier = Modifier.padding(16.dp), color = Color.Black)
+                        }
+                        Tab(
+                            selected = selectedTabIndex == 1,
+                            onClick = { selectedTabIndex = 1 },
+                            selectedContentColor = Color.Black,
+                            unselectedContentColor = Color.Gray
+                        ) {
+                            Text("Yorumlar", modifier = Modifier.padding(16.dp), color = Color.Black)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
 
+
+                    when (selectedTabIndex) {
+                        0 -> { // Details Tab
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = selectedAttraction?.placeName.orEmpty(),
+                                    style = MaterialTheme.typography.headlineMedium
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Place,
+                                        contentDescription = null,
+                                        tint = Color.Gray
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = selectedAttraction?.placeAddress.orEmpty(),
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Star Rating Section
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Ensure rating is valid and not null. If null, set it to 0.0
+                                    val rating = (selectedAttraction?.rating ?: 0.0).coerceIn(0.0, 5.0) // Clamp to a valid range between 0.0 and 5.0
+
+                                    val fullStars = rating.toInt()
+                                    val hasHalfStar = rating % 1 >= 0.5
+
+                                    // Full stars
+                                    repeat(fullStars) {
+                                        Icon(
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = "Full Star",
+                                            tint = Color(0xFFFFD700) // Gold color
+                                        )
+                                    }
+
+                                    // Half star
+                                    if (hasHalfStar) {
+                                        Icon(
+                                            imageVector = Icons.Default.StarHalf,
+                                            contentDescription = "Half Star",
+                                            tint = Color(0xFFFFD700) // Gold color
+                                        )
+                                    }
+
+                                    // Empty stars (to fill up to 5 stars)
+                                    repeat(5 - fullStars - if (hasHalfStar) 1 else 0) {
+                                        Icon(
+                                            imageVector = Icons.Default.StarOutline,
+                                            contentDescription = "Empty Star",
+                                            tint = Color.Gray
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    // Ensure rating is properly formatted to 1 decimal place and avoid invalid format exceptions
+                                    val formattedRating = try {
+                                        String.format("%.1f", rating) // Format to 1 decimal place
+                                    } catch (e: Exception) {
+                                        "0.0" // Fallback to a default value if formatting fails
+                                    }
+
+                                    Text(
+                                        text = formattedRating, // Display the formatted rating
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Text(
+                                    text = selectedAttraction?.description.orEmpty(),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
+                        1 -> { // Comments Tab
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                selectedAttraction?.let { attraction ->
+                                    val placeId = attraction.placeId
+
+                                    // Fetch Comments
+                                    commentViewModel.getPlaceComments(placeId) { comments, _ ->
+                                        commentsState.value = comments
+                                    }
+
+                                    // Display Comments
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        when {
+                                            commentsState.value != null -> {
+                                                LazyColumn(
+                                                    contentPadding = PaddingValues(16.dp),
+                                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                                ) {
+                                                    items(commentsState.value!!) { comment ->
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(8.dp),
+                                                            verticalAlignment = Alignment.Top
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.AccountCircle,
+                                                                contentDescription = null,
+                                                                modifier = Modifier
+                                                                    .size(40.dp)
+                                                                    .padding(end = 8.dp),
+                                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            )
+                                                            Column(modifier = Modifier.weight(1f)) {
+                                                                Text(
+                                                                    text = comment.createdBy
+                                                                        ?: "Unknown",
+                                                                    style = MaterialTheme.typography.bodyMedium,
+                                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                                    fontWeight = FontWeight.Bold
+                                                                )
+                                                                Text(
+                                                                    text = comment.text ?: "",
+                                                                    style = MaterialTheme.typography.bodyMedium,
+                                                                    modifier = Modifier.padding(
+                                                                        vertical = 4.dp
+                                                                    )
+                                                                )
+                                                                Row {
+                                                                    repeat(5) { index ->
+                                                                        Icon(
+                                                                            imageVector = if (index < comment.rate) Icons.Default.Star else Icons.Default.StarBorder,
+                                                                            contentDescription = null,
+                                                                            tint = if (index < comment.rate) Color(
+                                                                                0xFFFFC107
+                                                                            ) else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                        )
+                                                                    }
+                                                                }
+                                                                Spacer(
+                                                                    modifier = Modifier.height(
+                                                                        8.dp
+                                                                    )
+                                                                )
+                                                                Text(
+                                                                    text = comment.createdOn,
+                                                                    style = MaterialTheme.typography.bodySmall,
+                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                )
+                                                            }
+                                                            IconButton(onClick = {
+                                                                // Yorum düzenleme fonksiyonu
+                                                                // editComment(comment)
+                                                            }) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Edit,
+                                                                    contentDescription = "Edit Comment",
+                                                                    tint = MaterialTheme.colorScheme.primary
+                                                                )
+                                                            }
+                                                        }
+                                                        Divider(
+                                                            color = MaterialTheme.colorScheme.outline,
+                                                            thickness = 1.dp
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            else -> {
+                                                Text(
+                                                    text = "Henüz hiç yorum yok.",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    modifier = Modifier.align(Alignment.Center)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    // Add Comment Section
+                                    var comment by remember { mutableStateOf("") }
+                                    var rating by remember { mutableStateOf(0f) }
+
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text("Yorum Yapın", style = MaterialTheme.typography.headlineSmall)
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        // Star Rating Row
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            repeat(5) { index ->
+                                                IconButton(onClick = { rating = (index + 1).toFloat() }) {
+                                                    Icon(
+                                                        imageVector = if (index < rating) Icons.Default.Star else Icons.Default.StarBorder,
+                                                        contentDescription = null,
+                                                        tint = if (index < rating) Color(0xFFFFC107) else Color.Gray
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        // Styled TextField with Rounded Corners
+                                        OutlinedTextField(
+                                            value = comment,
+                                            onValueChange = { comment = it },
+                                            label = { Text("Your comment") },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(150.dp)
+                                                .padding(vertical = 8.dp),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = Color(0xFF3F51B5),
+                                                unfocusedBorderColor = Color.Gray,
+                                                focusedContainerColor = Color(0xFFF5F5F5),
+                                                unfocusedContainerColor = Color(0xFFF5F5F5)
+                                            ),
+                                            maxLines = 5
+                                        )
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        // Submit Button
+                                        Button(
+                                            onClick = {
+                                                selectedAttraction?.let { attraction ->
+                                                    val placeId = attraction.placeId
+                                                    commentViewModel.createComment(
+                                                        placeId = placeId,
+                                                        content = comment,
+                                                        rate = rating.toInt()
+                                                    ) { createdComment, errorMessage ->
+                                                        if (createdComment != null) {
+                                                            Toast.makeText(context, "Review submitted successfully", Toast.LENGTH_SHORT).show()
+                                                            // Reset text field and rating
+                                                            comment = ""
+                                                            rating = 0f
+                                                        }
+                                                        else {
+                                                            Toast.makeText(context, "Failed to submit review: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(50.dp),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
+                                        ) {
+                                            Text("Yorum Yap", color = Color.White, fontSize = 16.sp)
+                                        }
+                                    }
+                                }}}}}}}}}

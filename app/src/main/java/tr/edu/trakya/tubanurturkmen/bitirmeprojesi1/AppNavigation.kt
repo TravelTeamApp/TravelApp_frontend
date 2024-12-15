@@ -25,7 +25,6 @@ import androidx.navigation.compose.rememberNavController
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ExploreScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.LoginScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.RegisterScreen
-import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HomeScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ForgotPasswordScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.HobiesScreen
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.ProfileScreen
@@ -87,7 +86,12 @@ fun AppNavigation() {
                 currentRoute.value = "profile"
                 ProfileScreen(navController, sharedViewModel = SharedViewModel())
             }
+            composable("explore") {
+                currentRoute.value = "explore"
+                ExploreScreen(navController)
+            }
             composable("map") {
+                currentRoute.value = "map"
                 FinalLearningApp()
             }
         }
@@ -124,7 +128,22 @@ fun AppNavigation() {
                         },
                         alwaysShowLabel = false
                     )
-
+                    NavigationBarItem(
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Filled.Explore,
+                                contentDescription = "Explore",
+                                modifier = Modifier.size(40.dp) // Varsayılan boyut
+                            )
+                        },
+                        selected = currentRoute.value == "explore",
+                        onClick = {
+                            navController.navigate("explore") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        alwaysShowLabel = false
+                    )
                     NavigationBarItem(
                         icon = {
                             Icon(

@@ -130,7 +130,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Done
                 )
-                  // Başlık ile diğer içerik arasında boşluk bırakıyoruz
+                // Başlık ile diğer içerik arasında boşluk bırakıyoruz
 
             )
 
