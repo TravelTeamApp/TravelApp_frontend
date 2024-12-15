@@ -22,10 +22,10 @@ data class CommentDto(
         val userId: Int?,
         val rate:Int
 )
+
 data class CommentsResponse(
         val comments: List<CommentDto>
 )
-
 
 data class VisitedPlaceDto(
         val visitedPlaceId: Int,
@@ -49,6 +49,8 @@ data class PlaceDto(
         val placeAddress: String,
         val description: String,
         val rating: Double,
+        val latitude:Double,
+        val longitude:Double,
         val placeType: PlaceTypeDto,
         val comments: List<CommentDto>
 )

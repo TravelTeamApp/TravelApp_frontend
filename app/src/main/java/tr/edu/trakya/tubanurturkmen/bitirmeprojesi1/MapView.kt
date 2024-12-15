@@ -36,6 +36,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -48,63 +49,43 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.util.CustomMarkerWindow
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.util.MapPlace
 
-
 @Composable
 fun FinalLearningApp() {
+    val placeViewModel: PlaceViewModel = viewModel()
+    val placeDto = placeViewModel.places.value
 
-    val context = LocalContext.current
-    val mapView = MapView(context).apply {
-        val defaultLocation = GeoPoint(41.008238, 28.978359)
-        controller.setZoom(15.0)
-        controller.setCenter(defaultLocation)
-        onResume() // Haritayı başlatıyoruz
-    }
-    // mapView'i yeniden oluşturduğumuz için duraklatmayı da burada yapabiliriz.
-    DisposableEffect(mapView) {
-        onDispose {
-            mapView.onPause() // Harita duraklatılmalı
-        }
-    }
-    val places = listOf(
+    val places = placeDto.map {
+        Log.d("LatitudeLog", "Latitude: ${it.latitude}, Type: ${it.latitude::class.java.simpleName}")
         MapPlace(
-            id = "Istanbul41.008238",
-            name = "Istanbul",
-            coordinates = GeoPoint(41.008238, 28.978359),
-            description = "Istanbul, historically known as Byzantium and Constantinople, is Turkey's largest city and a cultural and historical hub spanning Europe and Asia.",
-            imageResId = R.drawable.istanbul,
-            focusZoomLvl = 12.0
-        ),
-        MapPlace(
-            id = "KizKulesi41.021075",
-            name = "Kız Kulesi",
-            coordinates = GeoPoint(41.021075, 29.004618),
-            description = "Kız Kulesi, or Maiden's Tower, is a historic tower located on a small islet at the southern entrance of the Bosphorus in Istanbul, offering breathtaking views and rich legends.",
+            id = "${it.placeName}_${it.latitude}_${it.longitude}", // Daha benzersiz ID
+            name = it.placeName,
+            coordinates = GeoPoint(it.latitude, it.longitude),
+            description = it.description,
             imageResId = R.drawable.istanbul,
             focusZoomLvl = 15.0
-        ),
-        MapPlace(
-            id = "TopkapiSarayi41.011740",
-            name = "Topkapı Sarayı",
-            coordinates = GeoPoint(41.011740, 28.985107),
-            description = "Topkapı Sarayı, the Topkapi Palace, was the administrative center and residence of the Ottoman sultans for almost 400 years. It is a UNESCO World Heritage site, renowned for its stunning architecture and rich history.",
-            imageResId = R.drawable.istanbul,
-            focusZoomLvl = 14.0
-        ),
-        MapPlace(
-            id = "Nusret41.022115",
-            name = "Nusret Steakhouse",
-            coordinates = GeoPoint(41.022115, 28.983242),
-            description = "Nusret Steakhouse, owned by renowned chef Nusret Gökçe, is famous for its luxurious dining experience and unique steak preparations, including the viral 'Salt Bae' move.",
-            imageResId = R.drawable.istanbul,
-            focusZoomLvl = 16.0
         )
-    )
+    }
+
+    val context = LocalContext.current
+    val mapView = remember {
+        MapView(context).apply {
+            val defaultLocation = GeoPoint(41.008238, 28.978359)
+            controller.setZoom(15.0)
+            controller.setCenter(defaultLocation)
+            onResume()
+        }
+    }
+
+    DisposableEffect(mapView) {
+        onDispose {
+            mapView.onPause()
+        }
+    }
 
     val markersIdOnMap = remember { mutableStateListOf<String>() }
     val markersWithInfoWindow = remember { mutableStateListOf<Marker>() }
 
     Surface(modifier = Modifier.fillMaxSize()) {
-
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
@@ -130,15 +111,15 @@ private fun MapView.onAnimateToNewPlace(
     itemPlace: MapPlace,
     marksWithWindowOnMap: SnapshotStateList<Marker>
 ) {
-    // Remove all markers with open info windows before animating
+    Log.d("MarkerDebug", "Searching for marker with ID: ${itemPlace.id}")
+    Log.d("MarkerDebug", "Current markers: ${overlays.filterIsInstance<Marker>().map { it.id }}")
+
     this.removeAllMarksFrom(marksWithWindowOnMap)
 
-    // Animate the map view to the new place
     controller.animateTo(itemPlace.coordinates, itemPlace.focusZoomLvl, 2000L)
     Log.d("FinalMapLearnLogs", "Going to: ${itemPlace.id}")
 
-    // Check if the marker already exists and show the info window
-    val marker = overlays.find { (it is Marker && it.id == itemPlace.id) } as? Marker
+    val marker = overlays.filterIsInstance<Marker>().find { it.id == itemPlace.id }
     marker?.apply {
         showInfoWindow()
         marksWithWindowOnMap.add(this)
@@ -160,7 +141,6 @@ private fun MapView(
     onAddNewMarker: (String) -> Unit,
     markersWithWindowOnMap: SnapshotStateList<Marker>
 ) {
-
     val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -176,45 +156,99 @@ private fun MapView(
         }
     }
 
-    LaunchedEffect(key1 = Unit) {
-        val mapEventsOverlay = MapEventsOverlay(object : MapEventsReceiver {
-            override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
-                if (markersWithWindowOnMap.isNotEmpty()) {
-                    mapView.removeAllMarksFrom(markersWithWindowOnMap)
-                }
-                return true
-            }
-
-            override fun longPressHelper(p: GeoPoint?): Boolean {
-                return false
-            }
-        })
-
-        mapView.apply {
-            controller.zoomTo(6, 1000L)
-            setMapConfigurations()
-            overlays.add(mapEventsOverlay)
-
-            places.forEachIndexed { index, place ->
-                onAddNewMarker(place.id)
-                addMarkertoMap(
-                    context,
-                    place,
-                    onNextclick = {
-                        onAnimateToNewPlace(
-                            if (index < places.size - 1) places[index + 1] else places[0],
-                            markersWithWindowOnMap
-                        )
+    LaunchedEffect(key1 = places) {
+        if (places.isNotEmpty()) {
+            val mapEventsOverlay = MapEventsOverlay(object : MapEventsReceiver {
+                override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
+                    if (markersWithWindowOnMap.isNotEmpty()) {
+                        mapView.removeAllMarksFrom(markersWithWindowOnMap)
                     }
-                )
+                    return true
+                }
+
+                override fun longPressHelper(p: GeoPoint?): Boolean {
+                    return false
+                }
+            })
+
+            mapView.apply {
+                controller.zoomTo(6, 1000L)
+                setMapConfigurations()
+                overlays.add(mapEventsOverlay)
+
+                places.forEachIndexed { index, place ->
+                    Log.d("LaunchedEffectDebug", "Adding place: ${place.name}, ID: ${place.id}")
+                    addMarkertoMap(
+                        context,
+                        place,
+                        onNextclick = {
+                            onAnimateToNewPlace(
+                                if (index < places.size - 1) places[index + 1] else places[0],
+                                markersWithWindowOnMap
+                            )
+                        }
+                    )
+                }
             }
+        } else {
+            Log.d("MapDebug", "Places list is empty, no markers to add.")
         }
     }
+}
+
+fun MapView.setMapConfigurations() {
+    val context = this.context
+
+    val rotationGestureOverlay = RotationGestureOverlay(this)
+    setMultiTouchControls(true)
+    overlays.add(rotationGestureOverlay)
+
+    val compassOverlay = CompassOverlay(context, this)
+    compassOverlay.enableCompass()
+    overlays.add(compassOverlay)
+}
+
+fun MapView.addMarkertoMap(
+    context: Context,
+    place: MapPlace,
+    onNextclick: () -> Unit
+) {
+    val marker = Marker(this).apply {
+        position = place.coordinates
+        icon = ResourcesCompat.getDrawable(resources, R.drawable.map_marker, null)
+        title = place.name
+        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+        subDescription = place.description
+        id = place.id
+        infoWindow = CustomMarkerWindow(this@addMarkertoMap, place, onNextclick)
+    }
+    Log.d("MarkerDebug", "Added Marker ID: ${marker.id}")
+
+    overlays.add(marker)
+    Log.d("OverlayDebug", "Overlays: ${overlays.filterIsInstance<Marker>().map { it.id }}")
+
+    invalidate()
+    Log.d("FinalMapLearnLogs", "Marker added for place: ${place.name}, ID: ${place.id}")
 }
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun PlacesDetailItem(mapPlace: MapPlace, onPlaceClick: () -> Unit) {
+    val description = mapPlace.description
+    val maxWords = 20
+
+    // Açıklamayı en fazla 50 kelimeyle sınırlıyoruz
+    val truncatedDescription = description
+        .split(" ")
+        .take(maxWords)
+        .joinToString(" ")
+
+    // Eğer açıklama sınırlıysa "..." ekliyoruz
+    val finalDescription = if (description.split(" ").size > maxWords) {
+        "$truncatedDescription..."
+    } else {
+        truncatedDescription
+    }
 
     Card(
         modifier = Modifier
@@ -226,13 +260,11 @@ private fun PlacesDetailItem(mapPlace: MapPlace, onPlaceClick: () -> Unit) {
         elevation = 6.dp,
         onClick = { onPlaceClick() }
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(8.dp)
         ) {
-
             Image(
                 painter = painterResource(id = mapPlace.imageResId),
                 contentDescription = mapPlace.name,
@@ -255,7 +287,7 @@ private fun PlacesDetailItem(mapPlace: MapPlace, onPlaceClick: () -> Unit) {
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = mapPlace.description,
+                text = finalDescription,
                 fontSize = 14.sp,
                 color = Color.Black,
                 modifier = Modifier.fillMaxWidth()
@@ -299,52 +331,3 @@ private fun PlacesListItem(
     }
 }
 
-@Composable
-private fun MapSearchBar() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth(0.75f)
-            .padding(8.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .height(24.dp)
-    ) {
-        Text(text = "Search", color = Color(0xFFACACAC))
-    }
-}
-
-fun MapView.setMapConfigurations() {
-    val context = this.context
-    val displayMetrics: DisplayMetrics = context.resources.displayMetrics
-
-    val rotationGestureOverlay = RotationGestureOverlay(this)
-    setMultiTouchControls(true)
-    overlays.add(rotationGestureOverlay)
-
-    val compassOverlay = CompassOverlay(context, this)
-    compassOverlay.enableCompass()
-    overlays.add(compassOverlay)
-}
-
-fun MapView.addMarkertoMap(
-    context: Context,
-    place: MapPlace,
-    onNextclick: () -> Unit
-) {
-    val marker = Marker(this)
-    marker.apply {
-        position = place.coordinates
-        icon = ResourcesCompat.getDrawable(resources, R.drawable.map_marker, null)
-        title = place.name
-        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-        this.subDescription = place.description
-        this.id = place.id
-        infoWindow = CustomMarkerWindow(
-            this@addMarkertoMap,
-            place = place,
-            onNextClick = onNextclick
-        )
-    }
-    overlays.add(marker)
-    invalidate()
-    Log.d("FinalMapLearnLogs", "Marker added for place: ${place.name}")
-}

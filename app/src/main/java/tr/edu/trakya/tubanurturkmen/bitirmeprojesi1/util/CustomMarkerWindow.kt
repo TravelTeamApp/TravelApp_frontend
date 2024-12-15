@@ -23,10 +23,11 @@ class CustomMarkerWindow(
     override fun onOpen(item: Any?) {
 
         mView.apply {
-            windowTitle = findViewById(R.id.placeTitle)
-            windowDescription = findViewById(R.id.placeDescription)
-            windowPlaceImage = findViewById(R.id.placeImage)
-            windowNextButton = findViewById(R.id.nextButton)
+            windowTitle = mView.findViewById<TextView>(R.id.placeTitle) ?: return
+            windowDescription = mView.findViewById<TextView>(R.id.placeDescription) ?: return
+            windowPlaceImage = mView.findViewById<ImageView>(R.id.placeImage) ?: return
+            windowNextButton = mView.findViewById<CardView>(R.id.nextButton) ?: return
+
         }
 
         windowTitle.text= place.name

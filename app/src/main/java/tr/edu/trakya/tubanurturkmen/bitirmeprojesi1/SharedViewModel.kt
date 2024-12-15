@@ -6,9 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.osmdroid.util.GeoPoint
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.util.MapPlace
 
 
 data class AddPlaceTypeResponse(
@@ -56,6 +58,8 @@ class PlaceViewModel : ViewModel() {
     // State'ler: List of places, loading state, and error message
     private val _places = mutableStateOf<List<PlaceDto>>(emptyList())
     val places: State<List<PlaceDto>> get() = _places
+    private val _mapPlaces = mutableStateOf<List<MapPlace>>(emptyList())
+    val mapPlaces: State<List<MapPlace>> get() = _mapPlaces
     private val _loading = mutableStateOf(false)
     val loading: State<Boolean> get() = _loading
     private val _errorMessage = mutableStateOf<String?>(null)
@@ -65,7 +69,7 @@ class PlaceViewModel : ViewModel() {
     init {
         fetchPlaces()
     }
-    private fun fetchPlaces() {
+    fun fetchPlaces() {
         _loading.value = true  // API çağrısı başladığında loading state'i true
         _errorMessage.value = null  // Hata mesajını sıfırla
         RetrofitClient.apiService.getAllPlaces().enqueue(object : Callback<List<PlaceDto>> {
@@ -89,7 +93,9 @@ class PlaceViewModel : ViewModel() {
                 Log.e("Network Error", "Error: ${t.message}")
             }
         })
+
     }
+
     fun getPlaceTypesByUserId(callback: (List<UserPlaceTypeDto>?) -> Unit) {
         RetrofitClient.apiService.getPlaceTypesByUserId().enqueue(object :
             Callback<List<UserPlaceTypeDto>> {
