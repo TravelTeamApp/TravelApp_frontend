@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
@@ -435,7 +436,6 @@ fun ExploreScreen(
                                             // Favorilerde mi kontrolü
                                             isFavorite = favorites.any { it.placeName == placeName }
                                         } else {
-                                            // Hata durumunda mesaj gösterilebilir
                                             Toast.makeText(
                                                 context,
                                                 error ?: "Favoriler alınırken hata oluştu.",
@@ -445,16 +445,13 @@ fun ExploreScreen(
                                     }
                                 }
                             }
-
                             IconButton(onClick = {
                                 selectedAttraction?.let { attraction ->
                                     val placeName = attraction.placeName
                                     val placeId = attraction.placeId
-
                                     if (isFavorite) {
                                         favoriteViewModel.deleteFavorite(placeId) { success, message ->
                                             if (success) {
-                                                // Favorilerden çıkarıldıktan sonra listeyi güncelle
                                                 isFavorite = false
                                                 Toast.makeText(
                                                     context,
@@ -472,7 +469,6 @@ fun ExploreScreen(
                                     } else {
                                         favoriteViewModel.addFavorite(placeId) { success, message ->
                                             if (success) {
-                                                // Favorilere eklendikten sonra listeyi güncelle
                                                 isFavorite = true
                                                 Toast.makeText(
                                                     context,
@@ -498,7 +494,6 @@ fun ExploreScreen(
                                     tint = Color.White
                                 )
                             }
-
                             // Gidilenler İkonu
                             var isVisited by remember { mutableStateOf(false) }
 
@@ -606,8 +601,6 @@ fun ExploreScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-
-
                     when (selectedTabIndex) {
                         0 -> { // Details Tab
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -629,7 +622,6 @@ fun ExploreScreen(
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(12.dp))
-
                                 // Star Rating Section
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     // Ensure rating is valid and not null. If null, set it to 0.0
@@ -768,6 +760,16 @@ fun ExploreScreen(
                                                                     imageVector = Icons.Default.Edit,
                                                                     contentDescription = "Edit Comment",
                                                                     tint = MaterialTheme.colorScheme.primary
+                                                                )
+                                                            }
+                                                            IconButton(onClick = {
+                                                                // Yorum silme fonksiyonu
+                                                                // deleteComment(comment)
+                                                            }) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Delete,
+                                                                    contentDescription = "Delete Comment",
+                                                                    tint = MaterialTheme.colorScheme.error
                                                                 )
                                                             }
                                                         }

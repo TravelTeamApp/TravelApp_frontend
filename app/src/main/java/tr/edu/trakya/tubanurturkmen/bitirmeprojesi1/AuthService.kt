@@ -90,7 +90,7 @@ interface AuthService {
         @Body createCommentRequest: CreateCommentDto
     ): Call<CommentDto>
     // Yorum güncelleme işlemi
-    @PUT("Comment/{id}")  // URL: BASE_URL/Comment/{id}
+    @PUT("comment/{id}")  // URL: BASE_URL/Comment/{id}
     fun updateComment(
         @Path("id") id: Int,
         @Body updateCommentRequest: UpdateCommentRequestDto
