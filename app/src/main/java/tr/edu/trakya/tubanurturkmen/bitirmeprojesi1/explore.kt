@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
@@ -41,9 +42,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import org.w3c.dom.Comment
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 
 @Composable
@@ -704,6 +708,8 @@ fun ExploreScreen(
                             }
                         }
                         1 -> { // Comments Tab
+                            var isView by remember { mutableStateOf(false) }
+
                             Column(modifier = Modifier.fillMaxSize()) {
                                 selectedAttraction?.let { attraction ->
                                     val placeId = attraction.placeId
@@ -714,164 +720,260 @@ fun ExploreScreen(
                                     }
 
                                     // Display Comments
+                                    // Yorumları Listelerken, Her Yorum İçin Ayrı Düzenleme Durumu
                                     Box(modifier = Modifier.weight(1f)) {
-                                        when {
-                                            commentsState.value != null -> {
-                                                LazyColumn(
-                                                    contentPadding = PaddingValues(16.dp),
-                                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                                ) {
-                                                    items(commentsState.value!!) { comment ->
-                                                        Row(
+                                        val comments = commentsState.value // Yorum listesini bir değişkene ata
+
+                                        // Yorumlar null veya boşsa kullanıcıya mesaj göster
+                                        if (comments.isNullOrEmpty()) {
+                                            Text(
+                                                text = "Henüz hiç yorum yok.",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                modifier = Modifier.align(Alignment.Center)
+                                            )
+                                        } else {
+                                            // Yorumlar doluysa listeyi göster
+                                            LazyColumn(
+                                                contentPadding = PaddingValues(16.dp),
+                                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                            ) {
+                                                items(comments) { comment ->
+                                                    // selectedCommentId'yi bir state olarak tanımlayın
+                                                    var selectedCommentId by remember { mutableStateOf<Int?>(null) }
+                                                    var isView by remember { mutableStateOf(true) }
+
+                                                    // Düzenlenmekte olan yorumun ID'sini kontrol et
+                                                    val isEditingComment = selectedCommentId == comment.commentId
+                                                    var selectedRating by remember { mutableStateOf(comment.rate.toFloat()) }
+                                                    var editableCommentText by remember { mutableStateOf(comment.text ?: "") }
+
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(8.dp),
+                                                        verticalAlignment = Alignment.Top
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.AccountCircle,
+                                                            contentDescription = null,
                                                             modifier = Modifier
-                                                                .fillMaxWidth()
-                                                                .padding(8.dp),
-                                                            verticalAlignment = Alignment.Top
-                                                        ) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.AccountCircle,
-                                                                contentDescription = null,
-                                                                modifier = Modifier
-                                                                    .size(40.dp)
-                                                                    .padding(end = 8.dp),
-                                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                .size(40.dp)
+                                                                .padding(end = 8.dp),
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+
+                                                        Column(modifier = Modifier.weight(1f)) {
+                                                            Text(
+                                                                text = comment.createdBy ?: "Unknown",
+                                                                style = MaterialTheme.typography.bodyMedium,
+                                                                color = MaterialTheme.colorScheme.onSurface,
+                                                                fontWeight = FontWeight.Bold
                                                             )
-                                                            Column(modifier = Modifier.weight(1f)) {
-                                                                Text(
-                                                                    text = comment.createdBy
-                                                                        ?: "Unknown",
-                                                                    style = MaterialTheme.typography.bodyMedium,
-                                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                                    fontWeight = FontWeight.Bold
+
+                                                            if (isEditingComment) {
+                                                                // Düzenleme Modunda TextField ve Yıldız Değerlendirmesi
+                                                                OutlinedTextField(
+                                                                    value = editableCommentText,
+                                                                    onValueChange = { editableCommentText = it },
+                                                                    label = { Text("Yorumunuzu Düzenleyin") },
+                                                                    modifier = Modifier.fillMaxWidth(),
+                                                                    shape = RoundedCornerShape(12.dp),
+                                                                    colors = OutlinedTextFieldDefaults.colors(
+                                                                        focusedBorderColor = Color(0xFF3F51B5),
+                                                                        unfocusedBorderColor = Color.Gray,
+                                                                        focusedContainerColor = Color(0xFFF5F5F5),
+                                                                        unfocusedContainerColor = Color(0xFFF5F5F5)
+                                                                    )
                                                                 )
+                                                                Spacer(modifier = Modifier.height(8.dp))
+
+                                                                // Yıldız Derecelendirmesini Güncelleme
+                                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                                    repeat(5) { index ->
+                                                                        IconButton(onClick = { selectedRating = (index + 1).toFloat() }) {
+                                                                            Icon(
+                                                                                imageVector = if (index < selectedRating) Icons.Default.Star else Icons.Default.StarBorder,
+                                                                                contentDescription = null,
+                                                                                tint = if (index < selectedRating) Color(0xFFFFC107) else Color.Gray
+                                                                            )
+                                                                        }
+                                                                    }
+                                                                }
+
+                                                                Spacer(modifier = Modifier.height(8.dp))
+
+                                                                // Kaydet ve İptal Butonları
+                                                                Row(
+                                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                                    modifier = Modifier.fillMaxWidth()
+                                                                ) {
+                                                                    Button(
+                                                                        onClick = {
+                                                                            commentViewModel.updateComment(
+                                                                                id = comment.commentId,
+                                                                                updateCommentRequest = UpdateCommentRequestDto(
+                                                                                    text = editableCommentText,
+                                                                                    rate = selectedRating.toInt()
+                                                                                )
+                                                                            ) { updatedComment, errorMessage ->
+                                                                                if (updatedComment != null) {
+                                                                                    Toast.makeText(context, "Yorum başarıyla güncellendi", Toast.LENGTH_SHORT).show()
+                                                                                    selectedCommentId = null // Düzenleme sonrasında tıklanan yorumu sıfırla
+                                                                                } else {
+                                                                                    Toast.makeText(context, "Yorum güncellenemedi: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
+                                                                    ) {
+                                                                        Text("Kaydet", color = Color.White)
+                                                                    }
+
+                                                                    TextButton(onClick = { selectedCommentId = null }) {
+                                                                        Text("İptal", color = MaterialTheme.colorScheme.primary)
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                // Görüntüleme Modu
                                                                 Text(
                                                                     text = comment.text ?: "",
                                                                     style = MaterialTheme.typography.bodyMedium,
-                                                                    modifier = Modifier.padding(
-                                                                        vertical = 4.dp
-                                                                    )
+                                                                    modifier = Modifier.padding(vertical = 4.dp)
                                                                 )
                                                                 Row {
                                                                     repeat(5) { index ->
                                                                         Icon(
                                                                             imageVector = if (index < comment.rate) Icons.Default.Star else Icons.Default.StarBorder,
                                                                             contentDescription = null,
-                                                                            tint = if (index < comment.rate) Color(
-                                                                                0xFFFFC107
-                                                                            ) else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                            tint = if (index < comment.rate) Color(0xFFFFC107) else MaterialTheme.colorScheme.onSurfaceVariant
                                                                         )
                                                                     }
                                                                 }
-                                                                Spacer(
-                                                                    modifier = Modifier.height(
-                                                                        8.dp
-                                                                    )
-                                                                )
+                                                                Spacer(modifier = Modifier.height(8.dp))
+                                                                val formattedDate = formatDateTime(comment.createdOn)
+
                                                                 Text(
-                                                                    text = comment.createdOn,
+                                                                    text = formattedDate,
                                                                     style = MaterialTheme.typography.bodySmall,
                                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                                 )
                                                             }
-                                                            IconButton(onClick = {
-                                                                // Yorum düzenleme fonksiyonu
-                                                                // editComment(comment)
-                                                            }) {
-                                                                Icon(
-                                                                    imageVector = Icons.Default.Edit,
-                                                                    contentDescription = "Edit Comment",
-                                                                    tint = MaterialTheme.colorScheme.primary
-                                                                )
+                                                        }
+
+                                                        // Düzenleme ve Silme Butonları
+                                                        if (!isEditingComment) {
+                                                            Row {
+                                                                IconButton(onClick = { selectedCommentId = comment.commentId; isView = false }) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.Edit,
+                                                                        contentDescription = "Edit Comment",
+                                                                        tint = MaterialTheme.colorScheme.primary
+                                                                    )
+                                                                }
+                                                                IconButton(onClick = {
+                                                                    // Silme işlemi
+                                                                    commentViewModel.deleteComment(comment.commentId) { _, errorMessage ->
+                                                                        if (errorMessage == null) {
+                                                                            Toast.makeText(context, "Yorum başarıyla silindi", Toast.LENGTH_SHORT).show()
+                                                                        } else {
+                                                                            Toast.makeText(context, "Yorum silinirken bir hata oluştu: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                                        }
+                                                                    }
+                                                                }) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.Delete,
+                                                                        contentDescription = "Delete Comment",
+                                                                        tint = MaterialTheme.colorScheme.error
+                                                                    )
+                                                                }
                                                             }
                                                         }
-                                                        Divider(
-                                                            color = MaterialTheme.colorScheme.outline,
-                                                            thickness = 1.dp
-                                                        )
                                                     }
-                                                }
-                                            }
-                                            else -> {
-                                                Text(
-                                                    text = "Henüz hiç yorum yok.",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    modifier = Modifier.align(Alignment.Center)
-                                                )
-                                            }
-                                        }
-                                    }
-                                    // Add Comment Section
-                                    var comment by remember { mutableStateOf("") }
-                                    var rating by remember { mutableStateOf(0f) }
-
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        Text("Yorum Yapın", style = MaterialTheme.typography.headlineSmall)
-                                        Spacer(modifier = Modifier.height(8.dp))
-
-                                        // Star Rating Row
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            repeat(5) { index ->
-                                                IconButton(onClick = { rating = (index + 1).toFloat() }) {
-                                                    Icon(
-                                                        imageVector = if (index < rating) Icons.Default.Star else Icons.Default.StarBorder,
-                                                        contentDescription = null,
-                                                        tint = if (index < rating) Color(0xFFFFC107) else Color.Gray
+                                                    Divider(
+                                                        color = MaterialTheme.colorScheme.outline,
+                                                        thickness = 1.dp
                                                     )
                                                 }
                                             }
                                         }
-                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
 
-                                        // Styled TextField with Rounded Corners
-                                        OutlinedTextField(
-                                            value = comment,
-                                            onValueChange = { comment = it },
-                                            label = { Text("Your comment") },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(150.dp)
-                                                .padding(vertical = 8.dp),
-                                            shape = RoundedCornerShape(12.dp),
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedBorderColor = Color(0xFF3F51B5),
-                                                unfocusedBorderColor = Color.Gray,
-                                                focusedContainerColor = Color(0xFFF5F5F5),
-                                                unfocusedContainerColor = Color(0xFFF5F5F5)
-                                            ),
-                                            maxLines = 5
-                                        )
 
-                                        Spacer(modifier = Modifier.height(8.dp))
 
-                                        // Submit Button
-                                        Button(
-                                            onClick = {
-                                                selectedAttraction?.let { attraction ->
-                                                    val placeId = attraction.placeId
-                                                    commentViewModel.createComment(
-                                                        placeId = placeId,
-                                                        content = comment,
-                                                        rate = rating.toInt()
-                                                    ) { createdComment, errorMessage ->
-                                                        if (createdComment != null) {
-                                                            Toast.makeText(context, "Review submitted successfully", Toast.LENGTH_SHORT).show()
-                                                            // Reset text field and rating
-                                                            comment = ""
-                                                            rating = 0f
-                                                        }
-                                                        else {
-                                                            Toast.makeText(context, "Failed to submit review: $errorMessage", Toast.LENGTH_SHORT).show()
-                                                        }
+
+
+
+                                    // Add Comment Section
+                                        var comment by remember { mutableStateOf("") }
+                                        var rating by remember { mutableStateOf(0f) }
+
+                                        Column(modifier = Modifier.padding(8.dp)) {
+
+                                            // Star Rating Row
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                repeat(5) { index ->
+                                                    IconButton(onClick = { rating = (index + 1).toFloat() }) {
+                                                        Icon(
+                                                            imageVector = if (index < rating) Icons.Default.Star else Icons.Default.StarBorder,
+                                                            contentDescription = null,
+                                                            tint = if (index < rating) Color(0xFFFFC107) else Color.Gray
+                                                        )
                                                     }
                                                 }
-                                            },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(50.dp),
-                                            shape = RoundedCornerShape(12.dp),
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
-                                        ) {
-                                            Text("Yorum Yap", color = Color.White, fontSize = 16.sp)
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
+
+                                            // Styled TextField with Rounded Corners
+                                            OutlinedTextField(
+                                                value = comment,
+                                                onValueChange = { comment = it },
+                                                label = { Text("Your comment") },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(150.dp)
+                                                    .padding(vertical = 8.dp),
+                                                shape = RoundedCornerShape(12.dp),
+                                                colors = OutlinedTextFieldDefaults.colors(
+                                                    focusedBorderColor = Color(0xFF3F51B5),
+                                                    unfocusedBorderColor = Color.Gray,
+                                                    focusedContainerColor = Color(0xFFF5F5F5),
+                                                    unfocusedContainerColor = Color(0xFFF5F5F5)
+                                                ),
+                                                maxLines = 5
+                                            )
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            // Submit Button
+                                            Button(
+                                                onClick = {
+                                                    selectedAttraction?.let { attraction ->
+                                                        val placeId = attraction.placeId
+                                                        commentViewModel.createComment(
+                                                            placeId = placeId,
+                                                            content = comment,
+                                                            rate = rating.toInt()
+                                                        ) { createdComment, errorMessage ->
+                                                            if (createdComment != null) {
+                                                                Toast.makeText(context, "Review submitted successfully", Toast.LENGTH_SHORT).show()
+                                                                // Reset text field and rating
+                                                                comment = ""
+                                                                rating = 0f
+                                                            }
+                                                            else {
+                                                                Toast.makeText(context, "Failed to submit review: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(50.dp),
+                                                shape = RoundedCornerShape(12.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
+                                            ) {
+                                                Text("Yorum Yap", color = Color.White, fontSize = 16.sp)
+                                            }
                                         }
                                     }
-                                }}}}}}}}}
+                                }}}}}}}}

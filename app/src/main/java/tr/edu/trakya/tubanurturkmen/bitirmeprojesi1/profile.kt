@@ -347,13 +347,7 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel() ) {
             .fillMaxSize()
             .padding(14.dp)
     ) {
-        Text(
-            text = "Yorumlarım",
-            fontSize = 20.sp,
-            color = Color.Black
-        )
 
-        Spacer(modifier = Modifier.height(10.dp))
 
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
