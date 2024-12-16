@@ -48,6 +48,7 @@ import retrofit2.Response
 
 @Composable
 fun ExploreScreen(
+
     navController: NavController,
     placeViewModel: PlaceViewModel = viewModel(),
     categoryViewModel: ExploreViewModel = viewModel(),
@@ -55,6 +56,7 @@ fun ExploreScreen(
     favoriteViewModel: FavoriteViewModel = viewModel(), // Eklenen ViewModel
     commentViewModel: CommentViewModel = viewModel()
 ) {
+
     val places by placeViewModel.places
     val categories by categoryViewModel.categories
     val context = LocalContext.current
@@ -78,18 +80,11 @@ fun ExploreScreen(
     val suggestedPlaces by placeViewModel.suggestedPlaces
     val isLoading by placeViewModel.loading
     val errorMessage by placeViewModel.errorMessage
-    val imageName = "ayasofya"
-    val imageName2 = "emirgan"
-
-    val resourceId = context.resources.getIdentifier(imageName, "drawable", context.packageName)
-    val resourceId2 = context.resources.getIdentifier(imageName2, "drawable", context.packageName)
-
 
     val searchedPlaces = places.filter { it.placeName.contains(searchQuery, ignoreCase = true) }
     fun getDrawableResourceByPlaceName(placeName: String): Int {
         return when (placeName.lowercase()) {
             "saray muhallebicisi" -> R.drawable.saray
-
             "gülhane parkı"->R.drawable.gulhane
             "yıldız parkı"->R.drawable.yildiz
             "mandabatmaz"->R.drawable.mandabatmaz
@@ -191,9 +186,6 @@ fun ExploreScreen(
                                     fontSize = 18.sp,
                                     color = Color.Black
                                 ))
-
-
-
                         }
                         if (searchQuery.isNotEmpty()) {
                             LazyRow(modifier = Modifier.padding(16.dp)) {
@@ -320,11 +312,9 @@ fun ExploreScreen(
                                     }
                                 }
                             }
-                            // LazyRow - Attraction items
                             LazyRow(modifier = Modifier.padding(16.dp)) {
                                 val filteredAttractions =
                                     places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
-
 
                                 if (filteredAttractions.isEmpty()) {
                                     // Eşleşen öğe yoksa, mesaj göster
@@ -334,54 +324,51 @@ fun ExploreScreen(
                                             modifier = Modifier.padding(16.dp)
                                         )
                                     }
-
                                 } else {
                                     items(filteredAttractions) { attraction ->
                                         Card(
                                             modifier = Modifier
-                                                .width(200.dp)
-                                                .padding(8.dp) // BottomNavigationBar alanı
-
+                                                .width(220.dp) // Sabit genişlik
+                                                .height(300.dp) // Sabit yükseklik
+                                                .padding(8.dp)
                                                 .clickable { selectedAttraction = attraction },
-                                            shape = RoundedCornerShape(12.dp),
+                                            shape = RoundedCornerShape(16.dp), // Köşeler yuvarlatılmış
                                             colors = CardDefaults.cardColors(
-                                                containerColor = Color.Gray.copy(
-                                                    alpha = 0.3f
-                                                )
+                                                containerColor = Color.Gray.copy(alpha = 0.15f) // Daha hafif bir gri
                                             )
                                         ) {
                                             Column(
                                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                                modifier = Modifier.padding(16.dp) // Adding padding for better spacing
+                                                modifier = Modifier.padding(12.dp)
                                             ) {
-                                                // Image of the attraction
+                                                // Mekanın görseli
                                                 Image(
                                                     painter = painterResource(
-                                                        id = getDrawableResourceByPlaceName(attraction.placeName)
+                                                        id = getDrawableResourceByPlaceName(
+                                                            attraction.placeName
+                                                        )
                                                     ),
                                                     contentDescription = attraction.placeName,
                                                     modifier = Modifier
-                                                        .height(200.dp) // Adjusting the height for better appearance
+                                                        .height(200.dp) // Görsel için sabit yükseklik
                                                         .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(16.dp)), // Adding rounded corners to the image
+                                                        .clip(RoundedCornerShape(12.dp)), // Görsel için köşeleri yuvarlatma
                                                     contentScale = ContentScale.Crop
                                                 )
 
-                                                Spacer(modifier = Modifier.height(16.dp)) // Adding some space between image and description
+                                                Spacer(modifier = Modifier.height(8.dp)) // Görsel ile metin arasındaki boşluk
                                                 Text(
                                                     text = attraction.placeName,
                                                     style = MaterialTheme.typography.bodyLarge.copy(
-                                                        color = Color.Black
+                                                        color = Color.Black,
+                                                        fontWeight = FontWeight.Bold
                                                     ),
                                                     modifier = Modifier.padding(horizontal = 8.dp)
                                                 )
-
-                                                Spacer(modifier = Modifier.height(2.dp))
-                                            }
-
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                            }}
                                         }
                                     }
-                                }
                             }
                         }
                     }
@@ -874,4 +861,7 @@ fun ExploreScreen(
                                             Text("Yorum Yap", color = Color.White, fontSize = 16.sp)
                                         }
                                     }
-                                }}}}}}}}}
+                                }}}}}}
+        }
+    }
+}
