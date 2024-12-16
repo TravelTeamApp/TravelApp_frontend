@@ -13,7 +13,7 @@ data class FavoriteDto(
 )
 
 data class CommentDto(
-        val commentId: Int?,
+        val commentId: Int,
         val placeId: Int?,
         val placeName: String?,
         val text: String?,
@@ -97,4 +97,16 @@ data class UserProfileResponse(
         val email: String,
         val userName: String,
         val score: Int
+)
+
+data class CommentResponse(
+        val id: Int?,
+        val content: String?,
+        val userId: Int?,
+        val createdAt: String,
+        val updatedAt: String
+)
+data class UpdateCommentRequestDto(
+        val text: String, // Yorum metni
+        val rate: Int? // Yorum puanı (isteğe bağlı)
 )

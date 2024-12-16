@@ -7,6 +7,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Header
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface AuthService {
@@ -88,7 +89,12 @@ interface AuthService {
         @Path("placeId") placeId: Int,
         @Body createCommentRequest: CreateCommentDto
     ): Call<CommentDto>
-
+    // Yorum güncelleme işlemi
+    @PUT("Comment/{id}")  // URL: BASE_URL/Comment/{id}
+    fun updateComment(
+        @Path("id") id: Int,
+        @Body updateCommentRequest: UpdateCommentRequestDto
+    ): Call<CommentResponse>
     // Kullanıcıya ait mekan türlerini getirme
     @GET("UserPlaceType")
     fun getPlaceTypesByUserId(): Call<List<UserPlaceTypeDto>>
