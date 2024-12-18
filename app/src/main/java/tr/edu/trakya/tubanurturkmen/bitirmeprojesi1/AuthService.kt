@@ -89,7 +89,13 @@ interface AuthService {
         @Path("placeId") placeId: Int,
         @Body createCommentRequest: CreateCommentDto
     ): Call<CommentDto>
-    // Yorum güncelleme işlemi
+
+    // Yorum silme işlemi
+    @DELETE("comment/{id}")  // BASE_URL'in sonuna eklenir, yani: http://localhost:5000/api/comments/{id}
+    fun deleteComment(
+        @Path("id") id: Int // Yorum ID'si
+    ): Call<CommentDto> // API'den dönen veri
+
     @PUT("comment/{id}")  // URL: BASE_URL/Comment/{id}
     fun updateComment(
         @Path("id") id: Int,

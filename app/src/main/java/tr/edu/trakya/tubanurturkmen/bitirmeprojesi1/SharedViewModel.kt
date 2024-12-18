@@ -139,6 +139,9 @@ class PlaceViewModel : ViewModel() {
             }
         })
     }
+
+
+
 }
 
 class ExploreViewModel : ViewModel() {
@@ -314,7 +317,6 @@ class CommentViewModel() : ViewModel() {
             }
         })
     }
-    // Yorum güncelleme fonksiyonu
     fun updateComment(id: Int, updateCommentRequest: UpdateCommentRequestDto, callback: (CommentResponse?, String?) -> Unit) {
         RetrofitClient.apiService.updateComment(id, updateCommentRequest).enqueue(object : Callback<CommentResponse> {
             override fun onResponse(call: Call<CommentResponse>, response: Response<CommentResponse>) {
@@ -329,6 +331,24 @@ class CommentViewModel() : ViewModel() {
 
             override fun onFailure(call: Call<CommentResponse>, t: Throwable) {
                 // Bağlantı hatası durumunda callback'e null ve hata mesajı gönder
+                callback(null, "Bir hata oluştu: ${t.message}")
+            }
+        })
+    }
+    fun deleteComment(commentId: Int, callback: (CommentDto?, String?) -> Unit) {
+        RetrofitClient.apiService.deleteComment(commentId).enqueue(object : Callback<CommentDto> {
+            override fun onResponse(call: Call<CommentDto>, response: Response<CommentDto>) {
+                if (response.isSuccessful) {
+                    // Başarılı bir şekilde silindiyse, silinen yorumu callback'e gönder
+                    callback(response.body(), null)
+                } else {
+                    // Başarısız bir durumda hata mesajını döndür
+                    callback(null, "Yorum silinirken bir hata oluştu: ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<CommentDto>, t: Throwable) {
+                // Bağlantı hatası durumunda callback'e hata mesajını döndür
                 callback(null, "Bir hata oluştu: ${t.message}")
             }
         })
