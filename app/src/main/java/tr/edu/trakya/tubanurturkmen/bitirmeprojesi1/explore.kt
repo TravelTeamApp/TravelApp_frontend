@@ -14,7 +14,9 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Place
@@ -33,8 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -235,7 +239,7 @@ fun ExploreScreen(
                         } else if (searchQuery.isEmpty()) {
                             Column(modifier = Modifier.fillMaxSize()) {
                                 Text(
-                                    text = "Suggested Attractions",
+                                    text = "Size Önerilenler",
                                     style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
                                     modifier = Modifier.padding(16.dp)
                                 )
@@ -291,7 +295,7 @@ fun ExploreScreen(
                             }
                             // Kategoriler için Tablar
                             Text(
-                                text = "Top Attractions",
+                                text = "Mekanlar",
                                 style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
                                 modifier = Modifier.padding(16.dp)
                             )
@@ -377,26 +381,45 @@ fun ExploreScreen(
             }
         }
         else {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .background(Color.White)
-            ) {
-                // Resim Bölümü
-                Box(
+            val scrollState = rememberScrollState()
+            val commentsState = remember { mutableStateOf<List<CommentDto>?>(null) }
+            var rating by remember { mutableStateOf(0f) }
+            var comment by remember { mutableStateOf("") }
+            val maxHeight = 650.dp
+            val minHeight = 10.dp
+
+            val density = LocalDensity.current // LocalDensity ile DP'den PX'e dönüştürme
+            val imageHeight = with(density) {
+                val maxPx = maxHeight.toPx()
+                val minPx = minHeight.toPx()
+                derivedStateOf {
+                    val scrollOffset = scrollState.value.toFloat()
+                    (maxPx - scrollOffset.coerceIn(0f, maxPx - minPx)).toDp()
+                }.value
+            }
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Scrollable Content
+                Column(
                     modifier = Modifier
-                        .height(200.dp)
-                        .fillMaxWidth()
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
                 ) {
-                    Image(
-                        painter = painterResource(
-                            id = selectedAttraction?.let { getDrawableResourceByPlaceName(it.placeName) }
-                                ?: R.drawable.istanbul // Default image
-                        ),
-                        contentDescription = "Selected Place Image", // Add meaningful content description
-                        modifier = Modifier.fillMaxSize(), // Add a modifier to specify the size or alignment
-                        contentScale = ContentScale.Crop // Optionally set the scale for the image
-                    )
+                    // Resim Bölümü
+                    Box(
+                        modifier = Modifier
+                            .height(imageHeight)
+                            .fillMaxWidth()
+                    ) {
+                        Image(
+                            painter = painterResource(
+                                id = selectedAttraction?.let { getDrawableResourceByPlaceName(it.placeName) }
+                                    ?: R.drawable.istanbul // Default image
+                            ),
+                            contentDescription = "Selected Place Image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
 
                     // Geri ve diğer ikon butonlar
                     Row(
@@ -571,374 +594,383 @@ fun ExploreScreen(
                         }
                     }
                 }
-                var selectedTabIndex by remember { mutableStateOf(0) }
-                val commentsState = remember { mutableStateOf<List<CommentDto>?>(null) }
-                var rating by remember { mutableStateOf(0f) }
-                var comment by remember { mutableStateOf("") }
-
-                Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                    // Tab Row for switching between "Details" and "Comments"
-                    TabRow(
-                        selectedTabIndex = selectedTabIndex,
-                        containerColor = Color.White, // TabRow background color
-                        contentColor = Color.Black // Text color for selected tab
-                    ) {
-                        Tab(
-                            selected = selectedTabIndex == 0,
-                            onClick = { selectedTabIndex = 0 },
-                            selectedContentColor = Color.Black,
-                            unselectedContentColor = Color.Gray
-                        ) {
-                            Text("Detaylar", modifier = Modifier.padding(16.dp), color = Color.Black)
-                        }
-                        Tab(
-                            selected = selectedTabIndex == 1,
-                            onClick = { selectedTabIndex = 1 },
-                            selectedContentColor = Color.Black,
-                            unselectedContentColor = Color.Gray
-                        ) {
-                            Text("Yorumlar", modifier = Modifier.padding(16.dp), color = Color.Black)
-                        }
-                    }
+                    Column (Modifier.padding(15.dp)){
                     Spacer(modifier = Modifier.height(8.dp))
-                    when (selectedTabIndex) {
-                        0 -> { // Details Tab
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = selectedAttraction?.placeName.orEmpty(),
-                                    style = MaterialTheme.typography.headlineMedium
-                                )
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Place,
-                                        contentDescription = null,
-                                        tint = Color.Gray
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = selectedAttraction?.placeAddress.orEmpty(),
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(6.dp))
-                                // Star Rating Section
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    // Ensure rating is valid and not null. If null, set it to 0.0
-                                    val rating = (selectedAttraction?.rating ?: 0.0).coerceIn(0.0, 5.0) // Clamp to a valid range between 0.0 and 5.0
 
-                                    val fullStars = rating.toInt()
-                                    val hasHalfStar = rating % 1 >= 0.5
+                    Text(
+                        text = selectedAttraction?.placeName.orEmpty(),
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Place,
+                            contentDescription = null,
+                            tint = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = selectedAttraction?.placeAddress.orEmpty(),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    // Star Rating Section
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Ensure rating is valid and not null. If null, set it to 0.0
+                        val rating = (selectedAttraction?.rating ?: 0.0).coerceIn(0.0, 5.0) // Clamp to a valid range between 0.0 and 5.0
 
-                                    // Full stars
-                                    repeat(fullStars) {
-                                        Icon(
-                                            imageVector = Icons.Default.Star,
-                                            contentDescription = "Full Star",
-                                            tint = Color(0xFFFFD700) // Gold color
-                                        )
-                                    }
+                        val fullStars = rating.toInt()
+                        val hasHalfStar = rating % 1 >= 0.5
 
-                                    // Half star
-                                    if (hasHalfStar) {
-                                        Icon(
-                                            imageVector = Icons.Default.StarHalf,
-                                            contentDescription = "Half Star",
-                                            tint = Color(0xFFFFD700) // Gold color
-                                        )
-                                    }
-
-                                    // Empty stars (to fill up to 5 stars)
-                                    repeat(5 - fullStars - if (hasHalfStar) 1 else 0) {
-                                        Icon(
-                                            imageVector = Icons.Default.StarOutline,
-                                            contentDescription = "Empty Star",
-                                            tint = Color.Gray
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.width(8.dp))
-
-                                    // Ensure rating is properly formatted to 1 decimal place and avoid invalid format exceptions
-                                    val formattedRating = try {
-                                        String.format("%.1f", rating) // Format to 1 decimal place
-                                    } catch (e: Exception) {
-                                        "0.0" // Fallback to a default value if formatting fails
-                                    }
-
-                                    Text(
-                                        text = formattedRating, // Display the formatted rating
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                }
-
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Text(
-                                    text = selectedAttraction?.description.orEmpty(),
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
+                        // Full stars
+                        repeat(fullStars) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Full Star",
+                                tint = Color(0xFFFFD700) // Gold color
+                            )
                         }
-                        1 -> { // Comments Tab
-                            Column(modifier = Modifier.fillMaxSize()) {
-                                selectedAttraction?.let { attraction ->
-                                    val placeId = attraction.placeId
 
-                                    // Fetch Comments
-                                    commentViewModel.getPlaceComments(placeId) { comments, _ ->
-                                        commentsState.value = comments
-                                    }
+                        // Half star
+                        if (hasHalfStar) {
+                            Icon(
+                                imageVector = Icons.Default.StarHalf,
+                                contentDescription = "Half Star",
+                                tint = Color(0xFFFFD700) // Gold color
+                            )
+                        }
 
-                                    // Display Comments
-                                    Box(modifier = Modifier.weight(1f)) {
-                                        val comments = commentsState.value
-                                        if (comments.isNullOrEmpty()) {
-                                            Text(
-                                                text = "Henüz hiç yorum yok.",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                modifier = Modifier.align(Alignment.Center)
-                                            )
-                                        } else {
-                                                LazyColumn(
-                                                    contentPadding = PaddingValues(8.dp),
-                                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                                ) {
-                                                    items(comments) { comment ->
-                                                        // selectedCommentId'yi bir state olarak tanımlayın
-                                                        var selectedCommentId by remember { mutableStateOf<Int?>(null) }
-                                                        var isView by remember { mutableStateOf(true) }
+                        // Empty stars (to fill up to 5 stars)
+                        repeat(5 - fullStars - if (hasHalfStar) 1 else 0) {
+                            Icon(
+                                imageVector = Icons.Default.StarOutline,
+                                contentDescription = "Empty Star",
+                                tint = Color.Gray
+                            )
+                        }
 
-                                                        // Düzenlenmekte olan yorumun ID'sini kontrol et
-                                                        val isEditingComment = selectedCommentId == comment.commentId
-                                                        var selectedRating by remember { mutableStateOf(comment.rate.toFloat()) }
-                                                        var editableCommentText by remember { mutableStateOf(comment.text ?: "") }
+                        Spacer(modifier = Modifier.width(8.dp))
 
-                                                        Row(
-                                                            modifier = Modifier
-                                                                .fillMaxWidth()
-                                                                .padding(8.dp),
-                                                            verticalAlignment = Alignment.Top
-                                                        ) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.AccountCircle,
-                                                                contentDescription = null,
-                                                                modifier = Modifier
-                                                                    .size(40.dp)
-                                                                    .padding(end = 8.dp),
-                                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        // Ensure rating is properly formatted to 1 decimal place and avoid invalid format exceptions
+                        val formattedRating = try {
+                            String.format("%.1f", rating) // Format to 1 decimal place
+                        } catch (e: Exception) {
+                            "0.0" // Fallback to a default value if formatting fails
+                        }
+
+                        Text(
+                            text = formattedRating, // Display the formatted rating
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = selectedAttraction?.description.orEmpty(),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+
+                    selectedAttraction?.let { attraction ->
+                        val placeId = attraction.placeId
+
+                        // Fetch Comments
+                        commentViewModel.getPlaceComments(placeId) { comments, _ ->
+                            commentsState.value = comments
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(text="Yorumlar",
+                            style = MaterialTheme.typography.headlineMedium
+                           )
+                        // Display Comments
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(300.dp) // Örneğin, belirli bir yükseklik
+                        ){
+                            val comments = commentsState.value
+                            if (comments.isNullOrEmpty()) {
+                                Text(
+                                    text = "Henüz hiç yorum yok.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            } else {
+                                    LazyColumn(
+                                        contentPadding = PaddingValues(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        items(comments) { comment ->
+                                            // selectedCommentId'yi bir state olarak tanımlayın
+                                            var selectedCommentId by remember { mutableStateOf<Int?>(null) }
+                                            var isView by remember { mutableStateOf(true) }
+
+                                            // Düzenlenmekte olan yorumun ID'sini kontrol et
+                                            val isEditingComment = selectedCommentId == comment.commentId
+                                            var selectedRating by remember { mutableStateOf(comment.rate.toFloat()) }
+                                            var editableCommentText by remember { mutableStateOf(comment.text ?: "") }
+
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(8.dp),
+                                                verticalAlignment = Alignment.Top
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.AccountCircle,
+                                                    contentDescription = null,
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .padding(end = 8.dp),
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = comment.createdBy ?: "Unknown",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurface,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+
+                                                    if (isEditingComment) {
+                                                        // Düzenleme Modunda TextField ve Yıldız Değerlendirmesi
+                                                        OutlinedTextField(
+                                                            value = editableCommentText,
+                                                            onValueChange = { editableCommentText = it },
+                                                            label = { Text("Yorumunuzu Düzenleyin") },
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            shape = RoundedCornerShape(12.dp),
+                                                            colors = OutlinedTextFieldDefaults.colors(
+                                                                focusedBorderColor = Color(0xFF3F51B5),
+                                                                unfocusedBorderColor = Color.Gray,
+                                                                focusedContainerColor = Color(0xFFF5F5F5),
+                                                                unfocusedContainerColor = Color(0xFFF5F5F5)
                                                             )
+                                                        )
+                                                        Spacer(modifier = Modifier.height(8.dp))
 
-                                                            Column(modifier = Modifier.weight(1f)) {
-                                                                Text(
-                                                                    text = comment.createdBy ?: "Unknown",
-                                                                    style = MaterialTheme.typography.bodyMedium,
-                                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                                    fontWeight = FontWeight.Bold
-                                                                )
-
-                                                                if (isEditingComment) {
-                                                                    // Düzenleme Modunda TextField ve Yıldız Değerlendirmesi
-                                                                    OutlinedTextField(
-                                                                        value = editableCommentText,
-                                                                        onValueChange = { editableCommentText = it },
-                                                                        label = { Text("Yorumunuzu Düzenleyin") },
-                                                                        modifier = Modifier.fillMaxWidth(),
-                                                                        shape = RoundedCornerShape(12.dp),
-                                                                        colors = OutlinedTextFieldDefaults.colors(
-                                                                            focusedBorderColor = Color(0xFF3F51B5),
-                                                                            unfocusedBorderColor = Color.Gray,
-                                                                            focusedContainerColor = Color(0xFFF5F5F5),
-                                                                            unfocusedContainerColor = Color(0xFFF5F5F5)
-                                                                        )
+                                                        // Yıldız Derecelendirmesini Güncelleme
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            repeat(5) { index ->
+                                                                IconButton(onClick = { selectedRating = (index + 1).toFloat() }) {
+                                                                    Icon(
+                                                                        imageVector = if (index < selectedRating) Icons.Default.Star else Icons.Default.StarBorder,
+                                                                        contentDescription = null,
+                                                                        tint = if (index < selectedRating) Color(0xFFFFC107) else Color.Gray
                                                                     )
-                                                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                                                    // Yıldız Derecelendirmesini Güncelleme
-                                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                                        repeat(5) { index ->
-                                                                            IconButton(onClick = { selectedRating = (index + 1).toFloat() }) {
-                                                                                Icon(
-                                                                                    imageVector = if (index < selectedRating) Icons.Default.Star else Icons.Default.StarBorder,
-                                                                                    contentDescription = null,
-                                                                                    tint = if (index < selectedRating) Color(0xFFFFC107) else Color.Gray
-                                                                                )
-                                                                            }
-                                                                        }
-                                                                    }
-
-                                                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                                                    // Kaydet ve İptal Butonları
-                                                                    Row(
-                                                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                                                        modifier = Modifier.fillMaxWidth()
-                                                                    ) {
-                                                                        Button(
-                                                                            onClick = {
-                                                                                commentViewModel.updateComment(
-                                                                                    id = comment.commentId,
-                                                                                    updateCommentRequest = UpdateCommentRequestDto(
-                                                                                        text = editableCommentText,
-                                                                                        rate = selectedRating.toInt()
-                                                                                    )
-                                                                                ) { updatedComment, errorMessage ->
-                                                                                    if (updatedComment != null) {
-                                                                                        Toast.makeText(context, "Yorum başarıyla güncellendi", Toast.LENGTH_SHORT).show()
-                                                                                        selectedCommentId = null // Düzenleme sonrasında tıklanan yorumu sıfırla
-                                                                                    } else {
-                                                                                        Toast.makeText(context, "Yorum güncellenemedi: $errorMessage", Toast.LENGTH_SHORT).show()
-                                                                                    }
-                                                                                }
-                                                                            },
-                                                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
-                                                                        ) {
-                                                                            Text("Kaydet", color = Color.White)
-                                                                        }
-
-                                                                        TextButton(onClick = { selectedCommentId = null }) {
-                                                                            Text("İptal", color = MaterialTheme.colorScheme.primary)
-                                                                        }
-                                                                    }
-                                                                } else {
-                                                                    // Görüntüleme Modu
-                                                                    Text(
-                                                                        text = comment.text ?: "",
-                                                                        style = MaterialTheme.typography.bodyMedium,
-                                                                        modifier = Modifier.padding(vertical = 4.dp)
-                                                                    )
-                                                                    Row {
-                                                                        repeat(5) { index ->
-                                                                            Icon(
-                                                                                imageVector = if (index < comment.rate) Icons.Default.Star else Icons.Default.StarBorder,
-                                                                                contentDescription = null,
-                                                                                tint = if (index < comment.rate) Color(0xFFFFC107) else MaterialTheme.colorScheme.onSurfaceVariant
-                                                                            )
-                                                                        }
-                                                                    }
-                                                                    Spacer(modifier = Modifier.height(8.dp))
-                                                                    val formattedDate = formatDateTime(comment.createdOn)
-
-                                                                    Text(
-                                                                        text = formattedDate,
-                                                                        style = MaterialTheme.typography.bodySmall,
-                                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                                    )
-                                                                }
-                                                            }
-
-                                                            // Düzenleme ve Silme Butonları
-                                                            if (!isEditingComment) {
-                                                                Row {
-                                                                    IconButton(onClick = { selectedCommentId = comment.commentId; isView = false }) {
-                                                                        Icon(
-                                                                            imageVector = Icons.Default.Edit,
-                                                                            contentDescription = "Edit Comment",
-                                                                            tint = MaterialTheme.colorScheme.primary
-                                                                        )
-                                                                    }
-                                                                    IconButton(onClick = {
-                                                                        // Silme işlemi
-                                                                        commentViewModel.deleteComment(comment.commentId) { _, errorMessage ->
-                                                                            if (errorMessage == null) {
-                                                                                Toast.makeText(context, "Yorum başarıyla silindi", Toast.LENGTH_SHORT).show()
-                                                                            } else {
-                                                                                Toast.makeText(context, "Yorum silinirken bir hata oluştu: $errorMessage", Toast.LENGTH_SHORT).show()
-                                                                            }
-                                                                        }
-                                                                    }) {
-                                                                        Icon(
-                                                                            imageVector = Icons.Default.Delete,
-                                                                            contentDescription = "Delete Comment",
-                                                                            tint = MaterialTheme.colorScheme.error
-                                                                        )
-                                                                    }
                                                                 }
                                                             }
                                                         }
-                                                        Divider(
-                                                            color = MaterialTheme.colorScheme.outline,
-                                                            thickness = 1.dp
+
+                                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                                        // Kaydet ve İptal Butonları
+                                                        Row(
+                                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                                            modifier = Modifier.fillMaxWidth()
+                                                        ) {
+                                                            Button(
+                                                                onClick = {
+                                                                    commentViewModel.updateComment(
+                                                                        id = comment.commentId,
+                                                                        updateCommentRequest = UpdateCommentRequestDto(
+                                                                            text = editableCommentText,
+                                                                            rate = selectedRating.toInt()
+                                                                        )
+                                                                    ) { updatedComment, errorMessage ->
+                                                                        if (updatedComment != null) {
+                                                                            Toast.makeText(context, "Yorum başarıyla güncellendi", Toast.LENGTH_SHORT).show()
+                                                                            selectedCommentId = null // Düzenleme sonrasında tıklanan yorumu sıfırla
+                                                                        } else {
+                                                                            Toast.makeText(context, "Yorum güncellenemedi: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                                        }
+                                                                    }
+                                                                },
+                                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
+                                                            ) {
+                                                                Text("Kaydet", color = Color.White)
+                                                            }
+
+                                                            TextButton(onClick = { selectedCommentId = null }) {
+                                                                Text("İptal", color = MaterialTheme.colorScheme.primary)
+                                                            }
+                                                        }
+                                                    } else {
+                                                        // Görüntüleme Modu
+                                                        Text(
+                                                            text = comment.text ?: "",
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            modifier = Modifier.padding(vertical = 4.dp)
+                                                        )
+                                                        Row {
+                                                            repeat(5) { index ->
+                                                                Icon(
+                                                                    imageVector = if (index < comment.rate) Icons.Default.Star else Icons.Default.StarBorder,
+                                                                    contentDescription = null,
+                                                                    tint = if (index < comment.rate) Color(0xFFFFC107) else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                )
+                                                            }
+                                                        }
+                                                        Spacer(modifier = Modifier.height(8.dp))
+                                                        val formattedDate = formatDateTime(comment.createdOn)
+
+                                                        Text(
+                                                            text = formattedDate,
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                                         )
                                                     }
-
-                                            }
-                                        }
-                                    }
-                                    // Add Comment Section
-                                    var comment by remember { mutableStateOf("") }
-                                    var rating by remember { mutableStateOf(0f) }
-
-                                    Column(modifier = Modifier.padding(8.dp)) {
-                                        // Star Rating Row
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            repeat(5) { index ->
-                                                IconButton(onClick = { rating = (index + 1).toFloat() }) {
-                                                    Icon(
-                                                        imageVector = if (index < rating) Icons.Default.Star else Icons.Default.StarBorder,
-                                                        contentDescription = null,
-                                                        tint = if (index < rating) Color(0xFFFFC107) else Color.Gray
-                                                    )
                                                 }
-                                            }
-                                        }
-                                        Spacer(modifier = Modifier.height(4.dp))
 
-                                        // Styled TextField with Rounded Corners
-                                        OutlinedTextField(
-                                            value = comment,
-                                            onValueChange = { comment = it },
-                                            label = { Text("Yorumunuz") },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(150.dp)
-                                                .padding(vertical = 8.dp),
-                                            shape = RoundedCornerShape(12.dp),
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedBorderColor = Color(0xFF3F51B5),
-                                                unfocusedBorderColor = Color.Gray,
-                                                focusedContainerColor = Color(0xFFF5F5F5),
-                                                unfocusedContainerColor = Color(0xFFF5F5F5)
-                                            ),
-                                            maxLines = 5
-                                        )
-
-                                        Spacer(modifier = Modifier.height(4.dp))
-
-                                        // Submit Button
-                                        Button(
-                                            onClick = {
-                                                selectedAttraction?.let { attraction ->
-                                                    val placeId = attraction.placeId
-                                                    commentViewModel.createComment(
-                                                        placeId = placeId,
-                                                        content = comment,
-                                                        rate = rating.toInt()
-                                                    ) { createdComment, errorMessage ->
-                                                        if (createdComment != null) {
-                                                            Toast.makeText(context, "Review submitted successfully", Toast.LENGTH_SHORT).show()
-                                                            // Reset text field and rating
-                                                            comment = ""
-                                                            rating = 0f
+                                                // Düzenleme ve Silme Butonları
+                                                if (!isEditingComment) {
+                                                    Row {
+                                                        IconButton(onClick = { selectedCommentId = comment.commentId; isView = false }) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Edit,
+                                                                contentDescription = "Edit Comment",
+                                                                tint = MaterialTheme.colorScheme.primary
+                                                            )
                                                         }
-                                                        else {
-                                                            Toast.makeText(context, "Failed to submit review: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                        IconButton(onClick = {
+                                                            // Silme işlemi
+                                                            commentViewModel.deleteComment(comment.commentId) { _, errorMessage ->
+                                                                if (errorMessage == null) {
+                                                                    Toast.makeText(context, "Yorum başarıyla silindi", Toast.LENGTH_SHORT).show()
+                                                                } else {
+                                                                    Toast.makeText(context, "Yorum silinirken bir hata oluştu: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                                }
+                                                            }
+                                                        }) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Delete,
+                                                                contentDescription = "Delete Comment",
+                                                                tint = MaterialTheme.colorScheme.error
+                                                            )
                                                         }
                                                     }
                                                 }
-                                            },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(50.dp),
-                                            shape = RoundedCornerShape(12.dp),
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
-                                        ) {
-                                            Text("Yorum Yap", color = Color.White, fontSize = 16.sp)
+                                            }
+                                            Divider(
+                                                color = MaterialTheme.colorScheme.outline,
+                                                thickness = 1.dp
+                                            )
+                                        }
+
+                                }
+                            }
+                        }
+                        var isCommentSectionVisible by remember { mutableStateOf(false) } // Yorum alanı görünürlük durumu
+
+
+                            // Yorum Bölümü Açma / Kapatma FAB
+                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.BottomEnd) {
+
+                                FloatingActionButton(
+                                    onClick = { isCommentSectionVisible = !isCommentSectionVisible },
+                                    containerColor = Color(0xFF3F51B5),
+                                    contentColor = Color.White,
+                                    modifier = Modifier.size(45.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isCommentSectionVisible) Icons.Default.Close else Icons.Default.Add,
+                                        contentDescription = if (isCommentSectionVisible) "Yorumu Kapat" else "Yorum Yap"
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Yorum Alanı - Yalnızca görünürse çizilir
+                            if (isCommentSectionVisible) {
+
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFFF5F5F5), shape = RoundedCornerShape(16.dp))
+                                        .padding(16.dp)
+                                ) {
+                                    // Star Rating Row
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        repeat(5) { index ->
+                                            IconButton(onClick = { rating = (index + 1).toFloat() }) {
+                                                Icon(
+                                                    imageVector = if (index < rating) Icons.Default.Star else Icons.Default.StarBorder,
+                                                    contentDescription = null,
+                                                    tint = if (index < rating) Color(0xFFFFC107) else Color.Gray
+                                                )
+                                            }
                                         }
                                     }
-                                }}}}}}
-        }
-    }
-}
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Styled TextField with Rounded Corners
+                                    OutlinedTextField(
+                                        value = comment,
+                                        onValueChange = { comment = it },
+                                        label = { Text("Yorumunuz") },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(150.dp)
+                                            .padding(vertical = 8.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = Color(0xFF3F51B5),
+                                            unfocusedBorderColor = Color.Gray,
+                                            focusedContainerColor = Color(0xFFF5F5F5),
+                                            unfocusedContainerColor = Color(0xFFF5F5F5)
+                                        ),
+                                        maxLines = 5
+                                    )
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    // Submit Button
+                                    Button(
+                                        onClick = {
+                                            selectedAttraction?.let { attraction ->
+                                                val placeId = attraction.placeId
+                                                commentViewModel.createComment(
+                                                    placeId = placeId,
+                                                    content = comment,
+                                                    rate = rating.toInt()
+                                                ) { createdComment, errorMessage ->
+                                                    if (createdComment != null) {
+                                                        Toast.makeText(context, "Review submitted successfully", Toast.LENGTH_SHORT).show()
+                                                        // Reset text field and rating
+                                                        comment = ""
+                                                        rating = 0f
+                                                        isCommentSectionVisible = false // Yorum bölümü kapanır
+                                                    } else {
+                                                        Toast.makeText(context, "Failed to submit review: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(50.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
+                                    ) {
+                                        Text("Gönder", color = Color.White, fontSize = 16.sp)
+                                    }
+                                }
+                            }
+                        }
+
+
+                    }}}}
+}}
+

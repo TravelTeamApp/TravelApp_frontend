@@ -11,14 +11,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,12 +56,29 @@ import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.util.MapPlace
 @Composable
 fun FinalLearningApp() {
     val placeViewModel: PlaceViewModel = viewModel()
+    val favoriteViewModel: FavoriteViewModel = viewModel()
     val placeDto = placeViewModel.places.value
 
+
+    var favoritePlaces by remember { mutableStateOf<List<FavoriteDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    // Fetch favorite places
+    LaunchedEffect(Unit) {
+        favoriteViewModel.fetchUserFavorites { favorites, error ->
+            if (favorites != null) {
+                favoritePlaces = favorites
+                isLoading = false
+            } else {
+                errorMessage = error
+                isLoading = false
+            }
+        }
+    }
+
     val places = placeDto.map {
-        Log.d("LatitudeLog", "Latitude: ${it.latitude}, Type: ${it.latitude::class.java.simpleName}")
         MapPlace(
-            id = "${it.placeName}_${it.latitude}_${it.longitude}", // Daha benzersiz ID
+            id = "${it.placeName}_${it.latitude}_${it.longitude}", // Unique ID
             name = it.placeName,
             coordinates = GeoPoint(it.latitude, it.longitude),
             description = it.description,
@@ -86,23 +107,29 @@ fun FinalLearningApp() {
     val markersWithInfoWindow = remember { mutableStateListOf<Marker>() }
 
     Surface(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            MapView(
-                places = places,
-                mapView = mapView,
-                markersWithWindowOnMap = markersWithInfoWindow,
-                onAddNewMarker = { markersIdOnMap.add(it) }
-            )
+        if (isLoading) {
+            // Display loading UI
+            CircularProgressIndicator()
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                MapView(
+                    places = places,
+                    mapView = mapView,
+                    markersWithWindowOnMap = markersWithInfoWindow,
+                    onAddNewMarker = { markersIdOnMap.add(it) },
+                    favoritePlaces = favoritePlaces
+                )
 
-            PlacesListItem(
-                places = places,
-                onItemClickListener = { itemPlace ->
-                    mapView.onAnimateToNewPlace(itemPlace, markersWithInfoWindow)
-                }
-            )
+                PlacesListItem(
+                    places = places,
+                    onItemClickListener = { itemPlace ->
+                        mapView.onAnimateToNewPlace(itemPlace, markersWithInfoWindow)
+                    }
+                )
+            }
         }
     }
 }
@@ -139,7 +166,8 @@ private fun MapView(
     places: List<MapPlace>,
     mapView: MapView,
     onAddNewMarker: (String) -> Unit,
-    markersWithWindowOnMap: SnapshotStateList<Marker>
+    markersWithWindowOnMap: SnapshotStateList<Marker>,
+    favoritePlaces: List<FavoriteDto> // IDs or names of favorite places
 ) {
     val context = LocalContext.current
 
@@ -176,16 +204,14 @@ private fun MapView(
                 setMapConfigurations()
                 overlays.add(mapEventsOverlay)
 
-                places.forEachIndexed { index, place ->
-                    Log.d("LaunchedEffectDebug", "Adding place: ${place.name}, ID: ${place.id}")
-                    addMarkertoMap(
+                places.forEach { place ->
+                    val isFavorite = favoritePlaces.any { it.placeName == place.name} // Correct comparison
+                    addMarkerToMap(
                         context,
                         place,
+                        isFavorite = isFavorite,
                         onNextclick = {
-                            onAnimateToNewPlace(
-                                if (index < places.size - 1) places[index + 1] else places[0],
-                                markersWithWindowOnMap
-                            )
+                            onAnimateToNewPlace(place, markersWithWindowOnMap)
                         }
                     )
                 }
@@ -194,6 +220,33 @@ private fun MapView(
             Log.d("MapDebug", "Places list is empty, no markers to add.")
         }
     }
+
+}
+
+fun MapView.addMarkerToMap(
+    context: Context,
+    place: MapPlace,
+    isFavorite: Boolean,
+    onNextclick: () -> Unit
+) {
+    val marker = Marker(this).apply {
+        position = place.coordinates
+        icon = if (isFavorite) {
+            ResourcesCompat.getDrawable(resources, R.drawable.heart_marker, null) // Heart icon
+        } else {
+            ResourcesCompat.getDrawable(resources, R.drawable.map_marker, null) // Default marker
+        }
+        title = place.name
+        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+        subDescription = place.description
+        id = place.id
+        infoWindow = CustomMarkerWindow(this@addMarkerToMap, place, onNextclick)
+    }
+    Log.d("MarkerDebug", "Added Marker ID: ${marker.id}, Is Favorite: $isFavorite")
+
+    overlays.add(marker)
+    invalidate()
+    Log.d("FinalMapLearnLogs", "Marker added for place: ${place.name}, ID: ${place.id}")
 }
 
 fun MapView.setMapConfigurations() {
@@ -208,28 +261,7 @@ fun MapView.setMapConfigurations() {
     overlays.add(compassOverlay)
 }
 
-fun MapView.addMarkertoMap(
-    context: Context,
-    place: MapPlace,
-    onNextclick: () -> Unit
-) {
-    val marker = Marker(this).apply {
-        position = place.coordinates
-        icon = ResourcesCompat.getDrawable(resources, R.drawable.map_marker, null)
-        title = place.name
-        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-        subDescription = place.description
-        id = place.id
-        infoWindow = CustomMarkerWindow(this@addMarkertoMap, place, onNextclick)
-    }
-    Log.d("MarkerDebug", "Added Marker ID: ${marker.id}")
 
-    overlays.add(marker)
-    Log.d("OverlayDebug", "Overlays: ${overlays.filterIsInstance<Marker>().map { it.id }}")
-
-    invalidate()
-    Log.d("FinalMapLearnLogs", "Marker added for place: ${place.name}, ID: ${place.id}")
-}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
