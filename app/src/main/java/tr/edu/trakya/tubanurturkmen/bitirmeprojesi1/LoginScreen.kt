@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.ui.layout.ContentScale
 
 // Retrofit
@@ -58,10 +59,16 @@ fun LoginScreen(navController: NavController) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
         Image(
-            painter = painterResource(id = R.drawable.galata22),
+            painter = painterResource(id = R.drawable.login),
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f)) // blur
         )
 
         Box(
@@ -88,7 +95,6 @@ fun LoginScreen(navController: NavController) {
                         imeAction = ImeAction.Next
                     )
                 )
-
                 // Şifre alanı
                 TextField(
                     value = password.value,
@@ -209,7 +215,7 @@ fun LoginScreen(navController: NavController) {
                             },
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isHovered) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                            containerColor = if (isHovered) Color(0xFF1C28E0) else Color(0xFF117ED0), // Hover ve normal renkler
                             contentColor = Color.White
                         ),
                     ) {

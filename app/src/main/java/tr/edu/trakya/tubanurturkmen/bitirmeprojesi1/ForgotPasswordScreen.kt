@@ -84,19 +84,16 @@ fun ForgotPasswordScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     val backgroundImage: Painter = painterResource(id = R.drawable.deneme2)
     var isHovered by remember { mutableStateOf(false) }
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        // Arka plan resmi
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background Image
+
         Image(
-            painter = backgroundImage,
+            painter = painterResource(id = R.drawable.resim),
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop // Resmi tam ekran doldur
+            contentScale = ContentScale.Crop
         )
 
-        // Ortadaki içerik
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center, // İçeriği dikeyde merkeze al

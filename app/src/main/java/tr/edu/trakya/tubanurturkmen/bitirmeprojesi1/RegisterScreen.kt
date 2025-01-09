@@ -101,8 +101,12 @@ fun RegisterScreen(navController: NavController) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop // Resmi tam ekran doldur
         )
-
-        Column(
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f)) // Yarı saydam siyah renk
+            )
+            Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(16.dp)
