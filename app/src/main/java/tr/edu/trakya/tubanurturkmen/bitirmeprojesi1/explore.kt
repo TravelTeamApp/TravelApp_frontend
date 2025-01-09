@@ -89,22 +89,41 @@ fun ExploreScreen(
     val searchedPlaces = places.filter { it.placeName.contains(searchQuery, ignoreCase = true) }
     fun getDrawableResourceByPlaceName(placeName: String): Int {
         return when (placeName.lowercase()) {
-            "saray muhallebicisi" -> R.drawable.saray
-            "gülhane parkı"->R.drawable.gulhane
-            "yıldız parkı"->R.drawable.yildiz
-            "mandabatmaz"->R.drawable.mandabatmaz
+            "saray muhallebicisi" -> R.drawable.saray1
+            "gülhane parkı"->R.drawable.gulhane1
+            "yıldız parkı"->R.drawable.yildiz1
+            "mandabatmaz"->R.drawable.mandabatmaz1
             "yerebatan sarnıcı"->R.drawable.yerebatan
             "sultanahmet camii"->R.drawable.sultanahmet
-            "taksim meydanı"->R.drawable.taksim
-            "kız kulesi"->R.drawable.kiz
-            //"çamlıca tepesi"->R.drawable.camlica
-            //"pierre loti tepesi" -> R.drawable.pierre
-            //"madame tussauds müzesi" -> R.drawable.madame
-            //"miniatürk" -> R.drawable.miniaturk
-            //"çamlıca kulesi" -> R.drawable.camlica
-            //"pelit çikolata müzesi" -> R.drawable.cikolata
-            "nusr-et restoran " -> R.drawable.nusret
-            //"kariye camii (eski chora kilisesi)" -> R.drawable.kariye
+            "kız kulesi"->R.drawable.kiz1
+            "vialand tema park"->R.drawable.vialand1
+            "arkeoloji müzesi"->R.drawable.arkeoloji1
+            "ayasofya camii"->R.drawable.ayasofya1
+            "balat"->R.drawable.balat1
+            "binbirdirek sarnıcı"->R.drawable.binbirdirek1
+            "beylerbeyi sarayı"->R.drawable.beylerbeyi1
+            "pierre loti tepesi" -> R.drawable.pierre1
+            "madame tussauds müzesi" -> R.drawable.madame1
+            "çamlıca kulesi" -> R.drawable.camlica1
+            "büyükada"->R.drawable.buyukada1
+            "çemberlitaş"->R.drawable.cemberlitas1
+            "eminönü"->R.drawable.eminonu1
+            "galata kulesi"->R.drawable.galata1
+            "gülhane parkı"->R.drawable.gulhane1
+            "topkapı sarayı"->R.drawable.topkapi1
+            "yeni cami"->R.drawable.yeni
+            "haydarpaşa tren garı"->R.drawable.haydarpasa1
+            "istanbul akvaryum"->R.drawable.istakvaryum1
+            "kapalı çarşı"->R.drawable.kapali1
+            "süleymaniye cami"->R.drawable.suleymaniye1
+            "rumeli hisarı"->R.drawable.rumeli1
+            "ortaköy cami"->R.drawable.ortakoy1
+            "dolmabahçe sarayı"->R.drawable.dolmabahce1
+            "rahmi koç müzesi"->R.drawable.rahmi1
+            "pera palace otel"->R.drawable.pera1
+            "pelit çikolata müzesi" -> R.drawable.pelit1
+            "nusret restoran " -> R.drawable.nusret1
+            "kariye camii (eski chora kilisesi)" -> R.drawable.kariye1
 
             else -> R.drawable.istanbul // Varsayılan görsel
         }
