@@ -42,6 +42,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.FinalLearningApp
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.TravelogScreen
 
 
 @Composable
@@ -52,7 +53,7 @@ fun AppNavigation() {
     val currentRoute = remember { mutableStateOf("login") }
 
     // Bottom Navigation Bar'ın hangi ekranlarda gizleneceği
-    val hideBottomNavRoutes = listOf("login", "register", "hobies","forgotPassword")
+    val hideBottomNavRoutes = listOf("travelog","login", "register", "hobies","forgotPassword")
     val showBottomNav = !hideBottomNavRoutes.contains(currentRoute.value)
 
     // Ekran içeriği ve yerleşim düzeni
@@ -60,11 +61,15 @@ fun AppNavigation() {
         // NavHost
         NavHost(
             navController = navController,
-            startDestination = "login",
+            startDestination = "travelog",
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = if (showBottomNav) 48.dp else 0.dp) // BottomNavigationBar için padding ekleniyor
         ) {
+            composable("travelog") {
+                currentRoute.value = "travelog"
+                TravelogScreen(navController)
+            }
             composable("login") {
                 currentRoute.value = "login"
                 LoginScreen(navController)

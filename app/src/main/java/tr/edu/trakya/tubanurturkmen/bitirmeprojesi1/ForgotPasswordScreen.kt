@@ -82,7 +82,7 @@ fun ForgotPasswordScreen(navController: NavController) {
     val email = remember { mutableStateOf("") }
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
-    val backgroundImage: Painter = painterResource(id = R.drawable.password)
+    val backgroundImage: Painter = painterResource(id = R.drawable.deneme2)
     var isHovered by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -105,16 +105,6 @@ fun ForgotPasswordScreen(navController: NavController) {
                 .padding(30.dp)
                 .align(Alignment.Center) // Sayfanın ortasına yerleştir
         ) {
-            Text(
-                text = "Şifremi Sıfırla",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    color = Color.White,
-                    fontSize = 32.sp
-                ),
-                modifier = Modifier.padding(bottom = 16.dp) // Başlık ile diğer içerik arasında boşluk bırakıyoruz
-            )
-
             // E-posta adresi alanı
             TextField(
                 value = email.value,
@@ -203,6 +193,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                     },
                     modifier = Modifier
                         .fillMaxWidth()
+
                         .pointerInput(Unit) {
                             // Hover için fare hareketini yakala
                             awaitPointerEventScope {
@@ -212,11 +203,12 @@ fun ForgotPasswordScreen(navController: NavController) {
                                 }
                             }
                         },
+                    shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isHovered) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
                         contentColor = Color.White
                     ), ){
-                    Text(text = "Şifremi Sıfırla")
+                    Text(text = "Şifremi Sıfırla", fontSize = 20.sp)
                 }
             }
         }

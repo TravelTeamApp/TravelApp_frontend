@@ -199,6 +199,7 @@ class VisitedPlaceViewModel() : ViewModel() {
             override fun onFailure(call: Call<Void>, t: Throwable) {
                 callback(false, "İstek başarısız: ${t.message}")
             } }) }
+
     fun fetchUserVisitedPlaces(callback: (List<VisitedPlaceDto>?, String?) -> Unit) {
         RetrofitClient.apiService.getUserVisitedPlaces().enqueue(object :
             Callback<List<VisitedPlaceDto>> {

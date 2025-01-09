@@ -1,16 +1,12 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 import androidx.compose.ui.res.painterResource
-import com.google.gson.stream.JsonReader
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.draw.shadow
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,28 +24,20 @@ import androidx.compose.material.icons.filled.VisibilityOff
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 
-import androidx.compose.ui.viewinterop.AndroidView
-
 // Android SDK ve sistem bileşenleri
-import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 
 // Retrofit
 import retrofit2.Call
-import retrofit2.Callback
 import retrofit2.Response
 
 // Media3 (ExoPlayer)
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 
 // Navigation
 import androidx.navigation.NavController
@@ -65,43 +53,15 @@ fun LoginScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var isHovered by remember { mutableStateOf(false) }
 
-    // ExoPlayer oluşturuluyor
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            val videoUri =
-                Uri.parse("android.resource://${context.packageName}/raw/manzara")
-            val mediaItem = MediaItem.fromUri(videoUri)
-            setMediaItem(mediaItem)
-            prepare()
-            playWhenReady = true
-            volume = 0f
 
-            addListener(object : Player.Listener {
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (playbackState == Player.STATE_ENDED) {
-                        seekTo(0)
-                        playWhenReady = true
-                    }
-                }
-            })
-        }
-    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Arka plan video oynatıcı
-        AndroidView(
-            factory = {
-                PlayerView(it).apply {
-                    player = exoPlayer
-                    useController = false
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                    layoutParams = android.view.ViewGroup.LayoutParams(
-                        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                        android.view.ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxSize()
+        // Background Image
+        Image(
+            painter = painterResource(id = R.drawable.galata22),
+            contentDescription = "Background Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
         )
 
         Box(
@@ -115,15 +75,6 @@ fun LoginScreen(navController: NavController) {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Hoşgeldiniz",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 36.sp,
-                        letterSpacing = 1.5.sp,
-                        color = Color.White
-                    )
-                )
 
                 // Email alanı
                 TextField(
@@ -262,14 +213,14 @@ fun LoginScreen(navController: NavController) {
                             contentColor = Color.White
                         ),
                     ) {
-                        Text(text = "Giriş Yap")
+                        Text(text = "Giriş Yap", fontSize = 20.sp)
                     }
 
                     TextButton(
                         onClick = { navController.navigate("register") },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Hesabınız yok mu? Kayıt olun", color = Color.White)
+                        Text("Hesabınız yok mu? Kayıt olun", color = Color.White, fontSize = 16.sp)
                     }
                 }
             }

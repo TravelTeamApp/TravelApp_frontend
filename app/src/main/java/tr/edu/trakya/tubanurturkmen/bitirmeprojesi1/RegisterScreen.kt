@@ -70,7 +70,7 @@ fun RegisterScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
-    val backgroundImage: Painter = painterResource(id = R.drawable.register)
+    val backgroundImage: Painter = painterResource(id = R.drawable.kuzguncuk)
 
     var isHovered by remember { mutableStateOf(false) } // Hover durumu
 
@@ -107,15 +107,6 @@ fun RegisterScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(
-                text = "Kayıt Ol",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.ExtraBold, // Daha kalın yazı
-                    fontSize = 32.sp, // Daha büyük boyut
-                    letterSpacing = 1.5.sp, // Harfler arasında boşluk
-                    color = Color.White
-                ),
-            )
 
             // Kullanıcı Adı
             TextField(
@@ -274,12 +265,21 @@ fun RegisterScreen(navController: NavController) {
                 } else {
                     Text(
                         text = "Kayıt Ol",
+                        fontSize = 20.sp,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
                     )
                 }
             }
+            Text(
+                text = "Hesabınız varsa giriş yapın",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 15.sp, fontWeight = FontWeight.ExtraBold),
+                color = Color.White,
+                modifier = Modifier
+                    .clickable { navController.navigate("login") }
+                    .align(Alignment.CenterHorizontally)
+            )
         }
     }
 }

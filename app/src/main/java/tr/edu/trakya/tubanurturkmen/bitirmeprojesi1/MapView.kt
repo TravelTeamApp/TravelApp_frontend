@@ -1,7 +1,5 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 import android.content.Context
-import android.util.DisplayMetrics
-import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.R
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ExperimentalMaterialApi
@@ -31,17 +28,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.res.ResourcesCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -57,17 +50,69 @@ import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.util.MapPlace
 fun FinalLearningApp() {
     val placeViewModel: PlaceViewModel = viewModel()
     val favoriteViewModel: FavoriteViewModel = viewModel()
+    val visitedPlaceViewModel: VisitedPlaceViewModel = viewModel()
     val placeDto = placeViewModel.places.value
 
-
+    var visitedPlaces by remember { mutableStateOf<List<VisitedPlaceDto>>(emptyList()) }
     var favoritePlaces by remember { mutableStateOf<List<FavoriteDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    fun getDrawableResourceByPlaceName(placeName: String): Int {
+        return when (placeName.lowercase()) {
+            "saray muhallebicisi" -> R.drawable.saray1
+            "gülhane parkı"->R.drawable.gulhane1
+            "yıldız parkı"->R.drawable.yildiz1
+            "mandabatmaz"->R.drawable.mandabatmaz1
+            "yerebatan sarnıcı"->R.drawable.yerebatan
+            "sultanahmet camii"->R.drawable.sultanahmet
+            "kız kulesi"->R.drawable.kiz1
+            "vialand tema park"->R.drawable.vialand1
+            "arkeoloji müzesi"->R.drawable.arkeoloji1
+            "ayasofya camii"->R.drawable.ayasofya1
+            "balat"->R.drawable.balat1
+            "binbirdirek sarnıcı"->R.drawable.binbirdirek1
+            "beylerbeyi sarayı"->R.drawable.beylerbeyi1
+            "pierre loti tepesi" -> R.drawable.pierre1
+            "madame tussauds müzesi" -> R.drawable.madame1
+            "çamlıca kulesi" -> R.drawable.camlica1
+            "büyükada"->R.drawable.buyukada1
+            "çemberlitaş"->R.drawable.cemberlitas1
+            "eminönü"->R.drawable.eminonu1
+            "emirgan korusu"->R.drawable.emirgan4
+            "galata kulesi"->R.drawable.galata1
+            "gülhane parkı"->R.drawable.gulhane1
+            "topkapı sarayı"->R.drawable.topkapi1
+            "yeni cami"->R.drawable.yeni
+            "haydarpaşa tren garı"->R.drawable.haydarpasa1
+            "istanbul akvaryum"->R.drawable.istakvaryum1
+            "kapalıçarşı"->R.drawable.kapali1
+            "süleymaniye cami"->R.drawable.suleymaniye1
+            "rumeli hisarı"->R.drawable.rumeli1
+            "ortaköy cami"->R.drawable.ortakoy1
+            "dolmabahçe sarayı"->R.drawable.dolmabahce1
+            "rahmi koç müzesi"->R.drawable.rahmi1
+            "pera palace otel"->R.drawable.pera1
+            "pelit çikolata müzesi" -> R.drawable.pelit1
+            "nusr-et steakhouse " -> R.drawable.nusret1
+            "kariye camii (eski chora kilisesi)" -> R.drawable.kariye1
+
+            else -> R.drawable.istanbul // Varsayılan görsel
+        }
+    }
     // Fetch favorite places
     LaunchedEffect(Unit) {
         favoriteViewModel.fetchUserFavorites { favorites, error ->
             if (favorites != null) {
                 favoritePlaces = favorites
+                isLoading = false
+            } else {
+                errorMessage = error
+                isLoading = false
+            }
+        }
+        visitedPlaceViewModel.fetchUserVisitedPlaces { visited, error ->
+            if (visited != null) {
+                visitedPlaces = visited
                 isLoading = false
             } else {
                 errorMessage = error
@@ -82,7 +127,7 @@ fun FinalLearningApp() {
             name = it.placeName,
             coordinates = GeoPoint(it.latitude, it.longitude),
             description = it.description,
-            imageResId = R.drawable.istanbul,
+            imageResId = getDrawableResourceByPlaceName(it.placeName),
             focusZoomLvl = 15.0
         )
     }
@@ -120,7 +165,8 @@ fun FinalLearningApp() {
                     mapView = mapView,
                     markersWithWindowOnMap = markersWithInfoWindow,
                     onAddNewMarker = { markersIdOnMap.add(it) },
-                    favoritePlaces = favoritePlaces
+                    favoritePlaces = favoritePlaces,
+                    visitedPlaces = visitedPlaces
                 )
 
                 PlacesListItem(
@@ -167,7 +213,8 @@ private fun MapView(
     mapView: MapView,
     onAddNewMarker: (String) -> Unit,
     markersWithWindowOnMap: SnapshotStateList<Marker>,
-    favoritePlaces: List<FavoriteDto> // IDs or names of favorite places
+    favoritePlaces: List<FavoriteDto>, // IDs or names of favorite places
+    visitedPlaces: List<VisitedPlaceDto>
 ) {
     val context = LocalContext.current
 
@@ -205,16 +252,62 @@ private fun MapView(
                 overlays.add(mapEventsOverlay)
 
                 places.forEach { place ->
-                    val isFavorite = favoritePlaces.any { it.placeName == place.name} // Correct comparison
-                    addMarkerToMap(
-                        context,
-                        place,
-                        isFavorite = isFavorite,
-                        onNextclick = {
-                            onAnimateToNewPlace(place, markersWithWindowOnMap)
-                        }
-                    )
+                    val isFavorite = favoritePlaces.any { it.placeName == place.name } // Favori kontrolü
+                    val isVisited = visitedPlaces.any { it.placeName == place.name } // Gidilen kontrolü
+
+                    // Hem favori hem gidilen durum için
+                    if (isFavorite && isVisited) {
+                        addMarkerToMap(
+                            context,
+                            place,
+                            isFavorite = true,
+                            isVisited = true,
+                            onNextclick = {
+                                onAnimateToNewPlace(place, markersWithWindowOnMap)
+                            }
+                        )
+                    }
+
+                    // Sadece favori durum için
+                    if (isFavorite && !isVisited) {
+                        addMarkerToMap(
+                            context,
+                            place,
+                            isFavorite = true,
+                            isVisited = false,
+                            onNextclick = {
+                                onAnimateToNewPlace(place, markersWithWindowOnMap)
+                            }
+                        )
+                    }
+
+                    // Sadece gidilen durum için
+                    if (!isFavorite && isVisited) {
+                        addMarkerToMap(
+                            context,
+                            place,
+                            isFavorite = false,
+                            isVisited = true,
+                            onNextclick = {
+                                onAnimateToNewPlace(place, markersWithWindowOnMap)
+                            }
+                        )
+                    }
+
+                    // Ne favori ne de gidilen durum için (isteğe bağlı)
+                    if (!isFavorite && !isVisited) {
+                        addMarkerToMap(
+                            context,
+                            place,
+                            isFavorite = false,
+                            isVisited = false,
+                            onNextclick = {
+                                onAnimateToNewPlace(place, markersWithWindowOnMap)
+                            }
+                        )
+                    }
                 }
+
             }
         } else {
             Log.d("MapDebug", "Places list is empty, no markers to add.")
@@ -227,15 +320,18 @@ fun MapView.addMarkerToMap(
     context: Context,
     place: MapPlace,
     isFavorite: Boolean,
+    isVisited: Boolean,
     onNextclick: () -> Unit
 ) {
     val marker = Marker(this).apply {
         position = place.coordinates
-        icon = if (isFavorite) {
-            ResourcesCompat.getDrawable(resources, R.drawable.heart_marker, null) // Heart icon
-        } else {
-            ResourcesCompat.getDrawable(resources, R.drawable.map_marker, null) // Default marker
+        icon = when {
+            isFavorite && isVisited -> ResourcesCompat.getDrawable(resources, R.drawable.yildiz_icon, null) // Hem favori hem gidilen için özel ikon
+            isFavorite -> ResourcesCompat.getDrawable(resources, R.drawable.kalp, null) // Sadece favori için
+            isVisited -> ResourcesCompat.getDrawable(resources, R.drawable.gidilen, null) // Sadece gidilen için
+            else -> ResourcesCompat.getDrawable(resources, R.drawable.map_marker, null) // Varsayılan ikon
         }
+
         title = place.name
         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
         subDescription = place.description
