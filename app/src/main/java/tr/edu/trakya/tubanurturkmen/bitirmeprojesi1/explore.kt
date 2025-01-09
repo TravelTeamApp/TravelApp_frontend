@@ -1,4 +1,5 @@
 package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
+import android.R.attr
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -37,10 +38,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,11 +53,9 @@ import androidx.navigation.compose.rememberNavController
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-
-
+import android.R.attr.maxLines
 @Composable
 fun ExploreScreen(
-
     navController: NavController,
     placeViewModel: PlaceViewModel = viewModel(),
     categoryViewModel: ExploreViewModel = viewModel(),
@@ -85,6 +87,7 @@ fun ExploreScreen(
     val suggestedPlaces by placeViewModel.suggestedPlaces
     val isLoading by placeViewModel.loading
     val errorMessage by placeViewModel.errorMessage
+    var isExpanded by remember { mutableStateOf(false) }
 
     val searchedPlaces = places.filter { it.placeName.contains(searchQuery, ignoreCase = true) }
     fun getDrawableResourceByPlaceName(placeName: String): Int {
@@ -108,13 +111,14 @@ fun ExploreScreen(
             "büyükada"->R.drawable.buyukada1
             "çemberlitaş"->R.drawable.cemberlitas1
             "eminönü"->R.drawable.eminonu1
+            "emirgan korusu"->R.drawable.emirgan4
             "galata kulesi"->R.drawable.galata1
             "gülhane parkı"->R.drawable.gulhane1
             "topkapı sarayı"->R.drawable.topkapi1
             "yeni cami"->R.drawable.yeni
             "haydarpaşa tren garı"->R.drawable.haydarpasa1
             "istanbul akvaryum"->R.drawable.istakvaryum1
-            "kapalı çarşı"->R.drawable.kapali1
+            "kapalıçarşı"->R.drawable.kapali1
             "süleymaniye cami"->R.drawable.suleymaniye1
             "rumeli hisarı"->R.drawable.rumeli1
             "ortaköy cami"->R.drawable.ortakoy1
@@ -122,7 +126,7 @@ fun ExploreScreen(
             "rahmi koç müzesi"->R.drawable.rahmi1
             "pera palace otel"->R.drawable.pera1
             "pelit çikolata müzesi" -> R.drawable.pelit1
-            "nusret restoran " -> R.drawable.nusret1
+            "nusr-et steakhouse " -> R.drawable.nusret1
             "kariye camii (eski chora kilisesi)" -> R.drawable.kariye1
 
             else -> R.drawable.istanbul // Varsayılan görsel
@@ -139,79 +143,98 @@ fun ExploreScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(bottom = 56.dp) // BottomNavigationBar alanı
+                            .padding(bottom = 50.dp) // BottomNavigationBar alanı
                             .verticalScroll(scrollState) // Dikey kaydırmayı etkinleştir
                     ) {
-                        Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
+                        Box(modifier = Modifier.height(280.dp).fillMaxWidth()) {
                             Image(
                                 painter = painterResource(id = R.drawable.istanbul),
                                 contentDescription = "Istanbul Overview",
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
                             )
-                            Text(
-                                text = "ISTANBUL",
-                                style = MaterialTheme.typography.headlineLarge.copy(color = Color.White),
-                                modifier = Modifier.align(Alignment.Center)
-                            )
+                            // Arama çubuğu
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                                    .background(
+                                        Color.White.copy(alpha = 0.8f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Search Icon",
+                                    tint = Color.Black,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                                BasicTextField(
+                                    value = searchQuery,
+                                    onValueChange = { searchQuery = it },
+                                    modifier = Modifier.weight(1f),
+                                    textStyle = TextStyle(
+                                        color = Color.Black,
+                                        fontSize = 16.sp
+                                    ),
+                                    decorationBox = { innerTextField ->
+                                        if (searchQuery.isEmpty()) {
+                                            Text(
+                                                text = "Ara...",
+                                                style = TextStyle(color = Color.Gray)
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                )
+                            }
+                            // Alt bilgi kısmı
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(10.dp)
-                                    .padding(10.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .background(
-                                            Color.White.copy(alpha = 0.8f),
-                                            shape = RoundedCornerShape(12.dp)
+                                    .align(Alignment.BottomStart)
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.Black.copy(alpha = 0.9f)
+                                            )
                                         )
-                                        .padding(8.dp)
-                                        .align(Alignment.Center),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Search,
-                                        contentDescription = "Search Icon",
-                                        tint = Color.Black,
-                                        modifier = Modifier.padding(end = 8.dp)
                                     )
-                                    BasicTextField(
-                                        value = searchQuery,
-                                        onValueChange = { searchQuery = it },
-                                        modifier = Modifier.weight(1f),
-                                        textStyle = TextStyle(
-                                            color = Color.Black,
-                                            fontSize = 16.sp
+                                    .padding(23.dp)
+                            ) {
+                                Column {
+                                    Text(
+                                        text = if (isExpanded) {
+                                            "İstanbul, Asya ve Avrupa’yı birleştiren, zengin tarihi ve büyüleyici atmosferiyle eşsiz bir metropoldür. Roma,Bizans ve Osmanlı gibi imparatorluklara başkentlik yapan şehir,tarihi yapılarla geçmişin izlerini günümüze taşır. Doğu ve Batı’nın ruhunu barındıran İstanbul,her köşesinde farklı bir hikâye sunar."
+                                        } else {
+                                            "İstanbul, Asya ve Avrupa’yı birleştiren, zengin tarihi ve büyüleyici atmosferiyle eşsiz bir metropoldür. Roma, Bizans ve Osmanlı gibi imparatorluklara başkentlik yapan şehir, tarihi yapılarla geçmişin izlerini günümüze taşır."
+                                        },
+                                        style = TextStyle(
+                                            fontSize = 16.sp,
+                                            color = Color.White
                                         ),
-                                        decorationBox = { innerTextField ->
-                                            if (searchQuery.isEmpty()) {
-                                                Text(
-                                                    text = "Ara...",
-                                                    style = TextStyle(color = Color.Gray)
-                                                )
-                                            }
-                                            innerTextField()
+                                        maxLines = if (isExpanded) Int.MAX_VALUE else 3,
+                                        overflow = if (isExpanded) TextOverflow.Visible else TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = if (isExpanded) "Daha az göster" else "Daha fazla oku",
+                                        style = TextStyle(
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textDecoration = TextDecoration.Underline
+                                        ),
+                                        modifier = Modifier.clickable {
+                                            isExpanded = !isExpanded
                                         }
                                     )
                                 }
-                            }
-                        }
-                        // Fotoğrafın altına "İstanbul hakkında bilgi" kısmı
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color.Gray.copy(alpha = 0.1f))
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = "İstanbul, Asya ve Avrupa’yı birleştiren, zengin tarihi ve büyüleyici atmosferiyle eşsiz bir metropoldür. Roma, Bizans ve Osmanlı gibi imparatorluklara başkentlik yapan şehir, Sultanahmet’teki Ayasofya, Topkapı Sarayı ve Sultanahmet Camii gibi tarihi yapılarla geçmişin izlerini günümüze taşır. İstanbul Boğazı’nda bir yürüyüş veya tekne turu, şehrin doğal güzelliklerini ve siluetini keşfetmek için harika bir fırsattır. Doğu ve Batı’nın ruhunu barındıran İstanbul, her köşesinde farklı bir hikâye sunar.",
-                                style = TextStyle(
-                                    fontSize = 18.sp,
-                                    color = Color.Black
-                                ))
-                        }
-                        if (searchQuery.isNotEmpty()) {
+                            }}
+    if (searchQuery.isNotEmpty()) {
                             LazyRow(modifier = Modifier.padding(16.dp)) {
                                 if (searchedPlaces.isEmpty()) {
                                     // No results found for the search
@@ -256,149 +279,376 @@ fun ExploreScreen(
                                 }
                             }
                         } else if (searchQuery.isEmpty()) {
-                            Column(modifier = Modifier.fillMaxSize()) {
-                                Text(
-                                    text = "Size Önerilenler",
-                                    style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
-                                    modifier = Modifier.padding(16.dp)
+        Column(modifier = Modifier.fillMaxSize()) {
+            Text(
+                text = "Önerilenler",
+                style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
+                modifier = Modifier.padding(16.dp)
+            )
+
+            when {
+                suggestedPlaces.isNotEmpty() -> {
+                    LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        items(suggestedPlaces) { place ->
+                            var isFavorite by remember { mutableStateOf(false) }
+                            var isVisited by remember { mutableStateOf(false) }
+
+                            // Favoriler ve gidilenler durumunu dinamik kontrol et
+                            LaunchedEffect(place.placeId) {
+                                favoriteViewModel.fetchUserFavorites { favorites, error ->
+                                    if (favorites != null) {
+                                        isFavorite = favorites.any { it.placeId == place.placeId }
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            error ?: "Favoriler alınırken hata oluştu.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+
+                                visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
+                                    if (visitedPlaces != null) {
+                                        isVisited = visitedPlaces.any { it.placeId == place.placeId }
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            error ?: "Ziyaret edilenler alınırken hata oluştu.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .width(220.dp)
+                                    .height(280.dp)
+                                    .padding(end = 16.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color.LightGray)
+                                    .clickable { selectedAttraction = place }
+                            ) {
+                                Image(
+                                    painter = painterResource(
+                                        id = getDrawableResourceByPlaceName(place.placeName)
+                                    ),
+                                    contentDescription = place.placeName,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(16.dp)),
+                                    contentScale = ContentScale.Crop
                                 )
 
-                                when {
-                                    suggestedPlaces.isNotEmpty() -> { // Önerilen mekanlar varsa göster
-                                        LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                            items(suggestedPlaces) { place ->
-                                                Card(
-                                                    modifier = Modifier
-                                                        .width(200.dp)
-                                                        .padding(end = 16.dp)
-                                                        .clickable { selectedAttraction = place },
-                                                    shape = RoundedCornerShape(12.dp),
-                                                    colors = CardDefaults.cardColors(
-                                                        containerColor = Color.Gray.copy(alpha = 0.3f)
-                                                    )
-                                                ) {
-                                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                        Image(
-                                                            painter = painterResource(
-                                                                id = getDrawableResourceByPlaceName(
-                                                                    place.placeName
-                                                                )
-                                                            ),
-                                                            contentDescription = place.placeName,
-                                                            modifier = Modifier
-                                                                .height(120.dp)
-                                                                .fillMaxWidth(),
-                                                            contentScale = ContentScale.Crop
-                                                        )
-                                                        Text(
-                                                            text = place.placeName,
-                                                            style = MaterialTheme.typography.bodyLarge.copy(
-                                                                color = Color.Black
-                                                            ),
-                                                            modifier = Modifier.padding(horizontal = 8.dp)
-                                                        )
+                                // Favoriler ve gidilenler ikonları
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .align(Alignment.TopEnd)
+                                        .padding(8.dp)
+                                ) {
+                                    Row(horizontalArrangement = Arrangement.End) {
+                                        // Favori İkonu
+                                        IconButton(onClick = {
+                                            if (isFavorite) {
+                                                favoriteViewModel.deleteFavorite(place.placeId) { success, message ->
+                                                    if (success) {
+                                                        isFavorite = false
+                                                        Toast.makeText(
+                                                            context,
+                                                            "${place.placeName} favorilerden çıkarıldı.",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    } else {
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Hata: $message",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                }
+                                            } else {
+                                                favoriteViewModel.addFavorite(place.placeId) { success, message ->
+                                                    if (success) {
+                                                        isFavorite = true
+                                                        Toast.makeText(
+                                                            context,
+                                                            "${place.placeName} favorilere eklendi.",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    } else {
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Hata: $message",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
                                                     }
                                                 }
                                             }
-                                        }
-                                    }
-
-                                    else -> { // Önerilen mekan yoksa bir mesaj göster
-                                        Text(
-                                            text = "No suggestions available",
-                                            style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
-                                            modifier = Modifier.padding(16.dp)
-                                        )
-                                    }
-                                }
-                            }
-                            // Kategoriler için Tablar
-                            Text(
-                                text = "Mekanlar",
-                                style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
-                                modifier = Modifier.padding(16.dp)
-                            )
-
-                            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
-                                items(categories) { category ->
-                                    Button(
-                                        onClick = { selectedCategory = category },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (category == selectedCategory) Color(
-                                                0xFF2196F3
-                                            ) else Color.White,
-                                            contentColor = if (category == selectedCategory) Color.White else Color.Gray
-                                        ),
-                                        shape = RoundedCornerShape(16.dp),
-                                        modifier = Modifier.padding(end = 8.dp)
-                                    ) {
-                                        Text(text = category.placeTypeName)
-                                    }
-                                }
-                            }
-                            LazyRow(modifier = Modifier.padding(16.dp)) {
-                                val filteredAttractions =
-                                    places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
-
-                                if (filteredAttractions.isEmpty()) {
-                                    // Eşleşen öğe yoksa, mesaj göster
-                                    item {
-                                        Text(
-                                            "No attractions found for this category.",
-                                            modifier = Modifier.padding(16.dp)
-                                        )
-                                    }
-                                } else {
-                                    items(filteredAttractions) { attraction ->
-                                        Card(
-                                            modifier = Modifier
-                                                .width(220.dp) // Sabit genişlik
-                                                .height(300.dp) // Sabit yükseklik
-                                                .padding(8.dp)
-                                                .clickable { selectedAttraction = attraction },
-                                            shape = RoundedCornerShape(16.dp), // Köşeler yuvarlatılmış
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = Color.Gray.copy(alpha = 0.15f) // Daha hafif bir gri
+                                        }) {
+                                            Icon(
+                                                painter = painterResource(
+                                                    id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
+                                                ),
+                                                contentDescription = "Favorilere Ekle",
+                                                tint = Color.White
                                             )
-                                        ) {
-                                            Column(
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                modifier = Modifier.padding(12.dp)
-                                            ) {
-                                                // Mekanın görseli
-                                                Image(
-                                                    painter = painterResource(
-                                                        id = getDrawableResourceByPlaceName(
-                                                            attraction.placeName
-                                                        )
-                                                    ),
-                                                    contentDescription = attraction.placeName,
-                                                    modifier = Modifier
-                                                        .height(200.dp) // Görsel için sabit yükseklik
-                                                        .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(12.dp)), // Görsel için köşeleri yuvarlatma
-                                                    contentScale = ContentScale.Crop
-                                                )
+                                        }
 
-                                                Spacer(modifier = Modifier.height(8.dp)) // Görsel ile metin arasındaki boşluk
-                                                Text(
-                                                    text = attraction.placeName,
-                                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                                        color = Color.Black,
-                                                        fontWeight = FontWeight.Bold
-                                                    ),
-                                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                                )
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                            }}
+                                        // Gidilenler İkonu
+                                        IconButton(onClick = {
+                                            if (isVisited) {
+                                                visitedPlaceViewModel.deleteVisitedPlace(place.placeId) { success, message ->
+                                                    if (success) {
+                                                        isVisited = false
+                                                        Toast.makeText(
+                                                            context,
+                                                            "${place.placeName} gidilenlerden çıkarıldı.",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    } else {
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Hata: $message",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                }
+                                            } else {
+                                                visitedPlaceViewModel.addVisitedPlace(place.placeId) { success, message ->
+                                                    if (success) {
+                                                        isVisited = true
+                                                        Toast.makeText(
+                                                            context,
+                                                            "${place.placeName} gidilenlere kaydedildi.",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    } else {
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Hata: $message",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                }
+                                            }
+                                        }) {
+                                            Icon(
+                                                painter = painterResource(
+                                                    id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
+                                                ),
+                                                contentDescription = "Gidilenlere Kaydet",
+                                                tint = Color.White
+                                            )
                                         }
                                     }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .align(Alignment.BottomStart)
+                                        .background(
+                                            Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    Color.Black.copy(alpha = 0.8f)
+                                                )
+                                            )
+                                        )
+                                        .padding(16.dp)
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = place.placeName,
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "${place.rating} ★",
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                color = Color.White
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    Text(
+                        text = "No suggestions available",
+                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+
+        }
+        // Kategoriler için Tablar
+        Text(
+            text = "Keşfedin",
+            style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
+            modifier = Modifier.padding(16.dp)
+        )
+        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
+            items(categories) { category ->
+                Button(
+                    onClick = { selectedCategory = category },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (category == selectedCategory) Color(0xFF2196F3) else Color.White,
+                        contentColor = if (category == selectedCategory) Color.White else Color.Gray
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    Text(text = category.placeTypeName)
+                }
+            }
+        }
+
+        LazyRow(modifier = Modifier.padding(16.dp)) {
+            val filteredAttractions =
+                places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
+
+            if (filteredAttractions.isEmpty()) {
+                // Eşleşen öğe yoksa, mesaj göster
+                item {
+                    Text(
+                        "No attractions found for this category.",
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else {
+                items(filteredAttractions) { attraction ->
+                    var isFavorite by remember { mutableStateOf(false) }
+                    var isVisited by remember { mutableStateOf(false) }
+
+                    // Dinamik kontrol
+                    LaunchedEffect(attraction.placeId) {
+                        favoriteViewModel.fetchUserFavorites { favorites, error ->
+                            if (favorites != null) {
+                                isFavorite = favorites.any { it.placeId == attraction.placeId }
+                            }
+                        }
+
+                        visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
+                            if (visitedPlaces != null) {
+                                isVisited = visitedPlaces.any { it.placeId == attraction.placeId }
+                            }
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .width(180.dp) // Sabit genişlik
+                            .height(240.dp) // Sabit yükseklik
+                            .padding(end = 16.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.LightGray)
+                            .clickable { selectedAttraction = attraction }
+                    ) {
+                        Image(
+                            painter = painterResource(
+                                id = getDrawableResourceByPlaceName(attraction.placeName)
+                            ),
+                            contentDescription = attraction.placeName,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(16.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        // Favori ve gidilen ikonları
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                        ) {
+                            Row(horizontalArrangement = Arrangement.End) {
+                                // Favori İkonu
+                                IconButton(onClick = {
+                                    if (isFavorite) {
+                                        favoriteViewModel.deleteFavorite(attraction.placeId) { success, _ ->
+                                            if (success) isFavorite = false
+                                        }
+                                    } else {
+                                        favoriteViewModel.addFavorite(attraction.placeId) { success, _ ->
+                                            if (success) isFavorite = true
+                                        }
+                                    }
+                                }) {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
+                                        ),
+                                        contentDescription = "Favorilere Ekle",
+                                        tint = Color.White
+                                    )
+                                }
+
+                                // Gidilenler İkonu
+                                IconButton(onClick = {
+                                    if (isVisited) {
+                                        visitedPlaceViewModel.deleteVisitedPlace(attraction.placeId) { success, _ ->
+                                            if (success) isVisited = false
+                                        }
+                                    } else {
+                                        visitedPlaceViewModel.addVisitedPlace(attraction.placeId) { success, _ ->
+                                            if (success) isVisited = true
+                                        }
+                                    }
+                                }) {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
+                                        ),
+                                        contentDescription = "Gidilenlere Kaydet",
+                                        tint = Color.White
+                                    )
+                                }
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomStart)
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color.Black.copy(alpha = 0.8f)
+                                        )
+                                    )
+                                )
+                                .padding(12.dp)
+                        ) {
+                            Column {
+                                Text(
+                                    text = attraction.placeName,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
                             }
                         }
                     }
                 }
             }
         }
+}}}}}
         else {
             val scrollState = rememberScrollState()
             val commentsState = remember { mutableStateOf<List<CommentDto>?>(null) }
@@ -406,7 +656,6 @@ fun ExploreScreen(
             var comment by remember { mutableStateOf("") }
             val maxHeight = 650.dp
             val minHeight = 10.dp
-
             val density = LocalDensity.current // LocalDensity ile DP'den PX'e dönüştürme
             val imageHeight = with(density) {
                 val maxPx = maxHeight.toPx()
