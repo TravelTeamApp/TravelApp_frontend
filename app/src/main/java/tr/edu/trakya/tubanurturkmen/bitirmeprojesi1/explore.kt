@@ -54,7 +54,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import android.R.attr.maxLines
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Map
@@ -141,17 +143,23 @@ fun ExploreScreen(
         placeViewModel.fetchPlacesByUserPlaceTypes()
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.White)) {
         if (selectedAttraction == null) {
             Column {
-                Box(modifier = Modifier.fillMaxSize().background(backgroundColor)) {
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(backgroundColor)) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(bottom = 50.dp) // BottomNavigationBar alanı
                             .verticalScroll(scrollState) // Dikey kaydırmayı etkinleştir
                     ) {
-                        Box(modifier = Modifier.height(280.dp).fillMaxWidth()) {
+                        Box(modifier = Modifier
+                            .height(280.dp)
+                            .fillMaxWidth()) {
                             Image(
                                 painter = painterResource(id = R.drawable.istanbul),
                                 contentDescription = "Istanbul Overview",
@@ -1153,7 +1161,10 @@ fun ExploreScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(Color(0xFFF5F5F5), shape = RoundedCornerShape(16.dp))
+                                        .background(
+                                            Color(0xFFF5F5F5),
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
                                         .padding(16.dp)
                                 ) {
                                     // Star Rating Row
@@ -1263,22 +1274,30 @@ fun ExploreScreen(
                                                 shape = RoundedCornerShape(12.dp),
 
                                             ) {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(8.dp),
-                                                verticalAlignment = Alignment.Top
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.AccountCircle,
-                                                    contentDescription = null,
+                                                Row(
                                                     modifier = Modifier
-                                                        .size(40.dp)
-                                                        .padding(end = 8.dp),
-                                                    tint =Color(0xFF0571C7)
-                                                )
+                                                        .fillMaxWidth()
+                                                        .padding(8.dp),
+                                                    verticalAlignment = Alignment.Top
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(40.dp) // Profil boyutu
+                                                            .clip(CircleShape) // Yuvarlak şekil
+                                                            .background(Color(0xFFE8ECEF)) // Arka plan rengi
+                                                            .border(2.dp, Color(0xFF0571C7), CircleShape) // Kenarlık
+                                                    ) {
+                                                        val firstLetter = comment.createdBy?.firstOrNull()?.uppercaseChar() ?: "?"
+                                                        Text(
+                                                            text = firstLetter.toString(),
+                                                            fontSize = 20.sp,
+                                                            color = Color(0xFF377A8D),
+                                                            modifier = Modifier.align(Alignment.Center)
+                                                        )
+                                                    }
 
-                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Column(modifier = Modifier.weight(1f)) {
                                                     Text(
                                                         text = comment.createdBy ?: "Unknown",
                                                         style = MaterialTheme.typography.bodyMedium,
