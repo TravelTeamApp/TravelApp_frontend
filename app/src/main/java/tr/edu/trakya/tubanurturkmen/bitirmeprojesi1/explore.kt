@@ -243,7 +243,7 @@ fun ExploreScreen(
                                     // Arama sonucunda eşleşme bulunamadığında gösterilecek mesaj
                                     item {
                                         Text(
-                                            "Aradığınız isimde bir mekan bulunmamaktadır.",
+                                            "Aramaya uygun sonuç bulunamadı",
                                             modifier = Modifier.padding(16.dp)
                                         )
                                     }
@@ -251,16 +251,17 @@ fun ExploreScreen(
                                     items(searchedPlaces) { attraction ->
                                         var isFavorite by remember { mutableStateOf(false) }
                                         var isVisited by remember { mutableStateOf(false) }
+                                        val context = LocalContext.current
 
                                         // Favori ve ziyaret durumu kontrolü
                                         LaunchedEffect(attraction.placeId) {
-                                            favoriteViewModel.fetchUserFavorites { favorites, error ->
+                                            favoriteViewModel.fetchUserFavorites { favorites, _ ->
                                                 if (favorites != null) {
                                                     isFavorite = favorites.any { it.placeId == attraction.placeId }
                                                 }
                                             }
 
-                                            visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
+                                            visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, _ ->
                                                 if (visitedPlaces != null) {
                                                     isVisited = visitedPlaces.any { it.placeId == attraction.placeId }
                                                 }
@@ -276,6 +277,7 @@ fun ExploreScreen(
                                                 .background(Color.LightGray)
                                                 .clickable { selectedAttraction = attraction }
                                         ) {
+                                            // Mekan Görseli
                                             Image(
                                                 painter = painterResource(
                                                     id = getDrawableResourceByPlaceName(attraction.placeName)
@@ -287,64 +289,146 @@ fun ExploreScreen(
                                                 contentScale = ContentScale.Crop
                                             )
 
-                                            // Favori ve ziyaret durumlarını gösteren ikonlar
-                                            if (isFavorite || isVisited) {
-                                                Row(
-                                                    modifier = Modifier
-                                                        .align(Alignment.TopEnd)
-                                                        .padding(8.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    if (isFavorite) {
+                                            // Favori ve gidilenler ikonları
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(8.dp)
+                                            ) {
+                                                Row(horizontalArrangement = Arrangement.End) {
+                                                    // Favori İkonu
+                                                    IconButton(onClick = {
+                                                        if (isFavorite) {
+                                                            favoriteViewModel.deleteFavorite(attraction.placeId) { success, message ->
+                                                                if (success) {
+                                                                    isFavorite = false
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "${attraction.placeName} favorilerden çıkarıldı.",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                } else {
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Hata: $message",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                }
+                                                            }
+                                                        } else {
+                                                            favoriteViewModel.addFavorite(attraction.placeId) { success, message ->
+                                                                if (success) {
+                                                                    isFavorite = true
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "${attraction.placeName} favorilere eklendi.",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                } else {
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Hata: $message",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                }
+                                                            }
+                                                        }
+                                                    }) {
                                                         Icon(
-                                                            imageVector = Icons.Default.Favorite,
-                                                            contentDescription = "Favorite",
-                                                            tint = Color.Red,
-                                                            modifier = Modifier.size(20.dp)
+                                                            painter = painterResource(
+                                                                id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
+                                                            ),
+                                                            contentDescription = "Favorilere Ekle",
+                                                            tint = Color.White
                                                         )
                                                     }
-                                                    if (isVisited) {
-                                                        Spacer(modifier = Modifier.width(4.dp))
+
+                                                    // Gidilenler İkonu
+                                                    IconButton(onClick = {
+                                                        if (isVisited) {
+                                                            visitedPlaceViewModel.deleteVisitedPlace(attraction.placeId) { success, message ->
+                                                                if (success) {
+                                                                    isVisited = false
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "${attraction.placeName} gidilenlerden çıkarıldı.",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                } else {
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Hata: $message",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                }
+                                                            }
+                                                        } else {
+                                                            visitedPlaceViewModel.addVisitedPlace(attraction.placeId) { success, message ->
+                                                                if (success) {
+                                                                    isVisited = true
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "${attraction.placeName} gidilenlere kaydedildi.",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                } else {
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Hata: $message",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                }
+                                                            }
+                                                        }
+                                                    }) {
                                                         Icon(
-                                                            imageVector = Icons.Default.CheckCircle,
-                                                            contentDescription = "Visited",
-                                                            tint = Color.Green,
-                                                            modifier = Modifier.size(20.dp)
+                                                            painter = painterResource(
+                                                                id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
+                                                            ),
+                                                            contentDescription = "Gidilenlere Kaydet",
+                                                            tint = Color.White
                                                         )
                                                     }
                                                 }
                                             }
-                                            // Mekan adı ve diğer bilgiler
-                                            Column(
+
+                                            // Mekan adı ve kategori bilgisi
+                                            Box(
                                                 modifier = Modifier
+                                                    .fillMaxWidth()
                                                     .align(Alignment.BottomStart)
-                                                    .padding(8.dp)
                                                     .background(
                                                         Brush.verticalGradient(
-                                                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
-                                                        ),
-                                                        shape = RoundedCornerShape(8.dp)
+                                                            colors = listOf(
+                                                                Color.Transparent,
+                                                                Color.Black.copy(alpha = 0.8f)
+                                                            )
+                                                        )
                                                     )
-                                                    .padding(8.dp)
+                                                    .padding(16.dp)
                                             ) {
-                                                Text(
-                                                    text = attraction.placeName,
-                                                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                Text(
-                                                    text = "${attraction.placeType.placeTypeName}",
-                                                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f)),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
+                                                Column {
+                                                    Text(
+                                                        text = attraction.placeName,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                    Text(
+                                                        text = "${attraction.placeType.placeTypeName}",
+                                                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f)),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
+
                         else if (searchQuery.isEmpty()) {
         Column(modifier = Modifier.fillMaxSize()) {
             Text(
