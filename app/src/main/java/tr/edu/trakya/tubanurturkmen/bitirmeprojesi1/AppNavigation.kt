@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 
@@ -41,12 +42,14 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.FinalLearningApp
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.TravelogScreen
 
 
+@OptIn(UnstableApi::class)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()

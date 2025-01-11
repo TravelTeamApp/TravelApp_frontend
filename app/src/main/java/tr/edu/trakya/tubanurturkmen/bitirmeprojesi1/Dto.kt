@@ -21,7 +21,9 @@ data class CommentDto(
         val createdBy: String?,
         val userId: Int?,
         val rate:Int
-)
+) {
+}
+
 
 data class CommentsResponse(
         val comments: List<CommentDto>
@@ -101,6 +103,7 @@ data class UserProfileResponse(
 
 data class CommentResponse(
         val id: Int?,
+        val rate: Int?,
         val content: String?,
         val userId: Int?,
         val createdAt: String,
