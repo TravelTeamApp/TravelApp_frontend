@@ -54,8 +54,6 @@ fun LoginScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var isHovered by remember { mutableStateOf(false) }
 
-
-
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
         Image(

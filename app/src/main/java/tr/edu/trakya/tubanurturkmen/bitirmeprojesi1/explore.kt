@@ -54,6 +54,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import android.R.attr.maxLines
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Favorite
+
 @Composable
 fun ExploreScreen(
     navController: NavController,
@@ -234,51 +237,115 @@ fun ExploreScreen(
                                     )
                                 }
                             }}
-    if (searchQuery.isNotEmpty()) {
+                        if (searchQuery.isNotEmpty()) {
                             LazyRow(modifier = Modifier.padding(16.dp)) {
                                 if (searchedPlaces.isEmpty()) {
-                                    // No results found for the search
+                                    // Arama sonucunda eşleşme bulunamadığında gösterilecek mesaj
                                     item {
                                         Text(
-                                            "No attractions found for this search.",
+                                            "Aradığınız isimde bir mekan bulunmamaktadır.",
                                             modifier = Modifier.padding(16.dp)
                                         )
                                     }
                                 } else {
                                     items(searchedPlaces) { attraction ->
-                                        Card(
+                                        var isFavorite by remember { mutableStateOf(false) }
+                                        var isVisited by remember { mutableStateOf(false) }
+
+                                        // Favori ve ziyaret durumu kontrolü
+                                        LaunchedEffect(attraction.placeId) {
+                                            favoriteViewModel.fetchUserFavorites { favorites, error ->
+                                                if (favorites != null) {
+                                                    isFavorite = favorites.any { it.placeId == attraction.placeId }
+                                                }
+                                            }
+
+                                            visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
+                                                if (visitedPlaces != null) {
+                                                    isVisited = visitedPlaces.any { it.placeId == attraction.placeId }
+                                                }
+                                            }
+                                        }
+
+                                        Box(
                                             modifier = Modifier
-                                                .width(200.dp)
-                                                .padding(8.dp)
-                                                .clickable { selectedAttraction = attraction },
-                                            shape = RoundedCornerShape(12.dp),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = Color.Gray.copy(alpha = 0.3f)
-                                            )
+                                                .width(180.dp) // Sabit genişlik
+                                                .height(240.dp) // Sabit yükseklik
+                                                .padding(end = 16.dp)
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(Color.LightGray)
+                                                .clickable { selectedAttraction = attraction }
                                         ) {
-                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Image(
-                                                    painter = painterResource(id = getDrawableResourceByPlaceName(attraction.placeName)), // Fixed
-                                                    contentDescription = null,
+                                            Image(
+                                                painter = painterResource(
+                                                    id = getDrawableResourceByPlaceName(attraction.placeName)
+                                                ),
+                                                contentDescription = attraction.placeName,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .clip(RoundedCornerShape(16.dp)),
+                                                contentScale = ContentScale.Crop
+                                            )
+
+                                            // Favori ve ziyaret durumlarını gösteren ikonlar
+                                            if (isFavorite || isVisited) {
+                                                Row(
                                                     modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(120.dp), // Example height
-                                                    contentScale = ContentScale.Crop
-                                                )
-                                                Spacer(modifier = Modifier.height(8.dp))
+                                                        .align(Alignment.TopEnd)
+                                                        .padding(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    if (isFavorite) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Favorite,
+                                                            contentDescription = "Favorite",
+                                                            tint = Color.Red,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                    if (isVisited) {
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Icon(
+                                                            imageVector = Icons.Default.CheckCircle,
+                                                            contentDescription = "Visited",
+                                                            tint = Color.Green,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            // Mekan adı ve diğer bilgiler
+                                            Column(
+                                                modifier = Modifier
+                                                    .align(Alignment.BottomStart)
+                                                    .padding(8.dp)
+                                                    .background(
+                                                        Brush.verticalGradient(
+                                                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                                        ),
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    )
+                                                    .padding(8.dp)
+                                            ) {
                                                 Text(
                                                     text = attraction.placeName,
-                                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                                        color = Color.Black
-                                                    ),
-                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = "${attraction.placeType.placeTypeName}",
+                                                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f)),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
                                                 )
                                             }
                                         }
                                     }
                                 }
                             }
-                        } else if (searchQuery.isEmpty()) {
+                        }
+                        else if (searchQuery.isEmpty()) {
         Column(modifier = Modifier.fillMaxSize()) {
             Text(
                 text = "Önerilenler",
@@ -887,10 +954,8 @@ fun ExploreScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         // Ensure rating is valid and not null. If null, set it to 0.0
                         val rating = (selectedAttraction?.rating ?: 0.0).coerceIn(0.0, 5.0) // Clamp to a valid range between 0.0 and 5.0
-
                         val fullStars = rating.toInt()
                         val hasHalfStar = rating % 1 >= 0.5
-
                         // Full stars
                         repeat(fullStars) {
                             Icon(
@@ -899,7 +964,6 @@ fun ExploreScreen(
                                 tint = Color(0xFFFFD700) // Gold color
                             )
                         }
-
                         // Half star
                         if (hasHalfStar) {
                             Icon(
@@ -908,7 +972,6 @@ fun ExploreScreen(
                                 tint = Color(0xFFFFD700) // Gold color
                             )
                         }
-
                         // Empty stars (to fill up to 5 stars)
                         repeat(5 - fullStars - if (hasHalfStar) 1 else 0) {
                             Icon(
@@ -932,8 +995,6 @@ fun ExploreScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
-
-
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
