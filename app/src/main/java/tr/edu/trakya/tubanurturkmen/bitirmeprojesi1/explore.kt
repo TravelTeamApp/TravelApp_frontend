@@ -54,6 +54,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import android.R.attr.maxLines
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 
@@ -634,7 +635,7 @@ fun ExploreScreen(
                                     }
                                     else -> {
                                         Text(
-                                            text = "No suggestions available",
+                                            text = "Öneri yok",
                                             style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
                                             modifier = Modifier.padding(16.dp)
                                         )
@@ -672,7 +673,7 @@ fun ExploreScreen(
                                     // Eşleşen öğe yoksa, mesaj göster
                                     item {
                                         Text(
-                                            "No attractions found for this category.",
+                                            "Eşleşen öge yok",
                                             modifier = Modifier.padding(16.dp)
                                         )
                                     }
@@ -1086,18 +1087,20 @@ fun ExploreScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        IconButton(
-                            onClick = {
-                                val placeId = selectedAttraction?.placeId.toString()
-                                navController.navigate("map/$placeId")
-                            },
-                            modifier = Modifier.fillMaxWidth() // Genişliği kapsayacak şekilde ayar
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null // Removes ripple effect
+                                ) {
+                                    val placeId = selectedAttraction?.placeId.toString()
+                                    navController.navigate("map/$placeId")
+                                }
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp), // İkon ve metin arasına boşluk ekler
-                                modifier = Modifier.fillMaxWidth() // Row genişliğini kapsar
-                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Place,
                                     contentDescription = "Go to Map",
@@ -1108,11 +1111,6 @@ fun ExploreScreen(
                                 )
                             }
                         }
-
-
-
-
-
                         selectedAttraction?.let { attraction ->
                             val placeId = attraction.placeId
 
@@ -1322,7 +1320,6 @@ fun ExploreScreen(
                                     )
                                 }
                             }
-
                             Spacer(modifier = Modifier.height(8.dp))
 
                             // Yorum Alanı - Yalnızca görünürse çizilir
@@ -1407,7 +1404,5 @@ fun ExploreScreen(
                                 }
                             }
                         }
-
-
                     }}}}
-    }}
+    }
