@@ -25,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -44,6 +45,7 @@ import androidx.navigation.compose.rememberNavController
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.R.drawable.profile
 
 
 @Composable
@@ -82,19 +84,15 @@ fun ProfileScreen(navController: NavController,sharedViewModel: SharedViewModel)
         // Geri butonu
         IconButton(
             onClick = {
-                navController.navigate("login") {
-                    popUpTo("home") { inclusive = true }
-                }
+                navController.navigateUp() // Navigates to the previous screen
             },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(16.dp)
         ) {
-            Icon(
-                imageVector = Icons.Filled.ArrowBack,
-                contentDescription = "Geri Git"
-            )
+
         }
+
 
         if (userProfile.value != null) {
             ProfileScreenContent(userProfile.value!!)
@@ -107,6 +105,9 @@ fun ProfileScreen(navController: NavController,sharedViewModel: SharedViewModel)
         }
     }
 }
+
+
+
 
 @Composable
 fun ProfileScreenContent(userProfile: UserProfileResponse) {
@@ -127,6 +128,7 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
     ) {
         // Dinamik isimle TopSection
         TopSection(userName = userProfile.userName, score = userProfile.score)
+
         Divider(color = Color.Black, thickness = 0.5.dp)
 
         // TabRow
@@ -152,7 +154,7 @@ fun ProfileScreenContent(userProfile: UserProfileResponse) {
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(5.dp))
 
         // Tab içerikleri
         when (selectedTabIndex) {
@@ -173,154 +175,91 @@ fun TopSection(userName: String, score: Int) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(400.dp)
     ) {
-        // Arka plan görseli
+        // Background image
         Image(
-            painter = painterResource(id = R.drawable.profile), // Drawable görsel
+            painter = painterResource(id = profile), // Drawable image
             contentDescription = "Profile Background",
-            contentScale = ContentScale.Crop, // Görselin boyutlandırılması
+            contentScale = ContentScale.Crop, // Resize the image
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp) // Restrict height of background
+                .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)) // Rounded corners
+        )
+
+        // Profile details
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)) // Yuvarlak köşe
-        )
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(top = 150.dp, start = 16.dp), // Push the content down below the image
+            horizontalAlignment = Alignment.Start
         ) {
+            // Profile picture
             Box(
                 modifier = Modifier
                     .size(110.dp)
                     .clip(CircleShape)
                     .background(Color.White)
+                    .border(2.dp, Color(0xFFE8ECEF), CircleShape)
             ) {
                 Text(
                     firstLetter.toString(),
-                    fontSize = 48.sp, // Harfin büyüklüğü
-                    color = Color(0xFF1E88E5), // Harf rengi
+                    fontSize = 48.sp, // Font size of the letter
+                    color = Color(0xFF377A8D), // Letter color
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(16.dp)) // Adjust spacing between items
+
+            // User Name
             Text(
-                text = "$userName",
-                fontSize = 22.sp,
+                text = userName,
+                fontSize = 24.sp,
                 fontFamily = FontFamily.SansSerif,
-                fontWeight = FontWeight.Bold, // Kalın yazı stili
-                color = Color.Black
+                fontWeight = FontWeight.Bold, // Bold font style
+                color =Color(0xFF377A8D)// Changed to black for visibility
             )
 
-            Text(
-                text = "Traveler",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-            PlaceTypesSection()
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp)
-                .align(Alignment.BottomCenter),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Badges",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Text(
-                text = "Score $score",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
-    }
-}
-
-
-@Composable
-fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
-    val context = LocalContext.current
-
-    // Durumlar
-    var placeTypes by remember { mutableStateOf<List<UserPlaceTypeDto>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // Mekan türlerini backend'den çek
-    LaunchedEffect(Unit) {
-        placeViewModel.getPlaceTypesByUserId { fetchedPlaceTypes ->
-            if (fetchedPlaceTypes != null) {
-                placeTypes = fetchedPlaceTypes
-                isLoading = false
-            } else {
-                errorMessage = "Mekan türleri yüklenirken bir hata oluştu."
-                isLoading = false
-            }
-        }
-    }
-
-    // UI
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else if (errorMessage != null) {
-            Text(
-                text = "Hata: $errorMessage",
-                color = Color.Red,
-                fontSize = 16.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-        } else if (placeTypes.isEmpty()) {
-            Text(
-                text = "Henüz mekan türü seçmediniz.",
-                color = Color.Gray,
-                fontSize = 16.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-        } else {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()) // Tüm butonları yatay kaydırılabilir yap
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp) // Butonlar arasında boşluk
+                    .padding(top = 8.dp) // Add padding if needed
+                    .align(Alignment.Start), // Align the Row to the start
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                placeTypes.forEach { placeType ->
-                    placeType.placeTypeNames.forEach { placeTypeName ->
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .border(1.dp, Color.White, RoundedCornerShape(12.dp))
-                                .background(Color.White)
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Text(
-                                text = placeTypeName,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
+                // Traveler Text
+                Text(
+                    text = "Traveler  /",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray // Subtle text color
+                )
+
+                Spacer(modifier = Modifier.width(8.dp)) // Add space between Traveler and Score
+
+                Text(
+                    text = "Score $score",
+                    fontSize = 16.sp, // Adjust font size
+                    fontWeight = FontWeight.Bold,
+                    color =Color(0xFFF9D131)
+                )
+
+
+
             }
+
+
+            Spacer(modifier = Modifier.height(15.dp)) // Add space before PlaceTypesSection
+
+            // Place types section
+            PlaceTypesSection()
         }
     }
 }
 
 @Composable
-fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel() ) {
+fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel()) {
     val context = LocalContext.current
 
     // Durumlar
@@ -347,11 +286,6 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel() ) {
             .fillMaxSize()
             .padding(14.dp)
     ) {
-        Text(
-            text = "Yorumlarım",
-            fontSize = 20.sp,
-            color = Color.Black
-        )
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -381,18 +315,6 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel() ) {
     }
 }
 
-fun formatDateTime(isoDate: String): String {
-    return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val outputFormat = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault())
-        val date = inputFormat.parse(isoDate)
-        date?.let { outputFormat.format(it) } ?: "Tarih Bilinmiyor"
-    } catch (e: Exception) {
-        "Tarih Bilinmiyor"
-    }
-}
-
-
 @Composable
 fun UserCommentItem(comment: CommentDto) {
     val formattedDate = formatDateTime(comment.createdOn)
@@ -405,36 +327,46 @@ fun UserCommentItem(comment: CommentDto) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .background(Color(android.graphics.Color.parseColor("#f9fcfd")))
+                .border(1.dp, Color(android.graphics.Color.parseColor("#459ab2")))
+                .padding(14.dp)
+
+
         ) {
-            // Yorumun metni
+            // Adı
             Text(
-                text = comment.text ?: "Yorum yok",
-                fontSize = 16.sp,
+                text = comment.placeName ?: "Anonim",
+
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
 
-            // Yazan kişinin bilgisi
+            // Mekan Adı
             Text(
-                text = "Yazan: ${comment.createdBy ?: "Anonim"}",
-                fontSize = 14.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-            Text(
-                text = "Mekan: ${comment.placeName ?: "Anonim"}",
-                fontSize = 14.sp,
+                text = comment.createdBy ?: "Anonim",
+
+                fontSize = 12.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 4.dp)
             )
 
+            // Yorum Metni
+            Text(
+                text = comment.text ?: "Yorum yok",
+                fontSize = 16.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+
+            // Tarih
             Text(
                 text = "Tarih: $formattedDate",
                 fontSize = 12.sp,
                 color = Color.Gray,
-                modifier = Modifier.padding(top = 2.dp)
+                modifier = Modifier.padding(top = 4.dp)
             )
+
             // Rating (Star icons)
             Row(
                 horizontalArrangement = Arrangement.Start,
@@ -448,12 +380,103 @@ fun UserCommentItem(comment: CommentDto) {
                         tint = if (index < comment.rate) Color(0xFFFFD700) else Color.Gray,
                         modifier = Modifier.size(20.dp)
                     )
-                }}
-
+                }
+            }
         }
     }
 }
 
+
+
+
+
+
+fun formatDateTime(isoDate: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault())
+        val date = inputFormat.parse(isoDate)
+        date?.let { outputFormat.format(it) } ?: "Tarih Bilinmiyor"
+    } catch (e: Exception) {
+        "Tarih Bilinmiyor"
+    }
+}
+
+@Composable
+fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
+    val context = LocalContext.current
+
+    // Durumlar
+    var placeTypes by remember { mutableStateOf<List<UserPlaceTypeDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Mekan türlerini backend'den çek
+    LaunchedEffect(Unit) {
+        placeViewModel.getPlaceTypesByUserId { fetchedPlaceTypes ->
+            if (fetchedPlaceTypes != null) {
+                placeTypes = fetchedPlaceTypes
+                isLoading = false
+            } else {
+                errorMessage = "Mekan türleri yüklenirken bir hata oluştu."
+                isLoading = false
+            }
+        }
+    }
+
+    // UI
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+
+    ) {
+
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else if (errorMessage != null) {
+            Text(
+                text = "Hata: $errorMessage",
+                color = Color.Red,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        } else if (placeTypes.isEmpty()) {
+            Text(
+                text = "Henüz mekan türü seçmediniz.",
+                color = Color.Gray,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()) // Tüm butonları yatay kaydırılabilir yap
+                ,
+                horizontalArrangement = Arrangement.spacedBy(8.dp) // Butonlar arasında boşluk
+            ) {
+                placeTypes.forEach { placeType ->
+                    placeType.placeTypeNames.forEach { placeTypeName ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(1.dp, Color.White, RoundedCornerShape(12.dp))
+                                .background(Color(0xFF81AAB7))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = placeTypeName,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun BadgesSection(score: Int) {
@@ -508,12 +531,14 @@ fun BadgeItem(badge: Badge, isUnlocked: Boolean) {
                 .clip(CircleShape)
                 .background(badgeColor)
                 .clickable(enabled = !isUnlocked) {
-                    // Toast çağrısı güvenli
-                    Toast.makeText(
-                        context,
-                        tooltipText,
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    // Show tooltip if badge is locked
+                    if (!isUnlocked) {
+                        Toast.makeText(
+                            context,
+                            tooltipText,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -530,6 +555,7 @@ fun BadgeItem(badge: Badge, isUnlocked: Boolean) {
         )
     }
 }
+
 
 data class Badge(val name: String, val iconRes: Int, val requiredScore: Int)
 
@@ -562,11 +588,6 @@ fun FavoritesSection(favoriteViewModel: FavoriteViewModel = viewModel() ) {
             .fillMaxSize()
             .padding(14.dp)
     ) {
-        Text(
-            text = "Favoriler",
-            fontSize = 20.sp,
-            color = Color.Black
-        )
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -607,13 +628,14 @@ fun FavoritePlaceItem(place: FavoriteDto) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background( Color(0xFFDFF6FC))
                 .padding(16.dp)
         ) {
             Text(
                 text = place.placeName ?: "Bilinmeyen Mekan",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = Color(0xFF0C657C)
             )
             Text(
                 text = place.placeAddress ?: "Adres bilgisi yok",
@@ -630,7 +652,7 @@ fun FavoritePlaceItem(place: FavoriteDto) {
                 Text(
                     text = "Puan: $it",
                     fontSize = 14.sp,
-                    color = Color.Blue,
+                    color = Color(0xFFF9D131),
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -667,11 +689,7 @@ fun VisitedPlacesSection(visitedPlaceViewModel: VisitedPlaceViewModel = viewMode
             .fillMaxSize()
             .padding(14.dp)
     ) {
-        Text(
-            text = "Ziyaret Edilen Yerler",
-            fontSize = 20.sp,
-            color = Color.Black
-        )
+
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -711,13 +729,14 @@ fun VisitedPlaceItem(place: VisitedPlaceDto) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(Color(0xFFDFF6FC))
                 .padding(16.dp)
         ) {
             Text(
                 text = place.placeName ?: "Bilinmeyen Mekan",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = Color(0xFF0C657C)
             )
             Text(
                 text = place.placeAddress ?: "Adres bilgisi yok",
@@ -734,12 +753,10 @@ fun VisitedPlaceItem(place: VisitedPlaceDto) {
                 Text(
                     text = "Puan: $it",
                     fontSize = 14.sp,
-                    color = Color.Blue,
+                    color = Color(0xFFF9D131),
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }
     }
 }
-
-
