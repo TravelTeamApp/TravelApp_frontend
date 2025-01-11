@@ -26,6 +26,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
+                android:cropToPadding="true"
                 android:scaleType="centerCrop"
                 tools:src="@drawable/place_singapore" />
 
@@ -75,27 +76,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@+id/placeDescription"
-            app:layout_constraintTop_toBottomOf="@+id/placeDescription">
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="2dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="0dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="4dp"
-                    android:text="next"
-                    android:textColor="#89FE8F" />
-
-            </androidx.cardview.widget.CardView>
-        </androidx.cardview.widget.CardView>
+            app:layout_constraintTop_toBottomOf="@+id/placeDescription"/>
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

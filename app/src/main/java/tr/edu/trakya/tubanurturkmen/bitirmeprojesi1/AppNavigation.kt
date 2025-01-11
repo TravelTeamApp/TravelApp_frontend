@@ -41,6 +41,8 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.FinalLearningApp
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.TravelogScreen
 
@@ -99,9 +101,22 @@ fun AppNavigation() {
                 currentRoute.value = "map"
                 FinalLearningApp()
             }
+            // Parametreli rota
+            composable(
+                route = "map/{placeId}",
+                arguments = listOf(navArgument("placeId") {
+                    type = NavType.StringType
+                }) // `placeId` as parameter
+            ) { backStackEntry ->
+                currentRoute.value = "map"
+                val placeId =
+                    backStackEntry.arguments?.getString("placeId") // Retrieve the parameter
+
+                FinalLearningApp(placeId = placeId) // Pass placeId to FinalLearningApp
+            }
         }
 
-        // Bottom Navigation Bar
+            // Bottom Navigation Bar
         if (showBottomNav) {
             NavigationBar(
                 modifier = Modifier

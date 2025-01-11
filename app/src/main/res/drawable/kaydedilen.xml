@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="30dp"
+    android:height="30dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Yuvarlak Yeşil Arka Plan -->
+    <path
+        android:fillColor="#4CAF50"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.4"
+        android:pathData="M12,0A12,12,0,1,0,12,24A12,12,0,1,0,12,0Z" />
+
+    <!-- Bookmark İkonu -->
+    <path
+        android:fillColor="#FFFFFF"
+    android:pathData="M7,5 L17,5 C18.1,5 19,5.9 19,7 L19,20 L12,16 L5,20 L5,7 C5,5.9 5.9,5 7,5 Z"
+    android:scaleX="0.8"
+    android:scaleY="0.8"
+    android:translateX="2"
+    android:translateY="2" />
+</vector>

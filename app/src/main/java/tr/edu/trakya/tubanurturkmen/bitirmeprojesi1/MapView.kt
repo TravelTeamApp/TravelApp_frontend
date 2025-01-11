@@ -6,12 +6,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -47,7 +55,7 @@ import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.util.CustomMarkerWindow
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.util.MapPlace
 
 @Composable
-fun FinalLearningApp() {
+fun FinalLearningApp(placeId: String? = null) {
     val placeViewModel: PlaceViewModel = viewModel()
     val favoriteViewModel: FavoriteViewModel = viewModel()
     val visitedPlaceViewModel: VisitedPlaceViewModel = viewModel()
@@ -57,6 +65,7 @@ fun FinalLearningApp() {
     var favoritePlaces by remember { mutableStateOf<List<FavoriteDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
     fun getDrawableResourceByPlaceName(placeName: String): Int {
         return when (placeName.lowercase()) {
             "saray muhallebicisi" -> R.drawable.saray1
@@ -99,7 +108,9 @@ fun FinalLearningApp() {
             else -> R.drawable.istanbul // Varsayılan görsel
         }
     }
-    // Fetch favorite places
+
+
+    // Fetch favorite and visited places
     LaunchedEffect(Unit) {
         favoriteViewModel.fetchUserFavorites { favorites, error ->
             if (favorites != null) {
@@ -132,12 +143,27 @@ fun FinalLearningApp() {
         )
     }
 
+// Parametreden gelen placeId'ye göre MapPlace bul
+    val selectedPlace = placeDto.find { it.placeId.toString() == placeId } // Find the matching placeDto
+
+    val selectedMapPlace = selectedPlace?.let {
+        MapPlace(
+            id = "${it.placeName}_${it.latitude}_${it.longitude}", // Unique ID
+            name = it.placeName,
+            coordinates = GeoPoint(it.latitude, it.longitude),
+            description = it.description,
+            imageResId = getDrawableResourceByPlaceName(it.placeName),
+            focusZoomLvl = 15.0
+        )
+    }
+    Log.d("MapDebug", "Selected Map Place: ${selectedMapPlace?.name}, Coordinates: ${selectedMapPlace?.coordinates}, Zoom Level: ${selectedMapPlace?.focusZoomLvl}")
     val context = LocalContext.current
-    val mapView = remember {
+    val mapView = remember(selectedMapPlace) { // Recreate mapView if selectedMapPlace changes
         MapView(context).apply {
-            val defaultLocation = GeoPoint(41.008238, 28.978359)
-            controller.setZoom(15.0)
-            controller.setCenter(defaultLocation)
+            val initialLocation = GeoPoint(41.008238, 28.978359) // Use selectedMapPlace if available
+            val initialZoom = 15.0
+            controller.setZoom(initialZoom)
+            controller.setCenter(initialLocation)
             onResume()
         }
     }
@@ -151,9 +177,17 @@ fun FinalLearningApp() {
     val markersIdOnMap = remember { mutableStateListOf<String>() }
     val markersWithInfoWindow = remember { mutableStateListOf<Marker>() }
 
+// Eğer placeId geçerli bir yeri temsil ediyorsa haritayı odakla
+    LaunchedEffect(selectedMapPlace) {
+        selectedMapPlace?.let {
+            mapView.controller.setZoom(it.focusZoomLvl)
+            mapView.controller.setCenter(it.coordinates)
+        }
+    }
+
+
     Surface(modifier = Modifier.fillMaxSize()) {
         if (isLoading) {
-            // Display loading UI
             CircularProgressIndicator()
         } else {
             Box(
@@ -168,14 +202,63 @@ fun FinalLearningApp() {
                     favoritePlaces = favoritePlaces,
                     visitedPlaces = visitedPlaces
                 )
-
+                // Trigger `onAnimateToNewPlace` for `selectedMapPlace`
+                LaunchedEffect(selectedMapPlace) {
+                    selectedMapPlace?.let { mapView.onAnimateToNewPlace(it, markersWithInfoWindow) }
+                }
                 PlacesListItem(
                     places = places,
                     onItemClickListener = { itemPlace ->
                         mapView.onAnimateToNewPlace(itemPlace, markersWithInfoWindow)
                     }
                 )
-            }
+                // Zoom Kontrolleri
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(10.dp)
+                ) {
+                    Row {
+                        IconButton(
+                            onClick = {
+                                val currentZoom = mapView.zoomLevelDouble
+                                mapView.controller.setZoom(currentZoom + 1) // Zoom In
+                            },
+                            modifier = Modifier
+                                .size(50.dp)
+                                .background(
+                                    color = Color.White.copy(alpha = 0.7f), // Şeffaf beyaz arka plan
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add, // "+" simgesi
+                                contentDescription = "Zoom In",
+                                tint = Color.Black // İkon rengi siyah
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))  // Fixed width space
+
+                        IconButton(
+                            onClick = {
+                                val currentZoom = mapView.zoomLevelDouble
+                                mapView.controller.setZoom(currentZoom - 1) // Zoom Out
+                            },
+                            modifier = Modifier
+                                .size(50.dp)
+                                .background(
+                                    color = Color.White.copy(alpha = 0.7f), // Şeffaf beyaz arka plan
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Remove, // "−" simgesi
+                                contentDescription = "Zoom Out",
+                                tint = Color.Black // İkon rengi siyah
+                            )
+                        }
+                }
+            }}
         }
     }
 }
@@ -262,9 +345,6 @@ private fun MapView(
                             place,
                             isFavorite = true,
                             isVisited = true,
-                            onNextclick = {
-                                onAnimateToNewPlace(place, markersWithWindowOnMap)
-                            }
                         )
                     }
 
@@ -275,9 +355,6 @@ private fun MapView(
                             place,
                             isFavorite = true,
                             isVisited = false,
-                            onNextclick = {
-                                onAnimateToNewPlace(place, markersWithWindowOnMap)
-                            }
                         )
                     }
 
@@ -288,9 +365,6 @@ private fun MapView(
                             place,
                             isFavorite = false,
                             isVisited = true,
-                            onNextclick = {
-                                onAnimateToNewPlace(place, markersWithWindowOnMap)
-                            }
                         )
                     }
 
@@ -301,9 +375,6 @@ private fun MapView(
                             place,
                             isFavorite = false,
                             isVisited = false,
-                            onNextclick = {
-                                onAnimateToNewPlace(place, markersWithWindowOnMap)
-                            }
                         )
                     }
                 }
@@ -321,14 +392,13 @@ fun MapView.addMarkerToMap(
     place: MapPlace,
     isFavorite: Boolean,
     isVisited: Boolean,
-    onNextclick: () -> Unit
 ) {
     val marker = Marker(this).apply {
         position = place.coordinates
         icon = when {
             isFavorite && isVisited -> ResourcesCompat.getDrawable(resources, R.drawable.yildiz_icon, null) // Hem favori hem gidilen için özel ikon
             isFavorite -> ResourcesCompat.getDrawable(resources, R.drawable.kalp, null) // Sadece favori için
-            isVisited -> ResourcesCompat.getDrawable(resources, R.drawable.gidilen, null) // Sadece gidilen için
+            isVisited -> ResourcesCompat.getDrawable(resources, R.drawable.kaydedilen, null) // Sadece gidilen için
             else -> ResourcesCompat.getDrawable(resources, R.drawable.map_marker, null) // Varsayılan ikon
         }
 
@@ -336,7 +406,7 @@ fun MapView.addMarkerToMap(
         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
         subDescription = place.description
         id = place.id
-        infoWindow = CustomMarkerWindow(this@addMarkerToMap, place, onNextclick)
+        infoWindow = CustomMarkerWindow(this@addMarkerToMap, place)
     }
     Log.d("MarkerDebug", "Added Marker ID: ${marker.id}, Is Favorite: $isFavorite")
 
@@ -362,27 +432,21 @@ fun MapView.setMapConfigurations() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun PlacesDetailItem(mapPlace: MapPlace, onPlaceClick: () -> Unit) {
-    val description = mapPlace.description
     val maxWords = 20
-
-    // Açıklamayı en fazla 50 kelimeyle sınırlıyoruz
-    val truncatedDescription = description
-        .split(" ")
-        .take(maxWords)
-        .joinToString(" ")
-
-    // Eğer açıklama sınırlıysa "..." ekliyoruz
-    val finalDescription = if (description.split(" ").size > maxWords) {
-        "$truncatedDescription..."
-    } else {
-        truncatedDescription
-    }
+    // Limit the description to `maxWords`
+    val finalDescription = mapPlace.description
+        .split(" ") // Split the description into words
+        .take(maxWords) // Take only the first `maxWords` words
+        .joinToString(" ") // Join them back into a string
+        .let {
+            if (it.length < mapPlace.description.length) "$it..." else it
+        }
 
     Card(
         modifier = Modifier
-            .height(250.dp)
-            .width(200.dp)
-            .padding(8.dp),
+            .height(200.dp)
+            .width(150.dp)
+            .padding(4.dp),
         shape = RoundedCornerShape(12.dp),
         backgroundColor = Color.White,
         elevation = 6.dp,
@@ -391,14 +455,14 @@ private fun PlacesDetailItem(mapPlace: MapPlace, onPlaceClick: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp)
+                .padding(4.dp)
         ) {
             Image(
                 painter = painterResource(id = mapPlace.imageResId),
                 contentDescription = mapPlace.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
+                    .height(160.dp)
                     .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )
@@ -406,23 +470,18 @@ private fun PlacesDetailItem(mapPlace: MapPlace, onPlaceClick: () -> Unit) {
 
             Text(
                 text = mapPlace.name,
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 color = Color.Black,
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = finalDescription,
-                fontSize = 14.sp,
-                color = Color.Black,
-                modifier = Modifier.fillMaxWidth()
-            )
+
         }
     }
 }
+
 
 @Composable
 private fun PlacesListItem(

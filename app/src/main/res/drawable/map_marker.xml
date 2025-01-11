@@ -1,8 +1,18 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp"
-    android:height="48dp"
+    android:width="20dp"
+    android:height="20dp"
     android:viewportWidth="48"
     android:viewportHeight="48">
+
+    <!-- Yuvarlak Çerçeve -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.4"
+        android:pathData="M24,2a22,22 0 1,0 0,44a22,22 0 1,0 0,-44z"
+         />
+
+    <!-- İçteki İkon -->
     <path
         android:pathData="M35.76,26.36h0.01c0,0 -3.77,5.53 -6.94,9.64c-2.74,3.55 -3.54,6.59 -3.77,8.06C24.97,44.6 24.53,45 24,45s-0.97,-0.4 -1.06,-0.94c-0.23,-1.47 -1.03,-4.51 -3.77,-8.06c-0.42,-0.55 -0.85,-1.12 -1.28,-1.7L28.24,22l8.33,-9.88C37.49,14.05 38,16.21 38,18.5C38,21.4 37.17,24.09 35.76,26.36z"
         android:fillColor="#48b564"/>

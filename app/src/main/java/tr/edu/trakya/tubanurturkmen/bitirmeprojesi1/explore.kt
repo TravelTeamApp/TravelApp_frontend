@@ -243,7 +243,7 @@ fun ExploreScreen(
                                     // Arama sonucunda eşleşme bulunamadığında gösterilecek mesaj
                                     item {
                                         Text(
-                                            "Aradığınız isimde bir mekan bulunmamaktadır.",
+                                            "Aramaya uygun sonuç bulunamadı",
                                             modifier = Modifier.padding(16.dp)
                                         )
                                     }
@@ -251,8 +251,437 @@ fun ExploreScreen(
                                     items(searchedPlaces) { attraction ->
                                         var isFavorite by remember { mutableStateOf(false) }
                                         var isVisited by remember { mutableStateOf(false) }
+                                        val context = LocalContext.current
 
                                         // Favori ve ziyaret durumu kontrolü
+                                        LaunchedEffect(attraction.placeId) {
+                                            favoriteViewModel.fetchUserFavorites { favorites, _ ->
+                                                if (favorites != null) {
+                                                    isFavorite = favorites.any { it.placeId == attraction.placeId }
+                                                }
+                                            }
+
+                                            visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, _ ->
+                                                if (visitedPlaces != null) {
+                                                    isVisited = visitedPlaces.any { it.placeId == attraction.placeId }
+                                                }
+                                            }
+                                        }
+
+                                        Box(
+                                            modifier = Modifier
+                                                .width(180.dp) // Sabit genişlik
+                                                .height(240.dp) // Sabit yükseklik
+                                                .padding(end = 16.dp)
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(Color.LightGray)
+                                                .clickable { selectedAttraction = attraction }
+                                        ) {
+                                            // Mekan Görseli
+                                            Image(
+                                                painter = painterResource(
+                                                    id = getDrawableResourceByPlaceName(attraction.placeName)
+                                                ),
+                                                contentDescription = attraction.placeName,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .clip(RoundedCornerShape(16.dp)),
+                                                contentScale = ContentScale.Crop
+                                            )
+
+                                            // Favori ve gidilenler ikonları
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(8.dp)
+                                            ) {
+                                                Row(horizontalArrangement = Arrangement.End) {
+                                                    // Favori İkonu
+                                                    IconButton(onClick = {
+                                                        if (isFavorite) {
+                                                            favoriteViewModel.deleteFavorite(attraction.placeId) { success, message ->
+                                                                if (success) {
+                                                                    isFavorite = false
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "${attraction.placeName} favorilerden çıkarıldı.",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                } else {
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Hata: $message",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                }
+                                                            }
+                                                        } else {
+                                                            favoriteViewModel.addFavorite(attraction.placeId) { success, message ->
+                                                                if (success) {
+                                                                    isFavorite = true
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "${attraction.placeName} favorilere eklendi.",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                } else {
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Hata: $message",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                }
+                                                            }
+                                                        }
+                                                    }) {
+                                                        Icon(
+                                                            painter = painterResource(
+                                                                id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
+                                                            ),
+                                                            contentDescription = "Favorilere Ekle",
+                                                            tint = Color.White
+                                                        )
+                                                    }
+
+                                                    // Gidilenler İkonu
+                                                    IconButton(onClick = {
+                                                        if (isVisited) {
+                                                            visitedPlaceViewModel.deleteVisitedPlace(attraction.placeId) { success, message ->
+                                                                if (success) {
+                                                                    isVisited = false
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "${attraction.placeName} gidilenlerden çıkarıldı.",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                } else {
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Hata: $message",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                }
+                                                            }
+                                                        } else {
+                                                            visitedPlaceViewModel.addVisitedPlace(attraction.placeId) { success, message ->
+                                                                if (success) {
+                                                                    isVisited = true
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "${attraction.placeName} gidilenlere kaydedildi.",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                } else {
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Hata: $message",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                }
+                                                            }
+                                                        }
+                                                    }) {
+                                                        Icon(
+                                                            painter = painterResource(
+                                                                id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
+                                                            ),
+                                                            contentDescription = "Gidilenlere Kaydet",
+                                                            tint = Color.White
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            // Mekan adı ve kategori bilgisi
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .align(Alignment.BottomStart)
+                                                    .background(
+                                                        Brush.verticalGradient(
+                                                            colors = listOf(
+                                                                Color.Transparent,
+                                                                Color.Black.copy(alpha = 0.8f)
+                                                            )
+                                                        )
+                                                    )
+                                                    .padding(16.dp)
+                                            ) {
+                                                Column {
+                                                    Text(
+                                                        text = attraction.placeName,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                    Text(
+                                                        text = "${attraction.placeType.placeTypeName}",
+                                                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f)),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        else if (searchQuery.isEmpty()) {
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = "Önerilenler",
+                                    style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
+                                    modifier = Modifier.padding(16.dp)
+                                )
+
+                                when {
+                                    suggestedPlaces.isNotEmpty() -> {
+                                        LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                            items(suggestedPlaces) { place ->
+                                                var isFavorite by remember { mutableStateOf(false) }
+                                                var isVisited by remember { mutableStateOf(false) }
+
+                                                // Favoriler ve gidilenler durumunu dinamik kontrol et
+                                                LaunchedEffect(place.placeId) {
+                                                    favoriteViewModel.fetchUserFavorites { favorites, error ->
+                                                        if (favorites != null) {
+                                                            isFavorite = favorites.any { it.placeId == place.placeId }
+                                                        } else {
+                                                            Toast.makeText(
+                                                                context,
+                                                                error ?: "Favoriler alınırken hata oluştu.",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                    }
+
+                                                    visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
+                                                        if (visitedPlaces != null) {
+                                                            isVisited = visitedPlaces.any { it.placeId == place.placeId }
+                                                        } else {
+                                                            Toast.makeText(
+                                                                context,
+                                                                error ?: "Ziyaret edilenler alınırken hata oluştu.",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                    }
+                                                }
+
+                                                Box(
+                                                    modifier = Modifier
+                                                        .width(220.dp)
+                                                        .height(280.dp)
+                                                        .padding(end = 16.dp)
+                                                        .clip(RoundedCornerShape(16.dp))
+                                                        .background(Color.LightGray)
+                                                        .clickable { selectedAttraction = place }
+                                                ) {
+                                                    Image(
+                                                        painter = painterResource(
+                                                            id = getDrawableResourceByPlaceName(place.placeName)
+                                                        ),
+                                                        contentDescription = place.placeName,
+                                                        modifier = Modifier
+                                                            .fillMaxSize()
+                                                            .clip(RoundedCornerShape(16.dp)),
+                                                        contentScale = ContentScale.Crop
+                                                    )
+
+                                                    // Favoriler ve gidilenler ikonları
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .align(Alignment.TopEnd)
+                                                            .padding(8.dp)
+                                                    ) {
+                                                        Row(horizontalArrangement = Arrangement.End) {
+                                                            // Favori İkonu
+                                                            IconButton(onClick = {
+                                                                if (isFavorite) {
+                                                                    favoriteViewModel.deleteFavorite(place.placeId) { success, message ->
+                                                                        if (success) {
+                                                                            isFavorite = false
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "${place.placeName} favorilerden çıkarıldı.",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        } else {
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "Hata: $message",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        }
+                                                                    }
+                                                                } else {
+                                                                    favoriteViewModel.addFavorite(place.placeId) { success, message ->
+                                                                        if (success) {
+                                                                            isFavorite = true
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "${place.placeName} favorilere eklendi.",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        } else {
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "Hata: $message",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }) {
+                                                                Icon(
+                                                                    painter = painterResource(
+                                                                        id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
+                                                                    ),
+                                                                    contentDescription = "Favorilere Ekle",
+                                                                    tint = Color.White
+                                                                )
+                                                            }
+
+                                                            // Gidilenler İkonu
+                                                            IconButton(onClick = {
+                                                                if (isVisited) {
+                                                                    visitedPlaceViewModel.deleteVisitedPlace(place.placeId) { success, message ->
+                                                                        if (success) {
+                                                                            isVisited = false
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "${place.placeName} gidilenlerden çıkarıldı.",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        } else {
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "Hata: $message",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        }
+                                                                    }
+                                                                } else {
+                                                                    visitedPlaceViewModel.addVisitedPlace(place.placeId) { success, message ->
+                                                                        if (success) {
+                                                                            isVisited = true
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "${place.placeName} gidilenlere kaydedildi.",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        } else {
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "Hata: $message",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }) {
+                                                                Icon(
+                                                                    painter = painterResource(
+                                                                        id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
+                                                                    ),
+                                                                    contentDescription = "Gidilenlere Kaydet",
+                                                                    tint = Color.White
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .align(Alignment.BottomStart)
+                                                            .background(
+                                                                Brush.verticalGradient(
+                                                                    colors = listOf(
+                                                                        Color.Transparent,
+                                                                        Color.Black.copy(alpha = 0.8f)
+                                                                    )
+                                                                )
+                                                            )
+                                                            .padding(16.dp)
+                                                    ) {
+                                                        Column {
+                                                            Text(
+                                                                text = place.placeName,
+                                                                style = MaterialTheme.typography.bodyLarge.copy(
+                                                                    color = Color.White,
+                                                                    fontWeight = FontWeight.Bold
+                                                                ),
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis
+                                                            )
+                                                            Spacer(modifier = Modifier.height(4.dp))
+                                                            Text(
+                                                                text = "${place.rating} ★",
+                                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                                    color = Color.White
+                                                                )
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else -> {
+                                        Text(
+                                            text = "No suggestions available",
+                                            style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+                                }
+
+                            }
+                            // Kategoriler için Tablar
+                            Text(
+                                text = "Keşfedin",
+                                style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
+                                modifier = Modifier.padding(16.dp)
+                            )
+                            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
+                                items(categories) { category ->
+                                    Button(
+                                        onClick = { selectedCategory = category },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (category == selectedCategory) Color(0xFF2196F3) else Color.White,
+                                            contentColor = if (category == selectedCategory) Color.White else Color.Gray
+                                        ),
+                                        shape = RoundedCornerShape(16.dp),
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    ) {
+                                        Text(text = category.placeTypeName)
+                                    }
+                                }
+                            }
+
+                            LazyRow(modifier = Modifier.padding(16.dp)) {
+                                val filteredAttractions =
+                                    places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
+
+                                if (filteredAttractions.isEmpty()) {
+                                    // Eşleşen öğe yoksa, mesaj göster
+                                    item {
+                                        Text(
+                                            "No attractions found for this category.",
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+                                } else {
+                                    items(filteredAttractions) { attraction ->
+                                        var isFavorite by remember { mutableStateOf(false) }
+                                        var isVisited by remember { mutableStateOf(false) }
+
+                                        // Dinamik kontrol
                                         LaunchedEffect(attraction.placeId) {
                                             favoriteViewModel.fetchUserFavorites { favorites, error ->
                                                 if (favorites != null) {
@@ -287,435 +716,90 @@ fun ExploreScreen(
                                                 contentScale = ContentScale.Crop
                                             )
 
-                                            // Favori ve ziyaret durumlarını gösteren ikonlar
-                                            if (isFavorite || isVisited) {
-                                                Row(
-                                                    modifier = Modifier
-                                                        .align(Alignment.TopEnd)
-                                                        .padding(8.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    if (isFavorite) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Favorite,
-                                                            contentDescription = "Favorite",
-                                                            tint = Color.Red,
-                                                            modifier = Modifier.size(20.dp)
-                                                        )
-                                                    }
-                                                    if (isVisited) {
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Icon(
-                                                            imageVector = Icons.Default.CheckCircle,
-                                                            contentDescription = "Visited",
-                                                            tint = Color.Green,
-                                                            modifier = Modifier.size(20.dp)
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                            // Mekan adı ve diğer bilgiler
-                                            Column(
+                                            // Favori ve gidilen ikonları
+                                            Box(
                                                 modifier = Modifier
-                                                    .align(Alignment.BottomStart)
-                                                    .padding(8.dp)
-                                                    .background(
-                                                        Brush.verticalGradient(
-                                                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
-                                                        ),
-                                                        shape = RoundedCornerShape(8.dp)
-                                                    )
+                                                    .fillMaxWidth()
+                                                    .align(Alignment.TopEnd)
                                                     .padding(8.dp)
                                             ) {
-                                                Text(
-                                                    text = attraction.placeName,
-                                                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                Text(
-                                                    text = "${attraction.placeType.placeTypeName}",
-                                                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f)),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
+                                                Row(horizontalArrangement = Arrangement.End) {
+                                                    // Favori İkonu
+                                                    IconButton(onClick = {
+                                                        if (isFavorite) {
+                                                            favoriteViewModel.deleteFavorite(attraction.placeId) { success, _ ->
+                                                                if (success) isFavorite = false
+                                                            }
+                                                        } else {
+                                                            favoriteViewModel.addFavorite(attraction.placeId) { success, _ ->
+                                                                if (success) isFavorite = true
+                                                            }
+                                                        }
+                                                    }) {
+                                                        Icon(
+                                                            painter = painterResource(
+                                                                id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
+                                                            ),
+                                                            contentDescription = "Favorilere Ekle",
+                                                            tint = Color.White
+                                                        )
+                                                    }
+
+                                                    // Gidilenler İkonu
+                                                    IconButton(onClick = {
+                                                        if (isVisited) {
+                                                            visitedPlaceViewModel.deleteVisitedPlace(attraction.placeId) { success, _ ->
+                                                                if (success) isVisited = false
+                                                            }
+                                                        } else {
+                                                            visitedPlaceViewModel.addVisitedPlace(attraction.placeId) { success, _ ->
+                                                                if (success) isVisited = true
+                                                            }
+                                                        }
+                                                    }) {
+                                                        Icon(
+                                                            painter = painterResource(
+                                                                id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
+                                                            ),
+                                                            contentDescription = "Gidilenlere Kaydet",
+                                                            tint = Color.White
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .align(Alignment.BottomStart)
+                                                    .background(
+                                                        Brush.verticalGradient(
+                                                            colors = listOf(
+                                                                Color.Transparent,
+                                                                Color.Black.copy(alpha = 0.8f)
+                                                            )
+                                                        )
+                                                    )
+                                                    .padding(12.dp)
+                                            ) {
+                                                Column {
+                                                    Text(
+                                                        text = attraction.placeName,
+                                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                                            color = Color.White,
+                                                            fontWeight = FontWeight.Bold
+                                                        ),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-                        else if (searchQuery.isEmpty()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Text(
-                text = "Önerilenler",
-                style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
-                modifier = Modifier.padding(16.dp)
-            )
-
-            when {
-                suggestedPlaces.isNotEmpty() -> {
-                    LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        items(suggestedPlaces) { place ->
-                            var isFavorite by remember { mutableStateOf(false) }
-                            var isVisited by remember { mutableStateOf(false) }
-
-                            // Favoriler ve gidilenler durumunu dinamik kontrol et
-                            LaunchedEffect(place.placeId) {
-                                favoriteViewModel.fetchUserFavorites { favorites, error ->
-                                    if (favorites != null) {
-                                        isFavorite = favorites.any { it.placeId == place.placeId }
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            error ?: "Favoriler alınırken hata oluştu.",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-
-                                visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
-                                    if (visitedPlaces != null) {
-                                        isVisited = visitedPlaces.any { it.placeId == place.placeId }
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            error ?: "Ziyaret edilenler alınırken hata oluştu.",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .width(220.dp)
-                                    .height(280.dp)
-                                    .padding(end = 16.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(Color.LightGray)
-                                    .clickable { selectedAttraction = place }
-                            ) {
-                                Image(
-                                    painter = painterResource(
-                                        id = getDrawableResourceByPlaceName(place.placeName)
-                                    ),
-                                    contentDescription = place.placeName,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(RoundedCornerShape(16.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-
-                                // Favoriler ve gidilenler ikonları
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .align(Alignment.TopEnd)
-                                        .padding(8.dp)
-                                ) {
-                                    Row(horizontalArrangement = Arrangement.End) {
-                                        // Favori İkonu
-                                        IconButton(onClick = {
-                                            if (isFavorite) {
-                                                favoriteViewModel.deleteFavorite(place.placeId) { success, message ->
-                                                    if (success) {
-                                                        isFavorite = false
-                                                        Toast.makeText(
-                                                            context,
-                                                            "${place.placeName} favorilerden çıkarıldı.",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    } else {
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Hata: $message",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                }
-                                            } else {
-                                                favoriteViewModel.addFavorite(place.placeId) { success, message ->
-                                                    if (success) {
-                                                        isFavorite = true
-                                                        Toast.makeText(
-                                                            context,
-                                                            "${place.placeName} favorilere eklendi.",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    } else {
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Hata: $message",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                }
-                                            }
-                                        }) {
-                                            Icon(
-                                                painter = painterResource(
-                                                    id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
-                                                ),
-                                                contentDescription = "Favorilere Ekle",
-                                                tint = Color.White
-                                            )
-                                        }
-
-                                        // Gidilenler İkonu
-                                        IconButton(onClick = {
-                                            if (isVisited) {
-                                                visitedPlaceViewModel.deleteVisitedPlace(place.placeId) { success, message ->
-                                                    if (success) {
-                                                        isVisited = false
-                                                        Toast.makeText(
-                                                            context,
-                                                            "${place.placeName} gidilenlerden çıkarıldı.",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    } else {
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Hata: $message",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                }
-                                            } else {
-                                                visitedPlaceViewModel.addVisitedPlace(place.placeId) { success, message ->
-                                                    if (success) {
-                                                        isVisited = true
-                                                        Toast.makeText(
-                                                            context,
-                                                            "${place.placeName} gidilenlere kaydedildi.",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    } else {
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Hata: $message",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                }
-                                            }
-                                        }) {
-                                            Icon(
-                                                painter = painterResource(
-                                                    id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
-                                                ),
-                                                contentDescription = "Gidilenlere Kaydet",
-                                                tint = Color.White
-                                            )
-                                        }
-                                    }
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .align(Alignment.BottomStart)
-                                        .background(
-                                            Brush.verticalGradient(
-                                                colors = listOf(
-                                                    Color.Transparent,
-                                                    Color.Black.copy(alpha = 0.8f)
-                                                )
-                                            )
-                                        )
-                                        .padding(16.dp)
-                                ) {
-                                    Column {
-                                        Text(
-                                            text = place.placeName,
-                                            style = MaterialTheme.typography.bodyLarge.copy(
-                                                color = Color.White,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "${place.rating} ★",
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                color = Color.White
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                else -> {
-                    Text(
-                        text = "No suggestions available",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
-
-        }
-        // Kategoriler için Tablar
-        Text(
-            text = "Keşfedin",
-            style = MaterialTheme.typography.headlineSmall.copy(color = Color.Black),
-            modifier = Modifier.padding(16.dp)
-        )
-        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
-            items(categories) { category ->
-                Button(
-                    onClick = { selectedCategory = category },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (category == selectedCategory) Color(0xFF2196F3) else Color.White,
-                        contentColor = if (category == selectedCategory) Color.White else Color.Gray
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.padding(end = 8.dp)
-                ) {
-                    Text(text = category.placeTypeName)
-                }
-            }
-        }
-
-        LazyRow(modifier = Modifier.padding(16.dp)) {
-            val filteredAttractions =
-                places.filter { it.placeType.placeTypeName == selectedCategory.placeTypeName }
-
-            if (filteredAttractions.isEmpty()) {
-                // Eşleşen öğe yoksa, mesaj göster
-                item {
-                    Text(
-                        "No attractions found for this category.",
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            } else {
-                items(filteredAttractions) { attraction ->
-                    var isFavorite by remember { mutableStateOf(false) }
-                    var isVisited by remember { mutableStateOf(false) }
-
-                    // Dinamik kontrol
-                    LaunchedEffect(attraction.placeId) {
-                        favoriteViewModel.fetchUserFavorites { favorites, error ->
-                            if (favorites != null) {
-                                isFavorite = favorites.any { it.placeId == attraction.placeId }
-                            }
-                        }
-
-                        visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
-                            if (visitedPlaces != null) {
-                                isVisited = visitedPlaces.any { it.placeId == attraction.placeId }
-                            }
-                        }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .width(180.dp) // Sabit genişlik
-                            .height(240.dp) // Sabit yükseklik
-                            .padding(end = 16.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color.LightGray)
-                            .clickable { selectedAttraction = attraction }
-                    ) {
-                        Image(
-                            painter = painterResource(
-                                id = getDrawableResourceByPlaceName(attraction.placeName)
-                            ),
-                            contentDescription = attraction.placeName,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(RoundedCornerShape(16.dp)),
-                            contentScale = ContentScale.Crop
-                        )
-
-                        // Favori ve gidilen ikonları
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.TopEnd)
-                                .padding(8.dp)
-                        ) {
-                            Row(horizontalArrangement = Arrangement.End) {
-                                // Favori İkonu
-                                IconButton(onClick = {
-                                    if (isFavorite) {
-                                        favoriteViewModel.deleteFavorite(attraction.placeId) { success, _ ->
-                                            if (success) isFavorite = false
-                                        }
-                                    } else {
-                                        favoriteViewModel.addFavorite(attraction.placeId) { success, _ ->
-                                            if (success) isFavorite = true
-                                        }
-                                    }
-                                }) {
-                                    Icon(
-                                        painter = painterResource(
-                                            id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
-                                        ),
-                                        contentDescription = "Favorilere Ekle",
-                                        tint = Color.White
-                                    )
-                                }
-
-                                // Gidilenler İkonu
-                                IconButton(onClick = {
-                                    if (isVisited) {
-                                        visitedPlaceViewModel.deleteVisitedPlace(attraction.placeId) { success, _ ->
-                                            if (success) isVisited = false
-                                        }
-                                    } else {
-                                        visitedPlaceViewModel.addVisitedPlace(attraction.placeId) { success, _ ->
-                                            if (success) isVisited = true
-                                        }
-                                    }
-                                }) {
-                                    Icon(
-                                        painter = painterResource(
-                                            id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
-                                        ),
-                                        contentDescription = "Gidilenlere Kaydet",
-                                        tint = Color.White
-                                    )
-                                }
-                            }
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.BottomStart)
-                                .background(
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color.Black.copy(alpha = 0.8f)
-                                        )
-                                    )
-                                )
-                                .padding(12.dp)
-                        ) {
-                            Column {
-                                Text(
-                                    text = attraction.placeName,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-}}}}}
+                        }}}}}
         else {
             val scrollState = rememberScrollState()
             val commentsState = remember { mutableStateOf<List<CommentDto>?>(null) }
@@ -756,280 +840,305 @@ fun ExploreScreen(
                             contentScale = ContentScale.Crop
                         )
 
-                    // Geri ve diğer ikon butonlar
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .align(Alignment.TopStart),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Geri Butonu
-                        IconButton(
-                            onClick = { selectedAttraction = null },
-                            modifier = Modifier
-                                .background(
-                                    Color.White, // Arka plan rengini beyaz yaptık
-                                    shape = RoundedCornerShape(50.dp) // Oval bir şekil için köşe yarıçapını artırdık
-                                )
-                                .padding(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Geri Dön",
-                                tint = Color.Black // İkon rengini siyah yaptık
-                            )
-                        }
-
-                        // Favorilere Ekle ve Gidilenlere Kaydet İkonları
-                        Row {
-                            // Favori İkonu
-                            var isFavorite by remember { mutableStateOf(false) }
-
-                            LaunchedEffect(selectedAttraction) {
-                                selectedAttraction?.placeName?.let { placeName ->
-                                    favoriteViewModel.fetchUserFavorites { favorites, error ->
-                                        if (favorites != null) {
-                                            // Favorilerde mi kontrolü
-                                            isFavorite = favorites.any { it.placeName == placeName }
-                                        } else {
-                                            Toast.makeText(
-                                                context,
-                                                error ?: "Favoriler alınırken hata oluştu.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                }
-                            }
-                            IconButton(onClick = {
-                                selectedAttraction?.let { attraction ->
-                                    val placeName = attraction.placeName
-                                    val placeId = attraction.placeId
-                                    if (isFavorite) {
-                                        favoriteViewModel.deleteFavorite(placeId) { success, message ->
-                                            if (success) {
-                                                isFavorite = false
-                                                Toast.makeText(
-                                                    context,
-                                                    "$placeName favorilerden çıkarıldı.",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                Toast.makeText(
-                                                    context,
-                                                    "Hata: $message",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-                                    } else {
-                                        favoriteViewModel.addFavorite(placeId) { success, message ->
-                                            if (success) {
-                                                isFavorite = true
-                                                Toast.makeText(
-                                                    context,
-                                                    "$placeName favorilere eklendi.",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                Toast.makeText(
-                                                    context,
-                                                    "Hata: $message",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-                                    }
-                                }
-                            }) {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
-                                    ),
-                                    contentDescription = "Favorilere Ekle",
-                                    tint = Color.White
-                                )
-                            }
-                            // Gidilenler İkonu
-                            var isVisited by remember { mutableStateOf(false) }
-
-                            LaunchedEffect(selectedAttraction) {
-                                selectedAttraction?.placeName?.let { placeName ->
-                                    visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
-                                        if (visitedPlaces != null) {
-                                            // Ziyaret edilenler listesinde mi kontrolü
-                                            isVisited =
-                                                visitedPlaces.any { it.placeName == placeName }
-                                        } else {
-                                            // Hata durumunda mesaj gösterilebilir
-                                            Toast.makeText(
-                                                context,
-                                                error ?: "Ziyaret edilenler alınırken hata oluştu.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                }
-                            }
-
-                            IconButton(onClick = {
-                                selectedAttraction?.let { attraction ->
-                                    val placeName = attraction.placeName
-                                    val placeId = attraction.placeId
-
-                                    if (isVisited) {
-                                        visitedPlaceViewModel.deleteVisitedPlace(placeId) { success, message ->
-                                            if (success) {
-                                                // Gidilenlerden çıkarıldıktan sonra listeyi güncelle
-                                                isVisited = false
-                                                Toast.makeText(
-                                                    context,
-                                                    "$placeName gidilenlerden çıkarıldı.",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                Toast.makeText(
-                                                    context,
-                                                    "Hata: $message",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-                                    } else {
-                                        visitedPlaceViewModel.addVisitedPlace(placeId) { success, message ->
-                                            if (success) {
-                                                // Gidilenlere eklendikten sonra listeyi güncelle
-                                                isVisited = true
-                                                Toast.makeText(
-                                                    context,
-                                                    "$placeName gidilenlere kaydedildi.",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                Toast.makeText(
-                                                    context,
-                                                    "Hata: $message",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-                                    }
-                                }
-                            }) {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
-                                    ),
-                                    contentDescription = "Gidilenlere Kaydet",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-                    }
-                }
-                    Column (Modifier.padding(15.dp)){
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = selectedAttraction?.placeName.orEmpty(),
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Place,
-                            contentDescription = null,
-                            tint = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = selectedAttraction?.placeAddress.orEmpty(),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    // Star Rating Section
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Ensure rating is valid and not null. If null, set it to 0.0
-                        val rating = (selectedAttraction?.rating ?: 0.0).coerceIn(0.0, 5.0) // Clamp to a valid range between 0.0 and 5.0
-                        val fullStars = rating.toInt()
-                        val hasHalfStar = rating % 1 >= 0.5
-                        // Full stars
-                        repeat(fullStars) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Full Star",
-                                tint = Color(0xFFFFD700) // Gold color
-                            )
-                        }
-                        // Half star
-                        if (hasHalfStar) {
-                            Icon(
-                                imageVector = Icons.Default.StarHalf,
-                                contentDescription = "Half Star",
-                                tint = Color(0xFFFFD700) // Gold color
-                            )
-                        }
-                        // Empty stars (to fill up to 5 stars)
-                        repeat(5 - fullStars - if (hasHalfStar) 1 else 0) {
-                            Icon(
-                                imageVector = Icons.Default.StarOutline,
-                                contentDescription = "Empty Star",
-                                tint = Color.Gray
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Ensure rating is properly formatted to 1 decimal place and avoid invalid format exceptions
-                        val formattedRating = try {
-                            String.format("%.1f", rating) // Format to 1 decimal place
-                        } catch (e: Exception) {
-                            "0.0" // Fallback to a default value if formatting fails
-                        }
-
-                        Text(
-                            text = formattedRating, // Display the formatted rating
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = selectedAttraction?.description.orEmpty(),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-
-                    selectedAttraction?.let { attraction ->
-                        val placeId = attraction.placeId
-
-                        // Fetch Comments
-                        commentViewModel.getPlaceComments(placeId) { comments, _ ->
-                            commentsState.value = comments
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(text="Yorumlar",
-                            style = MaterialTheme.typography.headlineMedium
-                           )
-                        // Display Comments
-                        Box(
+                        // Geri ve diğer ikon butonlar
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(300.dp) // Örneğin, belirli bir yükseklik
-                        ){
-                            val comments = commentsState.value
-                            if (comments.isNullOrEmpty()) {
-                                Text(
-                                    text = "Henüz hiç yorum yok.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.align(Alignment.Center)
+                                .padding(16.dp)
+                                .align(Alignment.TopStart),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Geri Butonu
+                            IconButton(
+                                onClick = { selectedAttraction = null },
+                                modifier = Modifier
+                                    .background(
+                                        Color.White, // Arka plan rengini beyaz yaptık
+                                        shape = RoundedCornerShape(50.dp) // Oval bir şekil için köşe yarıçapını artırdık
+                                    )
+                                    .padding(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = "Geri Dön",
+                                    tint = Color.Black // İkon rengini siyah yaptık
                                 )
-                            } else {
+                            }
+
+                            // Favorilere Ekle ve Gidilenlere Kaydet İkonları
+                            Row {
+                                // Favori İkonu
+                                var isFavorite by remember { mutableStateOf(false) }
+
+                                LaunchedEffect(selectedAttraction) {
+                                    selectedAttraction?.placeName?.let { placeName ->
+                                        favoriteViewModel.fetchUserFavorites { favorites, error ->
+                                            if (favorites != null) {
+                                                // Favorilerde mi kontrolü
+                                                isFavorite = favorites.any { it.placeName == placeName }
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    error ?: "Favoriler alınırken hata oluştu.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    }
+                                }
+                                IconButton(onClick = {
+                                    selectedAttraction?.let { attraction ->
+                                        val placeName = attraction.placeName
+                                        val placeId = attraction.placeId
+                                        if (isFavorite) {
+                                            favoriteViewModel.deleteFavorite(placeId) { success, message ->
+                                                if (success) {
+                                                    isFavorite = false
+                                                    Toast.makeText(
+                                                        context,
+                                                        "$placeName favorilerden çıkarıldı.",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                } else {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Hata: $message",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            }
+                                        } else {
+                                            favoriteViewModel.addFavorite(placeId) { success, message ->
+                                                if (success) {
+                                                    isFavorite = true
+                                                    Toast.makeText(
+                                                        context,
+                                                        "$placeName favorilere eklendi.",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                } else {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Hata: $message",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }) {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (isFavorite) R.drawable.favorite_filled else R.drawable.favorite_outline
+                                        ),
+                                        contentDescription = "Favorilere Ekle",
+                                        tint = Color.White
+                                    )
+                                }
+                                // Gidilenler İkonu
+                                var isVisited by remember { mutableStateOf(false) }
+
+                                LaunchedEffect(selectedAttraction) {
+                                    selectedAttraction?.placeName?.let { placeName ->
+                                        visitedPlaceViewModel.fetchUserVisitedPlaces { visitedPlaces, error ->
+                                            if (visitedPlaces != null) {
+                                                // Ziyaret edilenler listesinde mi kontrolü
+                                                isVisited =
+                                                    visitedPlaces.any { it.placeName == placeName }
+                                            } else {
+                                                // Hata durumunda mesaj gösterilebilir
+                                                Toast.makeText(
+                                                    context,
+                                                    error ?: "Ziyaret edilenler alınırken hata oluştu.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    }
+                                }
+
+                                IconButton(onClick = {
+                                    selectedAttraction?.let { attraction ->
+                                        val placeName = attraction.placeName
+                                        val placeId = attraction.placeId
+
+                                        if (isVisited) {
+                                            visitedPlaceViewModel.deleteVisitedPlace(placeId) { success, message ->
+                                                if (success) {
+                                                    // Gidilenlerden çıkarıldıktan sonra listeyi güncelle
+                                                    isVisited = false
+                                                    Toast.makeText(
+                                                        context,
+                                                        "$placeName gidilenlerden çıkarıldı.",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                } else {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Hata: $message",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            }
+                                        } else {
+                                            visitedPlaceViewModel.addVisitedPlace(placeId) { success, message ->
+                                                if (success) {
+                                                    // Gidilenlere eklendikten sonra listeyi güncelle
+                                                    isVisited = true
+                                                    Toast.makeText(
+                                                        context,
+                                                        "$placeName gidilenlere kaydedildi.",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                } else {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Hata: $message",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }) {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (isVisited) R.drawable.visited_filled else R.drawable.visited_outline
+                                        ),
+                                        contentDescription = "Gidilenlere Kaydet",
+                                        tint = Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Column (Modifier.padding(15.dp)){
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = selectedAttraction?.placeName.orEmpty(),
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Place,
+                                contentDescription = null,
+                                tint = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = selectedAttraction?.placeAddress.orEmpty(),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        // Star Rating Section
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Ensure rating is valid and not null. If null, set it to 0.0
+                            val rating = (selectedAttraction?.rating ?: 0.0).coerceIn(0.0, 5.0) // Clamp to a valid range between 0.0 and 5.0
+                            val fullStars = rating.toInt()
+                            val hasHalfStar = rating % 1 >= 0.5
+                            // Full stars
+                            repeat(fullStars) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Full Star",
+                                    tint = Color(0xFFFFD700) // Gold color
+                                )
+                            }
+                            // Half star
+                            if (hasHalfStar) {
+                                Icon(
+                                    imageVector = Icons.Default.StarHalf,
+                                    contentDescription = "Half Star",
+                                    tint = Color(0xFFFFD700) // Gold color
+                                )
+                            }
+                            // Empty stars (to fill up to 5 stars)
+                            repeat(5 - fullStars - if (hasHalfStar) 1 else 0) {
+                                Icon(
+                                    imageVector = Icons.Default.StarOutline,
+                                    contentDescription = "Empty Star",
+                                    tint = Color.Gray
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Ensure rating is properly formatted to 1 decimal place and avoid invalid format exceptions
+                            val formattedRating = try {
+                                String.format("%.1f", rating) // Format to 1 decimal place
+                            } catch (e: Exception) {
+                                "0.0" // Fallback to a default value if formatting fails
+                            }
+
+                            Text(
+                                text = formattedRating, // Display the formatted rating
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = selectedAttraction?.description.orEmpty(),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        IconButton(
+                            onClick = {
+                                val placeId = selectedAttraction?.placeId.toString()
+                                navController.navigate("map/$placeId")
+                            },
+                            modifier = Modifier.fillMaxWidth() // Genişliği kapsayacak şekilde ayar
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp), // İkon ve metin arasına boşluk ekler
+                                modifier = Modifier.fillMaxWidth() // Row genişliğini kapsar
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Place,
+                                    contentDescription = "Go to Map",
+                                    modifier = Modifier.size(24.dp) // İkon boyutu
+                                )
+                                Text(
+                                    text = "Haritada Göster",
+                                )
+                            }
+                        }
+
+
+
+
+
+                        selectedAttraction?.let { attraction ->
+                            val placeId = attraction.placeId
+
+                            // Fetch Comments
+                            commentViewModel.getPlaceComments(placeId) { comments, _ ->
+                                commentsState.value = comments
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(text="Yorumlar",
+                                style = MaterialTheme.typography.headlineMedium
+                            )
+                            // Display Comments
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(300.dp) // Örneğin, belirli bir yükseklik
+                            ){
+                                val comments = commentsState.value
+                                if (comments.isNullOrEmpty()) {
+                                    Text(
+                                        text = "Henüz hiç yorum yok.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                } else {
                                     LazyColumn(
                                         contentPadding = PaddingValues(8.dp),
                                         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -1192,10 +1301,10 @@ fun ExploreScreen(
                                             )
                                         }
 
+                                    }
                                 }
                             }
-                        }
-                        var isCommentSectionVisible by remember { mutableStateOf(false) } // Yorum alanı görünürlük durumu
+                            var isCommentSectionVisible by remember { mutableStateOf(false) } // Yorum alanı görünürlük durumu
 
 
                             // Yorum Bölümü Açma / Kapatma FAB
@@ -1301,5 +1410,4 @@ fun ExploreScreen(
 
 
                     }}}}
-}}
-
+    }}
