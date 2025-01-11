@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 
@@ -41,12 +42,15 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.FinalLearningApp
 import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.TravelogScreen
 
 
+@OptIn(UnstableApi::class)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -55,7 +59,7 @@ fun AppNavigation() {
     val currentRoute = remember { mutableStateOf("login") }
 
     // Bottom Navigation Bar'ın hangi ekranlarda gizleneceği
-    val hideBottomNavRoutes = listOf("travelog","login", "register", "hobies","forgotPassword")
+    val hideBottomNavRoutes = listOf("travelog", "login", "register", "hobies", "forgotPassword")
     val showBottomNav = !hideBottomNavRoutes.contains(currentRoute.value)
 
     // Ekran içeriği ve yerleşim düzeni
@@ -66,7 +70,7 @@ fun AppNavigation() {
             startDestination = "travelog",
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = if (showBottomNav) 48.dp else 0.dp) // BottomNavigationBar için padding ekleniyor
+                .padding(bottom = if (showBottomNav) 72.dp else 0.dp) // BottomNavigationBar için padding ekleniyor
         ) {
             composable("travelog") {
                 currentRoute.value = "travelog"
@@ -97,6 +101,18 @@ fun AppNavigation() {
                 currentRoute.value = "explore"
                 ExploreScreen(navController)
             }
+            composable(
+                route = "explore/{placeId}",
+                arguments = listOf(navArgument("placeId") {
+                    type = NavType.StringType
+                }) // `placeId` as parameter
+            ) { backStackEntry ->
+                currentRoute.value = "explore"
+                val placeId =
+                    backStackEntry.arguments?.getString("placeId") // Retrieve the parameter
+
+                ExploreScreen(navController,placeId = placeId) // Pass placeId to FinalLearningApp
+            }
             composable("map") {
                 currentRoute.value = "map"
                 FinalLearningApp()
@@ -116,7 +132,7 @@ fun AppNavigation() {
             }
         }
 
-            // Bottom Navigation Bar
+        // Bottom Navigation Bar
         if (showBottomNav) {
             NavigationBar(
                 modifier = Modifier
@@ -124,20 +140,23 @@ fun AppNavigation() {
                     .padding(2.dp)
                     .height(72.dp)
                     .align(Alignment.BottomCenter),
-                containerColor = MaterialTheme.colorScheme.surface
-            )  {
+                containerColor = Color.White // Beyaz arka plan
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
+                    horizontalArrangement = Arrangement.SpaceAround, // Daha dengeli yerleşim
                     verticalAlignment = Alignment.CenterVertically
-                    // Simgeleri yatayda ortalar
                 ) {
+                    val selectedColor = Color(0xFF1E88E5) // Mavi renk
+
+                    // Profile Button
                     NavigationBarItem(
                         icon = {
                             Icon(
                                 imageVector = Icons.Filled.Person,
                                 contentDescription = "Profile",
-                                modifier = Modifier.size(40.dp) // Varsayılan boyut
+                                tint = if (currentRoute.value == "profile") selectedColor else Color.Gray.copy(alpha = 0.6f),
+                                modifier = Modifier.size(40.dp)
                             )
                         },
                         selected = currentRoute.value == "profile",
@@ -148,12 +167,15 @@ fun AppNavigation() {
                         },
                         alwaysShowLabel = false
                     )
+
+                    // Explore Button
                     NavigationBarItem(
                         icon = {
                             Icon(
                                 imageVector = Icons.Filled.Explore,
                                 contentDescription = "Explore",
-                                modifier = Modifier.size(40.dp) // Varsayılan boyut
+                                tint = if (currentRoute.value == "explore") selectedColor else Color.Gray.copy(alpha = 0.6f),
+                                modifier = Modifier.size(40.dp)
                             )
                         },
                         selected = currentRoute.value == "explore",
@@ -164,11 +186,14 @@ fun AppNavigation() {
                         },
                         alwaysShowLabel = false
                     )
+
+                    // Map Button
                     NavigationBarItem(
                         icon = {
                             Icon(
                                 imageVector = Icons.Filled.Place,
                                 contentDescription = "Map",
+                                tint = if (currentRoute.value == "map") selectedColor else Color.Gray.copy(alpha = 0.6f),
                                 modifier = Modifier.size(36.dp)
                             )
                         },

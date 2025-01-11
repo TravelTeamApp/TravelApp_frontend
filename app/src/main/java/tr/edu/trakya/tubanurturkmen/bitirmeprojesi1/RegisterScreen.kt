@@ -29,6 +29,7 @@ import androidx.compose.ui.res.painterResource
 
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -73,7 +74,10 @@ fun RegisterScreen(navController: NavController) {
     val backgroundImage: Painter = painterResource(id = R.drawable.kuzguncuk)
 
     var isHovered by remember { mutableStateOf(false) } // Hover durumu
-
+    BackHandler {
+        navController.navigate("login") {
+            popUpTo("home") { inclusive = true }
+        }}
     fun validateEmail(email: String): String {
         return if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             ""

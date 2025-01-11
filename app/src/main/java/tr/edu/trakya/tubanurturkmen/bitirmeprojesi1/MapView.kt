@@ -102,12 +102,14 @@ fun FinalLearningApp(placeId: String? = null) {
             "rahmi koç müzesi"->R.drawable.rahmi1
             "pera palace otel"->R.drawable.pera1
             "pelit çikolata müzesi" -> R.drawable.pelit1
-            "nusr-et steakhouse " -> R.drawable.nusret1
+            "nusr-et restoran " -> R.drawable.nusret1
+            "taksim meydanı" -> R.drawable.taksim2
             "kariye camii (eski chora kilisesi)" -> R.drawable.kariye1
 
             else -> R.drawable.istanbul // Varsayılan görsel
         }
     }
+
 
 
     // Fetch favorite and visited places
@@ -218,14 +220,17 @@ fun FinalLearningApp(placeId: String? = null) {
                         .align(Alignment.TopEnd)
                         .padding(10.dp)
                 ) {
-                    Row {
+                    Column {
+                        Spacer(modifier = Modifier.height(12.dp))  // Fixed width space
+
+
                         IconButton(
                             onClick = {
                                 val currentZoom = mapView.zoomLevelDouble
                                 mapView.controller.setZoom(currentZoom + 1) // Zoom In
                             },
                             modifier = Modifier
-                                .size(50.dp)
+                                .size(40.dp)
                                 .background(
                                     color = Color.White.copy(alpha = 0.7f), // Şeffaf beyaz arka plan
                                     shape = CircleShape
@@ -237,7 +242,7 @@ fun FinalLearningApp(placeId: String? = null) {
                                 tint = Color.Black // İkon rengi siyah
                             )
                         }
-                        Spacer(modifier = Modifier.width(4.dp))  // Fixed width space
+                        Spacer(modifier = Modifier.height(12.dp))  // Fixed width space
 
                         IconButton(
                             onClick = {
@@ -245,7 +250,7 @@ fun FinalLearningApp(placeId: String? = null) {
                                 mapView.controller.setZoom(currentZoom - 1) // Zoom Out
                             },
                             modifier = Modifier
-                                .size(50.dp)
+                                .size(40.dp)
                                 .background(
                                     color = Color.White.copy(alpha = 0.7f), // Şeffaf beyaz arka plan
                                     shape = CircleShape
