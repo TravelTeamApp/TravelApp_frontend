@@ -129,7 +129,7 @@ fun ProfileScreenContent(userProfile: UserProfileResponse,navController: NavCont
             .background(Color.White)
     ) {
         // Dinamik isimle TopSection
-        TopSection(userName = userProfile.userName, score = userProfile.score)
+        TopSection(userName = userProfile.userName, score = userProfile.score,navController = navController)
 
         Divider(color = Color.Black, thickness = 0.5.dp)
 
@@ -185,7 +185,7 @@ data class TabItem(val title: String, val icon: ImageVector)
 
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun TopSection(userName: String, score: Int) {
+fun TopSection(userName: String, score: Int,navController: NavController) {
     val firstLetter = userName.firstOrNull()?.toUpperCase() ?: ""
     Box(
         modifier = Modifier
@@ -215,7 +215,23 @@ fun TopSection(userName: String, score: Int) {
                 modifier = Modifier
                     .fillMaxSize(), // Tüm ekranı kaplar
                 contentAlignment = Alignment.TopCenter // İçeriği üstten ortalamaya hizalar
+            ){Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                contentAlignment = Alignment.TopEnd
             ) {
+                IconButton(onClick = {
+                    navController.navigate("travelog") // Travelog sayfasına yönlendirme
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.ExitToApp,
+                        contentDescription = "Log Out",
+                        tint = Color.White,
+                                modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
