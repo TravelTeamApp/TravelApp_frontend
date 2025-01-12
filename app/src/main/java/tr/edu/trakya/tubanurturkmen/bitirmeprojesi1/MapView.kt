@@ -102,7 +102,7 @@ fun FinalLearningApp(placeId: String? = null) {
             "rahmi koç müzesi"->R.drawable.rahmi1
             "pera palace otel"->R.drawable.pera1
             "pelit çikolata müzesi" -> R.drawable.pelit1
-            "nusr-et restoran " -> R.drawable.nusret1
+            "nusret restoran " -> R.drawable.nusret1
             "taksim meydanı" -> R.drawable.taksim2
             "kariye camii (eski chora kilisesi)" -> R.drawable.kariye1
 

@@ -138,7 +138,7 @@ fun ExploreScreen(
             "rahmi koç müzesi"->R.drawable.rahmi1
             "pera palace otel"->R.drawable.pera1
             "pelit çikolata müzesi" -> R.drawable.pelit1
-            "nusr-et restoran " -> R.drawable.nusret1
+            "NusrEt restoran " -> R.drawable.nusret2
             "taksim meydanı" -> R.drawable.taksim2
             "kariye camii (eski chora kilisesi)" -> R.drawable.kariye1
 
@@ -1293,7 +1293,7 @@ fun ExploreScreen(
                                         .padding(6.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = Color(0xFFF0F8FF)
+                                        containerColor = Color(0xE0D3ECFA) // Very light blue with alpha transparency
                                     )
 
                                     ) {

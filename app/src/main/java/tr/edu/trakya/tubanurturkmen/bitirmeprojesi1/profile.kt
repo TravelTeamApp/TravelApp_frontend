@@ -37,6 +37,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -407,25 +408,42 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(8.dp)
-                                .clickable { navController.navigate("explore/$placeId") },
+                                .padding(8.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFF0F8FF)
+                                containerColor = Color(0xE0D3ECFA) // Very light blue with alpha transparency
                             )
-                        ) {
+                        )
+ {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(16.dp)
                             ) {
-                                // Mekan Adı
-                                Text(
-                                    text = comment.placeName ?: "Anonim",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0277BD)
-                                )
+                                // Mekan Adı ve Göz Butonu
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = comment.placeName ?: "Anonim",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0277BD),
+                                        modifier = Modifier.weight(1f) // Mekan adı sağa yaslanacak
+                                    )
+
+                                    // Göz butonu
+                                    IconButton(onClick = {
+                                        navController.navigate("explore/$placeId")
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Visibility,
+                                            contentDescription = "View Place",
+                                            tint = Color.DarkGray
+                                        )
+                                    }
+                                }
 
                                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -450,8 +468,8 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
                                     // Yorum Metni
                                     Text(
                                         text = comment.text ?: "Yorum yok",
-                                        fontSize = 14.sp,
-                                        color = Color.Gray,
+                                        fontSize = 15.sp,
+                                        color = Color.DarkGray,
                                         modifier = Modifier.weight(1f) // Butonlara yer bırakmak için esneklik
                                     )
                                     // Düzenle Butonu
@@ -505,16 +523,21 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
                                         )
                                     }
                                 }
+
                                 // Tarih
                                 Text(
                                     text = "$formattedDate",
                                     fontSize = 12.sp,
-                                    color = Color.DarkGray
+                                    color = Color.LightGray
                                 )
 
                                 Spacer(modifier = Modifier.height(4.dp))
+
+
                             }
                         }
+
+
                     }
 
                 }
@@ -612,8 +635,8 @@ fun PlaceTypesSection(placeViewModel: PlaceViewModel = viewModel()) {
 @Composable
 fun BadgesSection(score: Int) {
     val badges = listOf(
-        Badge("Amatör", R.drawable.neww, 1),
-        Badge("Kaşif", R.drawable.ic_explorer, 5),
+        Badge("Amatör", R.drawable.neww, 10),
+        Badge("Kaşif", R.drawable.ic_explorer, 50),
         Badge("Maceracı", R.drawable.maps, 100),
         Badge("Koleksiyoncu", R.drawable.collector, 200),
         Badge("Gezgin", R.drawable.maceraci, 300),
@@ -756,24 +779,43 @@ fun FavoritePlaceItem(place: FavoriteDto, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable {
-                navController.navigate("explore/$placeId")
-            },
+            .padding(8.dp),
         shape = RoundedCornerShape(16.dp),
-    ) {
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xE0D3ECFA) // Very light blue with alpha transparency
+        )
+    )
+    {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFF0F8FF)) // Beyaza yakın mavi
                 .padding(16.dp)
         ) {
-            Text(
-                text = place.placeName ?: "Bilinmeyen Mekan",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0277BD) // Mavi başlık
-            )
+            // Mekan Adı ve Göz Butonu
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = place.placeName ?: "Anonim",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0277BD),
+                    modifier = Modifier.weight(1f) // Mekan adı sağa yaslanacak
+                )
+
+                // Göz butonu
+                IconButton(onClick = {
+                    navController.navigate("explore/$placeId")
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Visibility,
+                        contentDescription = "View Place",
+                        tint = Color.DarkGray
+
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -786,19 +828,12 @@ fun FavoritePlaceItem(place: FavoriteDto, navController: NavController) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = place.description?.take(90) ?: "Açıklama yok", // 30 karakterle sınırlı açıklama
+                text = place.description?.take(120) ?: "Açıklama yok", // 30 karakterle sınırlı açıklama
                 fontSize = 14.sp,
                 color = Color.DarkGray
             )
 
-            place.rating?.let {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Puan: $it",
-                    fontSize = 14.sp,
-                    color = Color(0xFFFFD700)
-                )
-            }
+
         }
     }
 }
@@ -867,24 +902,42 @@ fun VisitedPlaceItem(place: VisitedPlaceDto, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp)
-            .clickable {
-                navController.navigate("explore/$placeId")
-            },
+            .padding(8.dp),
         shape = RoundedCornerShape(16.dp),
-    ) {
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xE0D3ECFA) // Very light blue with alpha transparency
+        )
+    )
+    {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFF0F8FF)) // Beyaza yakın mavi arka plan
                 .padding(16.dp)
         ) {
-            Text(
-                text = place.placeName ?: "Bilinmeyen Mekan",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0277BD) // Mavi başlık rengi
-            )
+            // Mekan Adı ve Göz Butonu
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = place.placeName ?: "Anonim",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0277BD),
+                    modifier = Modifier.weight(1f) // Mekan adı sağa yaslanacak
+                )
+
+                // Göz butonu
+                IconButton(onClick = {
+                    navController.navigate("explore/$placeId")
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Visibility,
+                        contentDescription = "View Place",
+                        tint = Color.DarkGray
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -897,20 +950,13 @@ fun VisitedPlaceItem(place: VisitedPlaceDto, navController: NavController) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = place.description?.take(90)
+                text = place.description?.take(120)
                     ?: "Açıklama yok", // 30 karakterle sınırlı açıklama
                 fontSize = 14.sp,
                 color = Color.DarkGray
             )
 
-            place.rating?.let {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Puan: $it",
-                    fontSize = 14.sp,
-                    color = Color(0xFFFFD700)
-                )
-            }
+
         }
     }
 }
