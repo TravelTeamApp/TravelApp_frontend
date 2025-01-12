@@ -1065,6 +1065,7 @@ fun ExploreScreen(
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         // Star Rating Section
+
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // Ensure rating is valid and not null. If null, set it to 0.0
                             val rating = (selectedAttraction?.rating ?: 0.0).coerceIn(0.0, 5.0) // Clamp to a valid range between 0.0 and 5.0
@@ -1495,6 +1496,7 @@ fun ExploreScreen(
                                                             },
                                                             confirmButton = {
                                                                 TextButton(onClick = {
+                                                                    showDialog = false
                                                                     // Deletion logic
                                                                     commentViewModel.deleteComment(comment.commentId) { _, errorMessage ->
                                                                         if (errorMessage == null) {
