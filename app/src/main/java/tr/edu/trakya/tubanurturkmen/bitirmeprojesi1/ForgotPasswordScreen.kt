@@ -105,6 +105,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                     }
                 }
             },
+
             modifier = Modifier
                 .align(Alignment.TopStart) // En üst ve sol hizalama
                 .padding(16.dp) // Dış boşluk

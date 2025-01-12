@@ -427,7 +427,7 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
                                     color = Color(0xFF0277BD)
                                 )
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
                                 // Yıldız Değerlendirme
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -440,7 +440,6 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
 
                                 // Düzenle ve Sil Butonları
                                 Row(

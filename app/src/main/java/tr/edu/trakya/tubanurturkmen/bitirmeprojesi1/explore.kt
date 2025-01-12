@@ -1151,7 +1151,7 @@ fun ExploreScreen(
 
                                 FloatingActionButton(
                                     onClick = { isCommentSectionVisible = !isCommentSectionVisible },
-                                    containerColor = Color(0xFF3F51B5),
+                                    containerColor = Color(0xFF0571C7),
                                     contentColor = Color.White,
                                     modifier = Modifier.size(45.dp)
                                 ) {
@@ -1403,11 +1403,7 @@ fun ExploreScreen(
                                                 }
                                             } else {
                                                 // Görüntüleme Modu
-                                                Text(
-                                                    text = comment.text ?: "",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    modifier = Modifier.padding(vertical = 4.dp)
-                                                )
+
                                                 Row {
                                                     repeat(5) { index ->
                                                         Icon(
@@ -1417,6 +1413,11 @@ fun ExploreScreen(
                                                         )
                                                     }
                                                 }
+                                                Text(
+                                                    text = comment.text ?: "",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    modifier = Modifier.padding(vertical = 4.dp)
+                                                )
                                                 Spacer(modifier = Modifier.height(4.dp))
                                                 val formattedDate = formatDateTime(comment.createdOn)
 
