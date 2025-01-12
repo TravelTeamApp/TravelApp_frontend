@@ -123,7 +123,7 @@ fun ExploreScreen(
             "büyükada"->R.drawable.buyukada1
             "çemberlitaş"->R.drawable.cemberlitas1
             "eminönü"->R.drawable.eminonu1
-            "emirgan korusu"->R.drawable.emirgan4
+            "emirgan korusu"->R.drawable.emirgan3
             "galata kulesi"->R.drawable.galata1
             "gülhane parkı"->R.drawable.gulhane1
             "topkapı sarayı"->R.drawable.topkapi1
@@ -1276,7 +1276,7 @@ fun ExploreScreen(
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+
                         ) {
                             items(comments) { comment ->
                                 // selectedCommentId'yi bir state olarak tanımlayın
@@ -1290,7 +1290,7 @@ fun ExploreScreen(
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(8.dp),
+                                        .padding(6.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = Color(0xFFF0F8FF)
