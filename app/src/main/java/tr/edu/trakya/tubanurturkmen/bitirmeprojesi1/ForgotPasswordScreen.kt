@@ -173,7 +173,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                                                         val tcKimlik = response.body()?.tckimlik
 
                                                         if (!tcKimlik.isNullOrEmpty()) {
-                                                            Toast.makeText(context, "Şifreniz başarıyla sıfırlandı ve yeni şifreniz TC Kimlik Numarası olarak ayarlandı.", Toast.LENGTH_SHORT).show()
+                                                            Toast.makeText(context, "Yeni şifreniz TC Kimlik Numarası olarak ayarlandı.", Toast.LENGTH_SHORT).show()
                                                             navController.navigate("login") // Giriş ekranına yönlendir
                                                         } else {
                                                             Toast.makeText(context, "TC Kimlik numarası alınamadı.", Toast.LENGTH_SHORT).show()
@@ -225,7 +225,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                         },
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isHovered) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                        containerColor = if (isHovered) Color(0xFF1C28E0) else Color(0xFF117ED0), // Hover ve normal renkler
                         contentColor = Color.White
                     ), ){
                     Text(text = "Şifremi Sıfırla", fontSize = 20.sp)

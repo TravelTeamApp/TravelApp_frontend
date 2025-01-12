@@ -193,7 +193,7 @@ fun LoginScreen(navController: NavController) {
                                                 )
                                                 Toast.makeText(
                                                     context,
-                                                    "Giriş Başarısız: $errorBody",
+                                                    "Giriş Başarısız: Kullanıcı adı veya şifre hatalı",
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             }

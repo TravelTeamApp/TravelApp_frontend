@@ -1269,7 +1269,7 @@ fun ExploreScreen(
                                                 rating = 0f
                                                 isCommentSectionVisible = false
                                             } else {
-                                                Toast.makeText(context, "Yorum gönderilemedi: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "Yorum gönderilemedi:Yorum yapmak için ziyaret etmelisiniz", Toast.LENGTH_SHORT).show()
                                             }
 
                                         }
