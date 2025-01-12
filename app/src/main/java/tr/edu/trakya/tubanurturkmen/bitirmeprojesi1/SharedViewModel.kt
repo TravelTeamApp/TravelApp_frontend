@@ -2,11 +2,15 @@ package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import org.osmdroid.util.GeoPoint
+import kotlinx.coroutines.launch
+
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -69,6 +73,32 @@ class PlaceViewModel : ViewModel() {
     init {
         fetchPlaces()
     }
+
+    var isLoading by mutableStateOf(false)
+        private set
+
+
+
+    // Belirli bir mekanı ID ile getir
+    fun fetchPlaceById(id: Int, callback: (PlaceDto?, String?) -> Unit) {
+        isLoading = true // Yüklenme durumu başlatılır
+        RetrofitClient.apiService.getPlaceById(id).enqueue(object : Callback<PlaceDto> {
+            override fun onResponse(call: Call<PlaceDto>, response: Response<PlaceDto>) {
+                isLoading = false // Yüklenme durumu durdurulur
+                if (response.isSuccessful) {
+                    callback(response.body(), null) // Başarılı sonuç döndürülür
+                } else {
+                    callback(null, "API Error: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<PlaceDto>, t: Throwable) {
+                isLoading = false // Yüklenme durumu durdurulur
+                callback(null, "Network Error: ${t.message}") // Hata döndürülür
+            }
+        })
+    }
+
     fun fetchPlaces() {
         _loading.value = true  // API çağrısı başladığında loading state'i true
         _errorMessage.value = null  // Hata mesajını sıfırla

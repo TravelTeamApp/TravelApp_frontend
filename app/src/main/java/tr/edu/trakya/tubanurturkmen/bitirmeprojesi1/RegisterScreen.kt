@@ -286,7 +286,7 @@ fun RegisterScreen(navController: NavController) {
                     },
                 enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isHovered) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                    containerColor = if (isHovered) Color(0xFF1C28E0) else Color(0xFF117ED0), // Hover ve normal renkler
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(10.dp) // Daha yumuşak kenarlar içi

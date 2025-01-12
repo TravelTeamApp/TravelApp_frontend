@@ -333,9 +333,10 @@ fun ExploreScreen(
                                                                 } else {
                                                                     Toast.makeText(
                                                                         context,
-                                                                        "Hata: $message",
+                                                                        "Bir hata oluştu: $message",
                                                                         Toast.LENGTH_SHORT
                                                                     ).show()
+
                                                                 }
                                                             }
                                                         } else {
@@ -350,9 +351,10 @@ fun ExploreScreen(
                                                                 } else {
                                                                     Toast.makeText(
                                                                         context,
-                                                                        "Hata: $message",
+                                                                        "Bir hata oluştu: $message",
                                                                         Toast.LENGTH_SHORT
                                                                     ).show()
+
                                                                 }
                                                             }
                                                         }
@@ -380,9 +382,10 @@ fun ExploreScreen(
                                                                 } else {
                                                                     Toast.makeText(
                                                                         context,
-                                                                        "Hata: $message",
+                                                                        "Bir hata oluştu: $message",
                                                                         Toast.LENGTH_SHORT
                                                                     ).show()
+
                                                                 }
                                                             }
                                                         } else {
@@ -397,9 +400,10 @@ fun ExploreScreen(
                                                                 } else {
                                                                     Toast.makeText(
                                                                         context,
-                                                                        "Hata: $message",
+                                                                        "Bir hata oluştu: $message",
                                                                         Toast.LENGTH_SHORT
                                                                     ).show()
+
                                                                 }
                                                             }
                                                         }
@@ -535,9 +539,10 @@ fun ExploreScreen(
                                                                         } else {
                                                                             Toast.makeText(
                                                                                 context,
-                                                                                "Hata: $message",
+                                                                                "Bir hata oluştu: $message",
                                                                                 Toast.LENGTH_SHORT
                                                                             ).show()
+
                                                                         }
                                                                     }
                                                                 } else {
@@ -552,9 +557,10 @@ fun ExploreScreen(
                                                                         } else {
                                                                             Toast.makeText(
                                                                                 context,
-                                                                                "Hata: $message",
+                                                                                "Bir hata oluştu: $message",
                                                                                 Toast.LENGTH_SHORT
                                                                             ).show()
+
                                                                         }
                                                                     }
                                                                 }
@@ -582,9 +588,10 @@ fun ExploreScreen(
                                                                         } else {
                                                                             Toast.makeText(
                                                                                 context,
-                                                                                "Hata: $message",
+                                                                                "Bir hata oluştu: $message",
                                                                                 Toast.LENGTH_SHORT
                                                                             ).show()
+
                                                                         }
                                                                     }
                                                                 } else {
@@ -599,9 +606,10 @@ fun ExploreScreen(
                                                                         } else {
                                                                             Toast.makeText(
                                                                                 context,
-                                                                                "Hata: $message",
+                                                                                "Bir hata oluştu: $message",
                                                                                 Toast.LENGTH_SHORT
                                                                             ).show()
+
                                                                         }
                                                                     }
                                                                 }
@@ -933,9 +941,10 @@ fun ExploreScreen(
                                                 } else {
                                                     Toast.makeText(
                                                         context,
-                                                        "Hata: $message",
+                                                        "Bir hata oluştu: $message",
                                                         Toast.LENGTH_SHORT
                                                     ).show()
+
                                                 }
                                             }
                                         } else {
@@ -950,9 +959,10 @@ fun ExploreScreen(
                                                 } else {
                                                     Toast.makeText(
                                                         context,
-                                                        "Hata: $message",
+                                                        "Bir hata oluştu: $message",
                                                         Toast.LENGTH_SHORT
                                                     ).show()
+
                                                 }
                                             }
                                         }
@@ -1006,9 +1016,10 @@ fun ExploreScreen(
                                                 } else {
                                                     Toast.makeText(
                                                         context,
-                                                        "Hata: $message",
+                                                        "Bir hata oluştu: $message",
                                                         Toast.LENGTH_SHORT
                                                     ).show()
+
                                                 }
                                             }
                                         } else {
@@ -1024,9 +1035,10 @@ fun ExploreScreen(
                                                 } else {
                                                     Toast.makeText(
                                                         context,
-                                                        "Hata: $message",
+                                                        "Bir hata oluştu: $message",
                                                         Toast.LENGTH_SHORT
                                                     ).show()
+
                                                 }
                                             }
                                         }
@@ -1098,17 +1110,7 @@ fun ExploreScreen(
 
                             Spacer(modifier = Modifier.width(8.dp))
 
-                            // Ensure rating is properly formatted to 1 decimal place and avoid invalid format exceptions
-                            val formattedRating = try {
-                                String.format("%.1f", rating) // Format to 1 decimal place
-                            } catch (e: Exception) {
-                                "0.0" // Fallback to a default value if formatting fails
-                            }
 
-                            Text(
-                                text = formattedRating, // Display the formatted rating
-                                style = MaterialTheme.typography.bodyLarge
-                            )
                         }
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -1251,14 +1253,25 @@ fun ExploreScreen(
                                             rate = rating.toInt()
                                         ) { createdComment, errorMessage ->
                                             if (createdComment != null) {
-                                                Toast.makeText(context, "Review submitted successfully", Toast.LENGTH_SHORT).show()
-                                                // Reset text field and rating
+                                                Toast.makeText(context, "Yorum başarıyla gönderildi", Toast.LENGTH_SHORT).show()
+
+                                                // Backend'den güncellenmiş veriyi al
+                                                placeViewModel.fetchPlaceById(placeId) { updatedAttraction, fetchError ->
+                                                    if (updatedAttraction != null) {
+                                                        selectedAttraction = updatedAttraction
+                                                    } else {
+                                                        Toast.makeText(context, "Güncellenmiş mekan bilgisi alınamadı: $fetchError", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+
+                                                // Yorum alanını ve puanı sıfırla
                                                 comment = ""
                                                 rating = 0f
-                                                isCommentSectionVisible = false // Yorum bölümü kapanır
+                                                isCommentSectionVisible = false
                                             } else {
-                                                Toast.makeText(context, "Failed to submit review: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "Yorum gönderilemedi: $errorMessage", Toast.LENGTH_SHORT).show()
                                             }
+
                                         }
                                     }
                                 },
@@ -1267,10 +1280,11 @@ fun ExploreScreen(
                                     .height(50.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0571C7))
-
                             ) {
                                 Text("Gönder", color = Color.White, fontSize = 16.sp)
                             }
+
+
                         }
                     }
                         // Display Comments
@@ -1399,6 +1413,7 @@ fun ExploreScreen(
                                                                             commentsState.value = comments
                                                                         }
 
+
                                                                     } else {
                                                                         Toast.makeText(context, "Yorum güncellenemedi: $errorMessage", Toast.LENGTH_SHORT).show()
                                                                     }
@@ -1466,7 +1481,13 @@ fun ExploreScreen(
                                             if (comment.createdBy == userProfile.value?.userName) {
                                                 Row {
                                                     // Edit button
-                                                    IconButton(onClick = { selectedCommentId = comment.commentId; isView = false }) {
+                                                    IconButton(onClick = {
+                                                        commentViewModel.getPlaceComments(placeId) { comments, _ ->
+                                                            commentsState.value = comments
+                                                        }
+                                                        selectedCommentId = comment.commentId;
+                                                        isView = false
+                                                    }) {
                                                         Icon(
                                                             imageVector = Icons.Default.Edit,
                                                             contentDescription = "Edit Comment",

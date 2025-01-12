@@ -152,7 +152,7 @@ fun TravelogScreen(navController: NavController) {
                         },
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isHoveredLogin) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                        containerColor = if (isHoveredLogin) Color(0xFF1C28E0) else Color(0xFF117ED0), // Hover ve normal renkler
                         contentColor = Color.White
                     ),
                 ) {
@@ -176,7 +176,7 @@ fun TravelogScreen(navController: NavController) {
                         },
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isHoveredRegister) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                        containerColor = if (isHoveredRegister) Color(0xFF1C28E0) else Color(0xFF117ED0), // Hover ve normal renkler
                         contentColor = Color.White
                     ),
                 ) {

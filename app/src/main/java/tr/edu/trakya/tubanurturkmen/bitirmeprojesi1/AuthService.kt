@@ -107,4 +107,8 @@ interface AuthService {
 
     @GET("Place/userplace")  // BASE_URL'in sonuna eklenir
     fun getPlacesByUserPlaceTypes(): Call<List<PlaceDto>>
+
+    @GET("place/{id}")
+    fun getPlaceById(@Path("id") id: Int): Call<PlaceDto>
+
 }
