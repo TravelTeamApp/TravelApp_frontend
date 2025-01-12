@@ -138,9 +138,21 @@ fun ExploreScreen(
             "rahmi koç müzesi"->R.drawable.rahmi1
             "pera palace otel"->R.drawable.pera1
             "pelit çikolata müzesi" -> R.drawable.pelit1
-            "NusrEt restoran " -> R.drawable.nusret2
             "taksim meydanı" -> R.drawable.taksim2
             "kariye camii (eski chora kilisesi)" -> R.drawable.kariye1
+            "asitane restoran"->R.drawable.asitane
+            "zuma restoran"->R.drawable.zuma
+            "mikla restoran"->R.drawable.mikla
+            "vogue restoran"->R.drawable.vogue
+            "karaköy güllüoğlu"->R.drawable.gulluoglu
+            "selanik kahvecisi"->R.drawable.selanik
+            "cafe de paris"->R.drawable.paris
+            "the house cafe"->R.drawable.house
+            "beyaz fırın"->R.drawable.beyaz
+            "feriye restoran"->R.drawable.feriye
+            "karaköy lokantası"->R.drawable.klokanta
+            "mendel's cafe"->R.drawable.mendels
+            "olden 1772"->R.drawable.olden
 
             else -> R.drawable.istanbul // Varsayılan görsel
         }
