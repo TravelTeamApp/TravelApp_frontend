@@ -31,6 +31,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.layout.ContentScale
 
 // Retrofit
@@ -66,9 +67,29 @@ fun LoginScreen(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f)) // blur
+                .background(Color.Black.copy(alpha = 0.2f)) // blur
         )
-
+        // Geri Butonu (En üstte ve solda)
+        IconButton(
+            onClick = {
+                // Travelog ekranına yönlendirme
+                navController.navigate("travelog") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart) // En üst ve sol hizalama
+                .padding(16.dp) // Dış boşluk
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Geri Git",
+                tint = Color.White, // Beyaz renk
+                modifier = Modifier.size(36.dp) // İkon boyutunu büyütmek için
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()

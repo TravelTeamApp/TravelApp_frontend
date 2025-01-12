@@ -135,7 +135,6 @@ fun TravelogScreen(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
-
                 // Sign in Button
                 Button(
                     onClick = { navController.navigate("login") },
@@ -153,15 +152,13 @@ fun TravelogScreen(navController: NavController) {
                         },
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isHoveredLogin) Color(0xFF2370F8) else Color(0xFF4BA8EF), // Hover ve normal renkler
+                        containerColor = if (isHoveredLogin) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
                         contentColor = Color.White
                     ),
                 ) {
                     Text(text = "Giriş Yap", color = Color.White, fontSize = 20.sp)
                 }
-
                 Spacer(modifier = Modifier.height(16.dp))
-
                 // Create an account Button
                 Button(
                     onClick = { navController.navigate("register") },
@@ -187,7 +184,5 @@ fun TravelogScreen(navController: NavController) {
                 }
             }
         }
-
     }
-
 }

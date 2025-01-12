@@ -56,6 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 
 
@@ -93,7 +95,27 @@ fun ForgotPasswordScreen(navController: NavController) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-
+        // Geri Butonu (En üstte ve solda)
+        IconButton(
+            onClick = {
+                // Travelog ekranına yönlendirme
+                navController.navigate("login") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart) // En üst ve sol hizalama
+                .padding(16.dp) // Dış boşluk
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Geri Git",
+                tint = Color.White, // Beyaz renk
+                modifier = Modifier.size(36.dp) // İkon boyutunu büyütmek için
+            )
+        }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center, // İçeriği dikeyde merkeze al

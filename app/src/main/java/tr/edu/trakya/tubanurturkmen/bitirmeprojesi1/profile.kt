@@ -199,6 +199,11 @@ fun TopSection(userName: String, score: Int) {
             modifier = Modifier
                 .fillMaxSize()
         )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.2f)) // blur
+        )
         Column(
             modifier = Modifier
                 .fillMaxWidth() // Tüm genişliği kaplamasını sağlar
@@ -220,13 +225,13 @@ fun TopSection(userName: String, score: Int) {
                         modifier = Modifier
                             .size(110.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF1E88E5)),
+                            .background(Color(0xFFF0F8FF)),
                         contentAlignment = Alignment.Center // Box içeriğini ortalar
                     ) {
                         Text(
                             firstLetter.toString(),
                             fontSize = 48.sp, // Harfin büyüklüğü
-                            color = Color.White // Harf rengi
+                            color = Color(0xFF1E88E5) // Harf rengi
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp)) // Resim ve metin arasına boşluk
@@ -235,7 +240,7 @@ fun TopSection(userName: String, score: Int) {
                         fontSize = 22.sp,
                         fontFamily = FontFamily.SansSerif,
                         fontWeight = FontWeight.Bold, // Kalın yazı stili
-                        color = Color.Black
+                        color = Color.White
                     )
 
             PlaceTypesSection()
@@ -316,31 +321,42 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
                     var selectedRating by remember { mutableStateOf(comment.rate.toFloat()) }
 
                     if (isEditingComment) {
-                        // Düzenleme Görünümü
-                        Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                            OutlinedTextField(
-                                value = editableCommentText,
-                                onValueChange = { editableCommentText = it },
-                                label = { Text("Yorumunuzu Düzenleyin") },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
+                        // Düzenleme Modunda TextField ve Yıldız Değerlendirmesi
+                        OutlinedTextField(
+                            value = editableCommentText,
+                            onValueChange = { editableCommentText = it },
+                            label = { Text("Yorumunuzu Düzenleyin") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF0571C7),
+                                unfocusedBorderColor = Color.LightGray,
+                                focusedContainerColor = Color(0xFFF5F5F5),
+                                unfocusedContainerColor = Color(0xFFF5F5F5)
                             )
+                        )
+                        Spacer(modifier = Modifier.height(5.dp))
 
-                            // Yıldız Derecelendirmesini Güncelleme
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                repeat(5) { index ->
-                                    IconButton(onClick = { selectedRating = (index + 1).toFloat() }) {
-                                        Icon(
-                                            imageVector = if (index < selectedRating) Icons.Default.Star else Icons.Default.StarBorder,
-                                            contentDescription = null,
-                                            tint = if (index < selectedRating) Color(0xFFFFC107) else Color.Gray
-                                        )
-                                    }
+                        // Yıldız Derecelendirmesini Güncelleme
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            repeat(5) { index ->
+                                IconButton(onClick = { selectedRating = (index + 1).toFloat() }) {
+                                    Icon(
+                                        imageVector = if (index < selectedRating) Icons.Default.Star else Icons.Default.StarBorder,
+                                        contentDescription = null,
+                                        tint = if (index < selectedRating) Color(0xFFFFC107) else Color.Gray
+                                    )
                                 }
                             }
+                        }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
+                        // Kaydet ve İptal Butonları
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             // Kaydet ve İptal Butonları
                             Row(
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -360,12 +376,12 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
 
                                                 // Yorumları yeniden fetch et
 
-                                                    commentViewModel.fetchUserComments { fetchedComments, error ->
-                                                        if (fetchedComments != null) {
-                                                            comments = fetchedComments
-                                                            isLoading = false
-                                                        }
+                                                commentViewModel.fetchUserComments { fetchedComments, error ->
+                                                    if (fetchedComments != null) {
+                                                        comments = fetchedComments
+                                                        isLoading = false
                                                     }
+                                                }
 
 
                                                 isEditingComment = false // Düzenleme modunu kapat
@@ -373,13 +389,15 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
                                                 Toast.makeText(context, "Yorum güncellenemedi: $errorMessage", Toast.LENGTH_SHORT).show()
                                             }
                                         }
-                                    }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0571C7))
                                 ) {
-                                    Text("Kaydet")
+                                    Text("Kaydet", color = Color.White)
                                 }
 
                                 TextButton(onClick = { isEditingComment = false }) {
-                                    Text("İptal")
+                                    Text("İptal", color = Color.Black)
+
                                 }
                             }
                         }
@@ -404,9 +422,9 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
                                 // Mekan Adı
                                 Text(
                                     text = comment.placeName ?: "Anonim",
-                                    fontSize = 16.sp,
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.Black
+                                    color = Color(0xFF0277BD)
                                 )
 
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -424,57 +442,82 @@ fun UserCommentsSection(commentViewModel: CommentViewModel = viewModel(), navCon
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
 
-                                // Yorum Metni
-                                Text(
-                                    text = comment.text ?: "Yorum yok",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0277BD)
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                // Tarih
-                                Text(
-                                    text = "Tarih: $formattedDate",
-                                    fontSize = 12.sp,
-                                    color = Color.Gray
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
                                 // Düzenle ve Sil Butonları
                                 Row(
+                                    modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    // Yorum Metni
+                                    Text(
+                                        text = comment.text ?: "Yorum yok",
+                                        fontSize = 14.sp,
+                                        color = Color.Gray,
+                                        modifier = Modifier.weight(1f) // Butonlara yer bırakmak için esneklik
+                                    )
+                                    // Düzenle Butonu
                                     IconButton(onClick = { isEditingComment = true }) {
                                         Icon(
                                             imageVector = Icons.Default.Edit,
                                             contentDescription = "Edit Comment",
-                                            tint = Color(0xFF3F51B5)
+                                            tint = Color(0xFF0571C7)
                                         )
                                     }
 
-                                    IconButton(onClick = {
-                                        commentViewModel.deleteComment(comment.commentId) { _, errorMessage ->
-                                            if (errorMessage == null) {
-                                                comments = comments.filter { it.commentId != comment.commentId }
-                                            } else {
-                                                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    }) {
+                                    // Silme Butonu ve Onay Diyaloğu
+                                    var showDialog by remember { mutableStateOf(false) }
+
+                                    IconButton(onClick = { showDialog = true }) {
                                         Icon(
                                             imageVector = Icons.Default.Delete,
                                             contentDescription = "Delete Comment",
                                             tint = Color.Red
                                         )
                                     }
+
+                                    if (showDialog) {
+                                        AlertDialog(
+                                            onDismissRequest = { showDialog = false },
+                                            title = {
+                                                Text(text = "Silmek istediğinizden emin misiniz?")
+                                            },
+                                            text = {
+                                                Text(text = "Bu işlem geri alınamaz. Yorumu silmek istediğinizden emin misiniz?")
+                                            },
+                                            confirmButton = {
+                                                TextButton(onClick = {
+                                                    showDialog = false
+                                                    commentViewModel.deleteComment(comment.commentId) { _, errorMessage ->
+                                                        if (errorMessage == null) {
+                                                            comments = comments.filter { it.commentId != comment.commentId }
+                                                        } else {
+                                                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                }) {
+                                                    Text("Evet", color = Color.Red)
+                                                }
+                                            },
+                                            dismissButton = {
+                                                TextButton(onClick = { showDialog = false }) {
+                                                    Text("Hayır")
+                                                }
+                                            }
+                                        )
+                                    }
                                 }
+                                // Tarih
+                                Text(
+                                    text = "$formattedDate",
+                                    fontSize = 12.sp,
+                                    color = Color.DarkGray
+                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
                             }
                         }
                     }
+
                 }
             }
         }

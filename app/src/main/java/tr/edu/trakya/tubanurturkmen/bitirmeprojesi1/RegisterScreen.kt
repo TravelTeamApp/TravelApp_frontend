@@ -54,6 +54,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 
 import androidx.compose.ui.input.pointer.pointerInput
@@ -108,8 +110,29 @@ fun RegisterScreen(navController: NavController) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f)) // Yarı saydam siyah renk
+                    .background(Color.Black.copy(alpha = 0.2f)) // Yarı saydam siyah renk
             )
+        // Geri Butonu (En üstte ve solda)
+        IconButton(
+            onClick = {
+                // Travelog ekranına yönlendirme
+                navController.navigate("travelog") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart) // En üst ve sol hizalama
+                .padding(16.dp) // Dış boşluk
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Geri Git",
+                tint = Color.White, // Beyaz renk
+                modifier = Modifier.size(36.dp) // İkon boyutunu büyütmek için
+            )
+        }
             Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),

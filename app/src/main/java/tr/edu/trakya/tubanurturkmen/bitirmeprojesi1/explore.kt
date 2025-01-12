@@ -849,7 +849,11 @@ fun ExploreScreen(
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
-
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.1f)) // blur
+                        )
                         // Geri ve diğer ikon butonlar
                         Row(
                             modifier = Modifier
@@ -861,29 +865,23 @@ fun ExploreScreen(
                         ) {
                             IconButton(
                                 onClick = {
-                                    if(placeId != null) {
+                                    if (placeId != null) {
                                         navController.popBackStack()
-                                    }
-                                    else{
+                                    } else {
                                         selectedAttraction = null
-
                                     }
-                                    // Eğer selectedAttraction null ise, popBackStack() ile önceki sayfaya dönü
-
                                 },
                                 modifier = Modifier
-                                    .background(
-                                        Color.White, // Arka plan rengini beyaz yaptık
-                                        shape = RoundedCornerShape(40.dp) // Oval bir şekil için köşe yarıçapını artırdık
-                                    )
-                                    .padding(8.dp)
+                                    .size(40.dp) // Beyaz arka planın boyutunu küçültmek için boyut tanımlandı
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ArrowBack,
-                                    contentDescription = "Geri Dön",
-                                    tint = Color.Black // İkon rengini siyah yaptık
+                                    contentDescription = "Geri Git",
+                                    tint = Color.White, // Beyaz renk
+                                    modifier = Modifier.size(36.dp) // İkon boyutunu büyütmek için
                                 )
                             }
+
 
 
                             // Favorilere Ekle ve Gidilenlere Kaydet İkonları
@@ -1256,6 +1254,7 @@ fun ExploreScreen(
                                     .height(50.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0571C7))
+
                             ) {
                                 Text("Gönder", color = Color.White, fontSize = 16.sp)
                             }
@@ -1291,9 +1290,11 @@ fun ExploreScreen(
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(8.dp)
-                                        .background(Color(0xFFADF1FC)),
+                                        .padding(8.dp),
                                     shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFFF0F8FF)
+                                    )
 
                                     ) {
                                     Row(
@@ -1313,7 +1314,7 @@ fun ExploreScreen(
                                             Text(
                                                 text = firstLetter.toString(),
                                                 fontSize = 20.sp,
-                                                color = Color(0xFF377A8D),
+                                                color = Color(0xFF0571C7),
                                                 modifier = Modifier.align(Alignment.Center)
                                             )
                                         }
@@ -1390,13 +1391,13 @@ fun ExploreScreen(
                                                                     }
                                                                 }
                                                             },
-                                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
+                                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0571C7))
                                                         ) {
                                                             Text("Kaydet", color = Color.White)
                                                         }
 
                                                         TextButton(onClick = { selectedCommentId = null }) {
-                                                            Text("İptal", color = MaterialTheme.colorScheme.primary)
+                                                            Text("İptal", color = Color.Black)
                                                         }
                                                     }
                                                 }
@@ -1416,13 +1417,13 @@ fun ExploreScreen(
                                                         )
                                                     }
                                                 }
-                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Spacer(modifier = Modifier.height(4.dp))
                                                 val formattedDate = formatDateTime(comment.createdOn)
 
                                                 Text(
                                                     text = formattedDate,
                                                     style = MaterialTheme.typography.bodySmall,
-                                                    color = Color.LightGray
+                                                    color = Color.DarkGray
                                                 )
                                             }
                                         }
@@ -1455,28 +1456,52 @@ fun ExploreScreen(
                                                         Icon(
                                                             imageVector = Icons.Default.Edit,
                                                             contentDescription = "Edit Comment",
-                                                            tint = MaterialTheme.colorScheme.primary
+                                                            tint = Color(0xFF0571C7)
+
                                                         )
                                                     }
 
-                                                    // Delete button
-                                                    IconButton(onClick = {
-                                                        // Deletion logic
-                                                        commentViewModel.deleteComment(comment.commentId) { _, errorMessage ->
-                                                            if (errorMessage == null) {
-                                                                Toast.makeText(context, "Yorum başarıyla silindi", Toast.LENGTH_SHORT).show()
-                                                                commentViewModel.getPlaceComments(placeId) { comments, _ ->
-                                                                    commentsState.value = comments
-                                                                }
-                                                            } else {
-                                                                Toast.makeText(context, "Yorum silinirken bir hata oluştu: $errorMessage", Toast.LENGTH_SHORT).show()
-                                                            }
-                                                        }
-                                                    }) {
+                                                    // Silme Butonu ve Onay Diyaloğu
+                                                    var showDialog by remember { mutableStateOf(false) }
+
+                                                    IconButton(onClick = { showDialog = true }) {
                                                         Icon(
                                                             imageVector = Icons.Default.Delete,
                                                             contentDescription = "Delete Comment",
-                                                            tint = MaterialTheme.colorScheme.error
+                                                            tint = Color.Red
+                                                        )
+                                                    }
+                                                    if (showDialog) {
+                                                        AlertDialog(
+                                                            onDismissRequest = { showDialog = false },
+                                                            title = {
+                                                                Text(text = "Silmek istediğinizden emin misiniz?")
+                                                            },
+                                                            text = {
+                                                                Text(text = "Bu işlem geri alınamaz. Yorumu silmek istediğinizden emin misiniz?")
+                                                            },
+                                                            confirmButton = {
+                                                                TextButton(onClick = {
+                                                                    // Deletion logic
+                                                                    commentViewModel.deleteComment(comment.commentId) { _, errorMessage ->
+                                                                        if (errorMessage == null) {
+                                                                            Toast.makeText(context, "Yorum başarıyla silindi", Toast.LENGTH_SHORT).show()
+                                                                            commentViewModel.getPlaceComments(placeId) { comments, _ ->
+                                                                                commentsState.value = comments
+                                                                            }
+                                                                        } else {
+                                                                            Toast.makeText(context, "Yorum silinirken bir hata oluştu: $errorMessage", Toast.LENGTH_SHORT).show()
+                                                                        }
+                                                                    }
+                                                                }) {
+                                                                    Text("Evet", color = Color.Red)
+                                                                }
+                                                            },
+                                                            dismissButton = {
+                                                                TextButton(onClick = { showDialog = false }) {
+                                                                    Text("Hayır")
+                                                                }
+                                                            }
                                                         )
                                                     }
                                                 }
