@@ -29,6 +29,7 @@ import androidx.compose.ui.res.painterResource
 
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,6 +54,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 
 import androidx.compose.ui.input.pointer.pointerInput
@@ -70,10 +73,13 @@ fun RegisterScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
-    val backgroundImage: Painter = painterResource(id = R.drawable.register)
+    val backgroundImage: Painter = painterResource(id = R.drawable.kuzguncuk)
 
     var isHovered by remember { mutableStateOf(false) } // Hover durumu
-
+    BackHandler {
+        navController.navigate("login") {
+            popUpTo("home") { inclusive = true }
+        }}
     fun validateEmail(email: String): String {
         return if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             ""
@@ -101,21 +107,37 @@ fun RegisterScreen(navController: NavController) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop // Resmi tam ekran doldur
         )
-
-        Column(
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.2f)) // Yarı saydam siyah renk
+            )
+        // Geri Butonu (En üstte ve solda)
+        IconButton(
+            onClick = {
+                // Travelog ekranına yönlendirme
+                navController.navigate("travelog") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart) // En üst ve sol hizalama
+                .padding(16.dp) // Dış boşluk
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Geri Git",
+                tint = Color.White, // Beyaz renk
+                modifier = Modifier.size(36.dp) // İkon boyutunu büyütmek için
+            )
+        }
+            Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(
-                text = "Kayıt Ol",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.ExtraBold, // Daha kalın yazı
-                    fontSize = 32.sp, // Daha büyük boyut
-                    letterSpacing = 1.5.sp, // Harfler arasında boşluk
-                    color = Color.White
-                ),
-            )
 
             // Kullanıcı Adı
             TextField(
@@ -251,7 +273,7 @@ fun RegisterScreen(navController: NavController) {
                     }
                 },
 
-            modifier = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .pointerInput(Unit) {
                         // Hover için fare hareketini yakala
@@ -264,7 +286,7 @@ fun RegisterScreen(navController: NavController) {
                     },
                 enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isHovered) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                    containerColor = if (isHovered) Color(0xFF1C28E0) else Color(0xFF117ED0), // Hover ve normal renkler
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(10.dp) // Daha yumuşak kenarlar içi
@@ -274,14 +296,22 @@ fun RegisterScreen(navController: NavController) {
                 } else {
                     Text(
                         text = "Kayıt Ol",
+                        fontSize = 20.sp,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
                     )
                 }
             }
+            Text(
+                text = "Hesabınız varsa giriş yapın",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 15.sp, fontWeight = FontWeight.ExtraBold),
+                color = Color.White,
+                modifier = Modifier
+                    .clickable { navController.navigate("login") }
+                    .align(Alignment.CenterHorizontally)
+            )
         }
     }
 }
-
 

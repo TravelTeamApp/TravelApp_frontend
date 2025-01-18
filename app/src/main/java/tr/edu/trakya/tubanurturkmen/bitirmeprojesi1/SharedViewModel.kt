@@ -2,13 +2,19 @@ package tr.edu.trakya.tubanurturkmen.bitirmeprojesi1
 
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import tr.edu.trakya.tubanurturkmen.bitirmeprojesi1.util.MapPlace
 
 
 data class AddPlaceTypeResponse(
@@ -56,6 +62,8 @@ class PlaceViewModel : ViewModel() {
     // State'ler: List of places, loading state, and error message
     private val _places = mutableStateOf<List<PlaceDto>>(emptyList())
     val places: State<List<PlaceDto>> get() = _places
+    private val _mapPlaces = mutableStateOf<List<MapPlace>>(emptyList())
+    val mapPlaces: State<List<MapPlace>> get() = _mapPlaces
     private val _loading = mutableStateOf(false)
     val loading: State<Boolean> get() = _loading
     private val _errorMessage = mutableStateOf<String?>(null)
@@ -65,7 +73,33 @@ class PlaceViewModel : ViewModel() {
     init {
         fetchPlaces()
     }
-    private fun fetchPlaces() {
+
+    var isLoading by mutableStateOf(false)
+        private set
+
+
+
+    // Belirli bir mekanı ID ile getir
+    fun fetchPlaceById(id: Int, callback: (PlaceDto?, String?) -> Unit) {
+        isLoading = true // Yüklenme durumu başlatılır
+        RetrofitClient.apiService.getPlaceById(id).enqueue(object : Callback<PlaceDto> {
+            override fun onResponse(call: Call<PlaceDto>, response: Response<PlaceDto>) {
+                isLoading = false // Yüklenme durumu durdurulur
+                if (response.isSuccessful) {
+                    callback(response.body(), null) // Başarılı sonuç döndürülür
+                } else {
+                    callback(null, "API Error: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<PlaceDto>, t: Throwable) {
+                isLoading = false // Yüklenme durumu durdurulur
+                callback(null, "Network Error: ${t.message}") // Hata döndürülür
+            }
+        })
+    }
+
+    fun fetchPlaces() {
         _loading.value = true  // API çağrısı başladığında loading state'i true
         _errorMessage.value = null  // Hata mesajını sıfırla
         RetrofitClient.apiService.getAllPlaces().enqueue(object : Callback<List<PlaceDto>> {
@@ -89,7 +123,9 @@ class PlaceViewModel : ViewModel() {
                 Log.e("Network Error", "Error: ${t.message}")
             }
         })
+
     }
+
     fun getPlaceTypesByUserId(callback: (List<UserPlaceTypeDto>?) -> Unit) {
         RetrofitClient.apiService.getPlaceTypesByUserId().enqueue(object :
             Callback<List<UserPlaceTypeDto>> {
@@ -133,6 +169,9 @@ class PlaceViewModel : ViewModel() {
             }
         })
     }
+
+
+
 }
 
 class ExploreViewModel : ViewModel() {
@@ -190,6 +229,7 @@ class VisitedPlaceViewModel() : ViewModel() {
             override fun onFailure(call: Call<Void>, t: Throwable) {
                 callback(false, "İstek başarısız: ${t.message}")
             } }) }
+
     fun fetchUserVisitedPlaces(callback: (List<VisitedPlaceDto>?, String?) -> Unit) {
         RetrofitClient.apiService.getUserVisitedPlaces().enqueue(object :
             Callback<List<VisitedPlaceDto>> {
@@ -308,4 +348,41 @@ class CommentViewModel() : ViewModel() {
             }
         })
     }
+    fun updateComment(id: Int, updateCommentRequest: UpdateCommentRequestDto, callback: (CommentResponse?, String?) -> Unit) {
+        RetrofitClient.apiService.updateComment(id, updateCommentRequest).enqueue(object : Callback<CommentResponse> {
+            override fun onResponse(call: Call<CommentResponse>, response: Response<CommentResponse>) {
+                if (response.isSuccessful) {
+                    // Yorum güncelleme başarılıysa, güncellenmiş yorumu callback'e gönder
+                    callback(response.body(), null)
+                } else {
+                    // Yorum güncellenirken bir hata oluşursa, null verisi ve hata mesajı gönder
+                    callback(null, "Yorum güncellenirken bir hata oluştu.")
+                }
+            }
+
+            override fun onFailure(call: Call<CommentResponse>, t: Throwable) {
+                // Bağlantı hatası durumunda callback'e null ve hata mesajı gönder
+                callback(null, "Bir hata oluştu: ${t.message}")
+            }
+        })
+    }
+    fun deleteComment(commentId: Int, callback: (CommentDto?, String?) -> Unit) {
+        RetrofitClient.apiService.deleteComment(commentId).enqueue(object : Callback<CommentDto> {
+            override fun onResponse(call: Call<CommentDto>, response: Response<CommentDto>) {
+                if (response.isSuccessful) {
+                    // Başarılı bir şekilde silindiyse, silinen yorumu callback'e gönder
+                    callback(response.body(), null)
+                } else {
+                    // Başarısız bir durumda hata mesajını döndür
+                    callback(null, "Yorum silinirken bir hata oluştu: ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<CommentDto>, t: Throwable) {
+                // Bağlantı hatası durumunda callback'e hata mesajını döndür
+                callback(null, "Bir hata oluştu: ${t.message}")
+            }
+        })
+    }
+
 }

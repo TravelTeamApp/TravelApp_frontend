@@ -7,6 +7,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Header
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface AuthService {
@@ -89,10 +90,25 @@ interface AuthService {
         @Body createCommentRequest: CreateCommentDto
     ): Call<CommentDto>
 
+    // Yorum silme işlemi
+    @DELETE("comment/{id}")  // BASE_URL'in sonuna eklenir, yani: http://localhost:5000/api/comments/{id}
+    fun deleteComment(
+        @Path("id") id: Int // Yorum ID'si
+    ): Call<CommentDto> // API'den dönen veri
+
+    @PUT("comment/{id}")  // URL: BASE_URL/Comment/{id}
+    fun updateComment(
+        @Path("id") id: Int,
+        @Body updateCommentRequest: UpdateCommentRequestDto
+    ): Call<CommentResponse>
     // Kullanıcıya ait mekan türlerini getirme
     @GET("UserPlaceType")
     fun getPlaceTypesByUserId(): Call<List<UserPlaceTypeDto>>
 
     @GET("Place/userplace")  // BASE_URL'in sonuna eklenir
     fun getPlacesByUserPlaceTypes(): Call<List<PlaceDto>>
+
+    @GET("place/{id}")
+    fun getPlaceById(@Path("id") id: Int): Call<PlaceDto>
+
 }

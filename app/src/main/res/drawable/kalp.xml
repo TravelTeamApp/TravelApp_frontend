@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="30dp"
+    android:height="30dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Background Circle (Bigger Pink Circle) -->
+    <path
+        android:fillColor="#F06292"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.4"
+        android:pathData="M12,0A12,12,0,1,0,12,24A12,12,0,1,0,12,0Z" />
+
+    <!-- Larger Heart Icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,18.35l-1.25-1.1C7,14,5,11.84,5,9.5c0-2.21,1.79-4,4-4c1.23,0,2.43,0.79,3,1.95C12.57,6.29,13.77,5.5,15,5.5c2.21,0,4,1.79,4,4c0,2.34-2,4.5-5.75,7.75L12,18.35z"
+        android:scaleX="3"
+    android:scaleY="3"
+    android:translateX="3"
+    android:translateY="3" />
+</vector>

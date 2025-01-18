@@ -56,6 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 
 
@@ -82,21 +84,39 @@ fun ForgotPasswordScreen(navController: NavController) {
     val email = remember { mutableStateOf("") }
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
-    val backgroundImage: Painter = painterResource(id = R.drawable.password)
+    val backgroundImage: Painter = painterResource(id = R.drawable.deneme2)
     var isHovered by remember { mutableStateOf(false) }
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        // Arka plan resmi
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background Image
+
         Image(
-            painter = backgroundImage,
+            painter = painterResource(id = R.drawable.resim),
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop // Resmi tam ekran doldur
+            contentScale = ContentScale.Crop
         )
+        // Geri Butonu (En üstte ve solda)
+        IconButton(
+            onClick = {
+                // Travelog ekranına yönlendirme
+                navController.navigate("login") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                }
+            },
 
-        // Ortadaki içerik
+            modifier = Modifier
+                .align(Alignment.TopStart) // En üst ve sol hizalama
+                .padding(16.dp) // Dış boşluk
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Geri Git",
+                tint = Color.White, // Beyaz renk
+                modifier = Modifier.size(36.dp) // İkon boyutunu büyütmek için
+            )
+        }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center, // İçeriği dikeyde merkeze al
@@ -105,16 +125,6 @@ fun ForgotPasswordScreen(navController: NavController) {
                 .padding(30.dp)
                 .align(Alignment.Center) // Sayfanın ortasına yerleştir
         ) {
-            Text(
-                text = "Şifremi Sıfırla",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    color = Color.White,
-                    fontSize = 32.sp
-                ),
-                modifier = Modifier.padding(bottom = 16.dp) // Başlık ile diğer içerik arasında boşluk bırakıyoruz
-            )
-
             // E-posta adresi alanı
             TextField(
                 value = email.value,
@@ -130,7 +140,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Done
                 )
-                  // Başlık ile diğer içerik arasında boşluk bırakıyoruz
+                // Başlık ile diğer içerik arasında boşluk bırakıyoruz
 
             )
 
@@ -163,7 +173,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                                                         val tcKimlik = response.body()?.tckimlik
 
                                                         if (!tcKimlik.isNullOrEmpty()) {
-                                                            Toast.makeText(context, "Şifreniz başarıyla sıfırlandı ve yeni şifreniz TC Kimlik Numarası olarak ayarlandı.", Toast.LENGTH_SHORT).show()
+                                                            Toast.makeText(context, "Yeni şifreniz TC Kimlik Numarası olarak ayarlandı.", Toast.LENGTH_SHORT).show()
                                                             navController.navigate("login") // Giriş ekranına yönlendir
                                                         } else {
                                                             Toast.makeText(context, "TC Kimlik numarası alınamadı.", Toast.LENGTH_SHORT).show()
@@ -203,6 +213,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                     },
                     modifier = Modifier
                         .fillMaxWidth()
+
                         .pointerInput(Unit) {
                             // Hover için fare hareketini yakala
                             awaitPointerEventScope {
@@ -212,11 +223,12 @@ fun ForgotPasswordScreen(navController: NavController) {
                                 }
                             }
                         },
+                    shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isHovered) Color(0xFF091057) else Color(0xFF0D92F4), // Hover ve normal renkler
+                        containerColor = if (isHovered) Color(0xFF1C28E0) else Color(0xFF117ED0), // Hover ve normal renkler
                         contentColor = Color.White
                     ), ){
-                    Text(text = "Şifremi Sıfırla")
+                    Text(text = "Şifremi Sıfırla", fontSize = 20.sp)
                 }
             }
         }
